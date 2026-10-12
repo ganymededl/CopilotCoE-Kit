@@ -1,0 +1,46 @@
+ILLUSTRATIVE DRAFT FOR {{OrgNameUpper}} REVIEW
+Not adopted policy. Not evidence of an organizational decision, appointment, purchase, or completed activity.
+
+PROPOSED FIRST-YEAR AI STRATEGY AND PRIORITY PORTFOLIO
+
+Strategic direction
+
+The organization will use AI to expand the capacity of faculty and staff to support students, not to automate judgments about students. The proposed first-year portfolio will favor bounded, reversible assistance using public or specifically authorized nonsensitive information. It will support every part of the organization, including its schools, campuses, and online programs, without assuming that every student or employee has a paid license, reliable connectivity, or experience with generative AI.
+
+The first year will be measured from an eventual authorized program launch, not from the preparation of this sample. The organization will not represent a demonstration, license activation, or training attendance as improved learning or service quality.
+
+Priority one: teaching support and accessible learning
+
+Academic functions will sponsor voluntary faculty exploration of public-source lesson outlines, practice questions, and alternative explanations. Faculty will check subject accuracy, reading demands, alignment with learning outcomes, and the suitability of examples for adult learners and varied language backgrounds. Generated practice questions must not introduce unverified answer keys or become unattended grading mechanisms.
+
+Accessibility functions will help evaluate plain-language versions, document structure, and descriptions of visual material. AI-generated alternative text and simplified explanations will be drafts requiring knowledgeable review. They will not replace accommodations, caption quality checks, or accessible source documents. Students will have an equivalent way to complete required activities without purchasing a particular AI service.
+
+Priority two: understandable student services
+
+Student-services functions will improve public-facing explanations of registration steps, orientation resources, service hours, and where to obtain human assistance. Staff may draft a plain-language guide from verified public sources and test whether readers can identify their next step. Links and requirements must be checked against authoritative material before publication.
+
+This priority will not authorize a system to decide which courses an individual should take, predict eligibility for aid, or interpret an individual’s academic standing. A public FAQ helper would require separate review of accessibility, escalation, source maintenance, and incorrect-answer risk before release. It must direct individualized questions to qualified staff rather than invent a student-specific answer.
+
+Priority three: administrative productivity
+
+Business functions will consider drafting routine internal communications, summarizing authorized nonsensitive planning documents, and preparing public meeting agendas. Sponsors will identify the actual work removed and the review work added. Meeting summaries will require notice, appropriate authorization, and records review; a general productivity objective will not authorize recording confidential discussions.
+
+The organization will favor reusable templates and shared staff learning over isolated demonstrations. A successful administrative pilot will document a safe operating boundary that another unit can understand, not merely a compelling screenshot.
+
+Selection and sequencing
+
+Every proposal will pass a safety screen before scoring benefits. The proposed selection rubric will consider educational or service value, accessibility and equitable reach, reviewer capacity, data readiness, reversibility, total support cost, and strength of the baseline. Sponsors will describe non-AI alternatives, including clearer source information or a simpler workflow.
+
+Projects with no accountable reviewing function, unclear data rights, inaccessible required interfaces, or unresolved consequential-decision risk will not enter a pilot merely because demand is high. Popularity and executive visibility will not substitute for readiness.
+
+The proposed first quarter will establish the approved-use inventory, orientation materials, baseline methods, and bounded public-content pilots. The second quarter will evaluate those pilots and correct recurring errors. The third quarter will expand only uses with verified controls and credible benefits. The fourth quarter will recommend continuation, redesign, or retirement based on evidence. These are proposed phases, not reports of completed activity.
+
+Excluded baseline uses
+
+The first-year assistance portfolio will exclude automated admissions selection, course grading, financial-aid eligibility, disciplinary recommendations, employment screening, and individual advising decisions. Student surveillance, behavioral profiling, and inference of disability, motivation, immigration circumstances, or likelihood of success will not be portfolio objectives. Removing names from a student record will not automatically make such projects eligible.
+
+Portfolio oversight
+
+The coordinating function will review progress with sponsoring functions at a proposed quarterly portfolio discussion. A pilot may stop if costs exceed the sponsor’s authorized resources, source quality deteriorates, or accessibility and privacy conditions fail. Expansion will require renewed review when users, data, integrations, or affected populations change.
+
+References to existing organizational strategies and policies are reserved for final reconciliation; this sample does not claim those documents were researched. No priority listed here represents an approved investment or accomplished outcome.

@@ -1,0 +1,50 @@
+ILLUSTRATIVE DRAFT FOR {{OrgNameUpper}} REVIEW
+Not adopted policy. Not evidence of an organizational decision, appointment, purchase, or completed activity.
+
+DRAFT CHAMPION AND TRAINING PLAYBOOK
+
+Scope note: Named roles are functional responsibilities to be designated through authorized organizational processes, not claims that people have been appointed. These procedures are draft provisions for review.
+
+Purpose and participation
+
+The training lead will help {{OrgName}} participants use reviewed Copilot capabilities with clear limits, accessible instruction, and dependable support handoffs. The restricted delivery workroom will support material preparation and follow-through; it does not appoint champions, mandate faculty practices, or serve as a public help forum.
+
+Champions will demonstrate approved examples, identify learning needs, and direct questions to the responsible function. Champions must not approve tools, interpret policy authoritatively, change access, or handle sensitive incident evidence. The CoE program lead must route selection, workload, and participation through appropriate organizational review before assigning champion responsibilities. No appointments or office hours are established by this draft.
+
+Course expectations
+
+The course will use practical learning sessions rather than certify unrestricted AI use. Participants will practice with public or synthetic material, recognize unsuitable inputs, verify claims against sources, and revise outputs for accuracy and accessibility. Completing an exercise does not authorize a new purpose or remove human review. Faculty retain control of course-specific AI expectations, assignments, assessment rules, and instructional suitability. Course participation must not be presented as permission to use student work or change a syllabus.
+
+Before each session, the training lead must provide accessible source material, an alternative exercise not dependent on AI access, and clear instructions not to supply student personal details or other restricted information. The service liaison will coordinate licensing and sign-in checks through approved IT support routes, without asking for credentials in training chat. Participation must not depend on a separately scheduled Pacific-time lab.
+
+During practice, instructors must show both a useful response and a flawed response. Participants will identify unsupported claims and explain what review is needed before reuse. Instructors must not ask attendees to paste actual work documents into the session. The training lead will evaluate demonstrated judgment, not speed or the appearance of polished output, and provide a safe correction exercise when participants miss an unsupported claim.
+
+Draft training roadmap: not booked
+
+The following dates preserve a proposed training sequence for review, with each session proposed for noon Eastern Time. The training lead must confirm duration, delivery arrangements, instructor availability, accessible materials, and the applicable authorized scope before requesting invitations through the appropriate process. No room, instructor, registration, or booking is claimed. If a readiness gate remains open, revise or defer the affected exercise rather than treating a date as approval.
+
+October 14, 2026: Copilot basics: what it is and where to start. The training lead will seek IT service and privacy/data-steward review of instruction on tool availability versus purpose approval, safe inputs, permissions, and support routes.
+
+October 28, 2026: Prompt patterns for everyday work. The training lead will prepare instruction on summarizing published information, verifying citations, and avoiding invented commitments, with review by the relevant content authority.
+
+November 4, 2026: Copilot, information protection, and responsible use. The training lead will seek privacy, security, and data-steward review of examples distinguishing public sources, internal information, restricted records, and approved service boundaries. The session must not use actual student or personnel information.
+
+November 18, 2026: Accessible content and human review. The training lead will arrange accessibility and content-authority review of instruction on accessible outputs, equivalent participation, and authoritative notices.
+
+December 2, 2026: Teaching and learning scenario lab. The training lead will seek academic review of alternative explanations, discussion questions, and instructor-judgment exercises using public or synthetic material. Faculty course expectations and assessment authority remain unchanged.
+
+December 16, 2026: CoE administrator office hours: calendar, champions, and governance. The training lead, service liaison, and CoE program lead will rehearse maintenance of draft dates and approved champion records, sanitized support handoffs, and escalation to the proper decision authority. They will assess learning barriers without presenting this draft as evidence of program outcomes.
+
+Safe practice examples
+
+Teaching example: supply a short instructor-created synthetic paragraph about evaluating evidence. Ask, "Suggest three discussion questions using only this paragraph. Identify anything that cannot be supported by the text. Do not infer student characteristics or grading requirements." The instructor must assess suitability; the exercise does not approve use of student work or alter assessment rules.
+
+Administrative example: use a fictional public event description. Ask, "Draft a brief event summary using only the supplied text. Do not add dates, eligibility rules, registration instructions, or promises. Mark missing information as unknown." Any real public communication must receive responsible content-authority review before distribution.
+
+Human-review example: use a synthetic student-support notice with an intentionally missing deadline. Ask, "List statements requiring verification; do not invent the missing deadline." Participants must compare the response with source material and explain why authoritative policy, registration, and student-support notices need responsible organizational review.
+
+Champion handoff habits
+
+A champion receiving a basic formatting question will explain the reviewed exercise or route the person to existing IT support. Reports of unexpected content visibility must go promptly through approved incident channels, with no document contents or student details posted to the Team. Requests for agents, connectors, web search, or new data use must enter change review; champions cannot enable a requested capability as a training workaround.
+
+The training lead will revise materials when repeated questions reveal ambiguity, retain the reviewed version, and withdraw superseded instructions from use. Sanitized learning themes will inform delivery review. Do not claim adoption, productivity gains, or completed training without verified evidence. Keep evaluation records free of sensitive prompts and distinguish planned sessions from sessions actually delivered.

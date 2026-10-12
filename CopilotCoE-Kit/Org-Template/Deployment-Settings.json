@@ -1,0 +1,62 @@
+{
+  "_instructions": "Organization profile for the Copilot CoE kit. Copy the whole Org-Template folder (for example to C:\\CoE-Orgs\\Contoso), replace every <placeholder>, then run the scripts with -OrgPath <that folder>.",
+  "Tenant": "<your-tenant>.onmicrosoft.com",
+  "AdminFQDN": "<your-tenant>-admin.sharepoint.com",
+  "SiteFQDN": "<your-tenant>.sharepoint.com",
+  "PnPClientID": "",
+  "SharedChannelOwnerUPN": "<coe-owner>@<your-domain>",
+  "OrgName": "<Organization name, for example Contoso University>",
+  "OrgNoun": "",
+  "ShortName": "",
+  "MailNickname": "CopilotCoE",
+  "DisplayName": "",
+  "TeamVisibility": "Private",
+  "CoESiteSharingCapability": "Disabled",
+  "OrganizationEmailDomains": [
+    "<your-domain>"
+  ],
+  "GovernanceAdditionalAllowedMembers": [],
+  "CatalogReviewerUPNs": [],
+  "EnvironmentLabel": "Pilot",
+  "SampleNotice": "",
+  "SupportEmail": "<copilot-help>@<your-domain>",
+  "NavigationOrder": "TaskFirst",
+  "NavigationPinFirst": [
+    "Home"
+  ],
+  "TimeZone": "Eastern Standard Time",
+  "PromptLibrary": "On",
+  "ChampionDepartments": [
+    "<Unit name, for example Office of Information Technology>",
+    "<Another unit>"
+  ],
+  "Links": {
+    "ServiceDesk": "",
+    "TechnologyRequest": "",
+    "DataSafetyIncident": "",
+    "AIGuidelines": "",
+    "AboutOrg": "",
+    "PromptLibrary": "",
+    "LearningSystem": ""
+  },
+  "GovernanceLinks": [
+    {
+      "label": "<Name of the organization's AI policy>",
+      "url": ""
+    }
+  ],
+  "TrainingLinks": [
+    {
+      "label": "<Library or training resource name>",
+      "url": ""
+    }
+  ],
+  "Agents": {
+    "name": "<Agent name>",
+    "description": "<One or two sentences: what the agent does>",
+    "audience": "<Who it is for>",
+    "examplePrompt": "<A prompt to try>",
+    "owner": "<Owner name or team>",
+    "url": ""
+  }
+}

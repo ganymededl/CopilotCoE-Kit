@@ -1,0 +1,74 @@
+ILLUSTRATIVE DRAFT FOR {{OrgNameUpper}} REVIEW
+Not adopted policy. Not evidence of an organizational decision, appointment, purchase, or completed activity.
+
+DRAFT OPERATIONAL RISK AND ISSUE PROCEDURE
+
+Scope note: Named roles are functional responsibilities to be designated through authorized organizational processes, not claims that people have been appointed. These procedures are draft provisions for review.
+
+Purpose and safe recordkeeping
+
+The CoE program lead will use the {{OrgName}} delivery workroom to coordinate risks that could prevent safe, useful delivery and issues already affecting the authorized scope. A risk is a possible future condition; an issue is a present problem. Neither label grants the team authority to accept {{OrgNoun}}-wide risk or investigate a sensitive incident.
+
+The CoE program lead will maintain a sanitized account of the affected capability, business consequence, responsible role, protective step, next decision, and closure evidence. Record the affected release gate and the dependency on other work. Sensitive evidence must remain in existing approved service, security, or other case-management channels. Team posts must contain no personal details about residents or employees, credentials, restricted document extracts, or speculative allegations about individuals.
+
+Routing and prioritization
+
+Anyone receiving a report of suspected disclosure, compromised credentials, or unauthorized access must report it promptly through the organization's existing approved incident channels. The service liaison will coordinate the handoff without collecting evidence in the Team. The CoE program lead must ask the responsible function what operational status can safely be shared. Do not investigate in chat or wait for a meeting or coordination target.
+
+The CoE program lead will classify delivery dependencies as blockers, material concerns, or improvements. A blocker prevents release or continued use of the affected scenario; the lead must recommend a pause and refer production containment to the authorized function. A material concern requires a decision before expansion. Track improvements without obstructing unrelated safe work. These draft categories are delivery priorities, not incident severity definitions. Route policy, funding, or residual-risk questions to leadership after appropriate functional assessment.
+
+Four worked fictional cases
+
+All cases below are invented, non-sensitive examples. Required responses illustrate this draft procedure; decision requests are not accounts of actions taken or approvals given by the organization.
+
+CASE 1: Unexpected discovery of a synthetic restricted document
+
+During an authorized readiness test, a test identity retrieves a synthetic planning file that the test design says it should not see.
+
+Required response: the IT implementation lead must stop the affected retrieval exercise, avoid copying the output into the Team, and submit test evidence through approved identity/security channels. The CoE program lead will record that the retrieval gate is blocked pending access review.
+
+Responsible roles and review: the IT implementation lead will support testing; existing identity/security and relevant data-steward functions assess access and intended reuse.
+
+Escalation trigger: evidence of real-data exposure, multiple affected locations, or inability to bound the problem requires the existing incident process and a release pause recommendation.
+
+Decision needed: the relevant authorized functions determine whether remediation and negative-access retesting are sufficient to resume. The team must not broaden access or declare inherited permissions a privacy approval.
+
+CASE 2: An invented deadline in a public-notice practice response
+
+A synthetic service-notice exercise produces a plausible deadline absent from the supplied approved example text.
+
+Required response: the training lead must prevent reuse of the draft notice, compare every requirement against authoritative source text, and revise the exercise to demonstrate uncertainty and verification.
+
+Responsible roles and review: the training lead will revise training; the responsible program content authority assesses accuracy expectations and reviews authoritative notices before reuse.
+
+Escalation trigger: repeated ungrounded requirements despite source controls, or a proposal to distribute AI-generated advice without human review, blocks that scenario. The CoE program lead must seek leadership review if scope or policy expectations remain disputed.
+
+Decision needed: whether a source-bounded, human-reviewed drafting task is acceptable or the use case must remain excluded. This draft does not permit autonomous eligibility or deadline advice to the public.
+
+CASE 3: Keyboard users cannot complete a practice activity
+
+A rehearsal using non-sensitive materials reveals that a required control cannot be operated from the keyboard.
+
+Required response: the training lead must stop treating that activity as mandatory, prepare an accessible equivalent, and test the alternative with the relevant accessibility function. Do not ask participants to disclose disabilities in the Team.
+
+Responsible roles and review: the training lead and IT implementation lead will revise materials or configuration; the accessibility function assesses equivalence.
+
+Escalation trigger: no equivalent path before the planned session, or a barrier affecting an essential workflow, blocks reliance on that activity.
+
+Decision needed: whether the reviewed alternative meets participation needs, whether to change the activity, or whether to defer it. Scheduling convenience cannot settle accessibility acceptability.
+
+CASE 4: Pressure to enable a connector to relieve support demand
+
+Fictional support trends show repeated questions about retrieving content from another repository. Someone suggests enabling a connector without additional review.
+
+Required response: the CoE program lead must retain the existing approved scope. The service liaison will route ordinary questions to IT service; the IT implementation lead will prepare a change proposal describing data boundaries, access behavior, indexing, retention implications, and rollback.
+
+Responsible roles and review: the CoE program lead will track dependencies and route the proposal to IT service, identity/security, privacy, and the relevant data steward for review.
+
+Escalation trigger: funding requirements, unresolved reuse authority, or a connector that changes exposure beyond the approved scope requires leadership and functional review before deployment.
+
+Decision needed: whether to reject, revise, or authorize the changed scope after evidence is available. A licensed connector does not establish approved use.
+
+Closure discipline
+
+The CoE program lead may close a concern only when the responsible function confirms resolution within its authority and delivery evidence supports the next step. Record remediation, targeted retesting, the decision reference, and any remaining limitation. A workaround must remain visible with its limits and follow-up responsibility. Meeting attendance, a reassuring reply, absence of complaints, or an overdue item moved off the agenda does not establish closure. Reopen the concern if retesting fails or the affected scope changes.

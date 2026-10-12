@@ -1,0 +1,44 @@
+ILLUSTRATIVE DRAFT FOR {{OrgNameUpper}} REVIEW
+Not adopted policy. Not evidence of an organizational decision, appointment, purchase, or completed activity.
+
+DRAFT DELIVERY CHARTER AND FUNCTIONAL RESPONSIBILITIES
+
+Scope note: Named roles are functional responsibilities to be designated through authorized organizational processes, not claims that people have been appointed. These procedures are draft provisions for review.
+
+Purpose and operating boundary
+
+The {{OrgName}} Copilot Center of Excellence delivery team will coordinate implementation only within a scope authorized through existing organizational processes. The CoE program lead will use the restricted Program Governance workroom to connect release planning, technical readiness, training, service quality, escalation, and follow-through across the organization's schools, campuses, and online programs. Opening a Team or placing a document in a tab does not establish an approved pilot.
+
+The CoE program lead will translate each authorized objective into a bounded release plan: identify dependencies, assemble readiness evidence, prepare accessible learning materials, arrange support handoffs, and route unresolved concerns to the functions that can decide them. The lead must recommend a smaller release or a pause when conditions are not met. The delivery team cannot approve its own policy exception, purchase, expanded data use, or teaching requirement.
+
+Authority retained outside the workroom
+
+The CoE program lead must route policy, institutional-risk, funding, and unresolved cross-functional priority questions to leadership through the organization's actual decision processes. IT service, identity, and security functions retain their operational and technical authority. Academic, privacy, accessibility, and data-steward functions retain authority in their respective domains. Faculty instructional judgment, course expectations, assessment rules, and academic decisions do not transfer to this team.
+
+Existing access to a document does not authorize reuse of its contents in an AI workflow. A feature being licensed or available does not prove that its tool, purpose, or data use is approved. A Team tab adds no delegated authority. Delivery recommendations must reference the actual decision source rather than treating meeting agreement as authorization.
+
+Delivery responsibility allocation
+
+"Accountable" means accountable for the stated delivery artifact within existing authority, not empowered to override another function. The CoE program lead must identify the responsible role and required review route for each artifact before assigning work.
+
+Release scope and dependency plan: the CoE program lead will maintain the plan and consolidate inputs from the IT implementation lead, training lead, and service liaison. The lead must consult IT service, academic, privacy, accessibility, and data-steward functions as relevant and send unresolved scope and funding questions to leadership.
+
+Technical readiness evidence: the IT implementation lead will prepare configuration and test evidence, including authorized- and denied-access results. Existing IT service and identity/security functions determine acceptability within their domains. The CoE program lead will track missing evidence and hold the delivery recommendation; the lead must not sign on behalf of those functions.
+
+Training and champion materials: the training lead will assemble accessible materials and safe exercises and coordinate instructor preparation. The lead must obtain relevant academic, accessibility, privacy, and IT service review before using the materials. The team must not require faculty participation or appoint champions without the appropriate organizational process.
+
+Operational issue coordination: the service liaison will connect requests with existing support routes; the CoE program lead will maintain sanitized status and dependencies. Existing service or security functions own cases in their approved systems. Share only the status or case reference authorized for delivery decisions, not sensitive evidence.
+
+Policy, funding, and residual-risk questions: the CoE program lead will prepare a concise recommendation and alternatives. Leadership and relevant authorized functions make or route the decision. The lead will retain an appropriately restricted decision reference in the workroom, not sensitive supporting records.
+
+Intake and handoff
+
+The CoE program lead will record each request in ordinary language: intended users, task, output, proposed source material, and why current work needs improvement. The service liaison must separate ordinary support from a new use case and route support through existing approved channels. Do not request student records, credentials, or sensitive examples in the Team. Resolve uncertain data classification with the relevant data steward and privacy function before experimentation.
+
+Fictional case: a request to summarize an already published organizational event description. The CoE program lead will route tool and purpose questions to IT service, arrange accessibility review, and seek communications/content-authority review of public wording. The training lead may prepare a synthetic practice exercise while approval questions remain open. Preparation is not publication authorization.
+
+Fictional case: a request to draft individualized registration advice from student records. The training lead must remove it from the ordinary training queue. The CoE program lead must obtain academic/student-support, privacy, data-steward, and security review before the workflow can proceed. Authoritative policy, registration, and student-support notices require human review by the responsible organizational authority.
+
+Closure and continued accountability
+
+A request is ready for a delivery recommendation only when scope, authority references, safeguards, support arrangements, and acceptance evidence are available. The CoE program lead must check that authorization still covers the intended users, tools, tasks, and data before each release gate. Rejected or deferred work must retain a reason, responsible role, and route for reconsideration rather than disappearing into chat. Closure requires evidence and the applicable authority's decision, not meeting attendance or an unanswered message.

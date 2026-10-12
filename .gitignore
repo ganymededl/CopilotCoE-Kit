@@ -1,0 +1,34 @@
+# Build outputs regenerated fresh by Internal\Prepare-CopilotCoE.ps1 on every
+# 02_Install-CopilotCoE.ps1 / 03_Update-CoEContent.ps1 run (see Prepare-CopilotCoE.ps1
+# line ~900, called unconditionally from 02_Install-CopilotCoE.ps1 line ~194).
+# Never commit these: they are rewritten with the LAST-RUN organization's name,
+# description and site text every time the kit is used, and would otherwise leak
+# real customer/tenant details into git history. A fresh clone regenerates clean
+# versions automatically the first time a script is run.
+CopilotCoE-Kit/CopilotCoESite.pnp
+CopilotCoE-Kit/TeamTemplate-CoE.xml
+CopilotCoE-Kit/SiteAssetManifest.json
+
+# Per-run transcripts and before/after audit snapshots captured in RevisionAudit.
+# These contain real tenant URLs, admin UPNs, and site content from whichever
+# organization last ran the kit. Always local-only.
+CopilotCoE-Kit/RevisionAudit/
+
+# Transient staging folder created mid-build by Prepare-CopilotCoE.ps1, removed on
+# success but can be left behind if a run is interrupted.
+CopilotCoE-Kit/.prepare-*/
+
+# Local organization folders some admins create under the kit before moving them to
+# C:\CoE-Orgs\<org> per START-HERE.txt. Organization folders hold tenant-specific
+# settings and must never be committed.
+CopilotCoE-Kit/Orgs/
+
+# Oversized vendor source package (~175 MB) exceeds GitHub's 100 MB per-file push
+# limit. Published instead as a GitHub Release asset -- see README.md for the
+# download link and where to place it locally.
+SourceOriginal/CopilotCoESite/CopilotCoESite.pnp
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp

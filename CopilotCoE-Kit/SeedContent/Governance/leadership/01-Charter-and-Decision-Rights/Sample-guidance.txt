@@ -1,0 +1,46 @@
+ILLUSTRATIVE DRAFT FOR {{OrgNameUpper}} REVIEW
+Not adopted policy. Not evidence of an organizational decision, appointment, purchase, or completed activity.
+
+PROPOSED AI GOVERNANCE CHARTER AND DECISION RIGHTS
+
+Purpose and institutional commitment
+
+The organization will govern artificial intelligence as an institutional capability serving learning, research, equitable access, and responsible operations, rather than as a software deployment alone. The proposed Copilot Center of Excellence will coordinate practical support, evaluation, and shared learning. It will not replace faculty governance, information technology authority, data stewardship, procurement controls, or established student and employee protections.
+
+The organization will prioritize assistance that leaves people accountable: preparing accessible learning materials, improving explanations of public services, and reducing repetitive administrative drafting. A faster process will not justify a less fair, less accessible, or less reviewable process. This charter proposes a coordinating structure; adoption and delegation must occur through authorized organizational processes.
+
+Membership by function
+
+The proposed steering function will include academic leadership and faculty governance, student services, information technology, information security, privacy and records management, accessibility, human resources, procurement, and executive leadership. Student perspectives will inform design and review without requiring student representatives to receive confidential personnel, security, or individual student information.
+
+The coordinating function will maintain the use-case inventory, convene reviewers, record dispositions, and track corrective actions. Service owners will operate approved configurations. Sponsoring academic or business functions will define the intended benefit and remain responsible for delivery. Data stewards will determine whether specific data may be used for a specific purpose. Participation in coordination will not create authority that a function does not otherwise possess.
+
+Reserved academic decisions
+
+Academic governance will determine institution-wide academic principles, including assessment integrity, faculty responsibilities, and the treatment of AI in academic processes. Faculty will establish course-specific expectations for permitted assistance, disclosure, and assessment within those principles. The Center of Excellence must not issue a tool guide that silently overrides a syllabus or changes grading expectations.
+
+Academic leadership and the relevant faculty governance process will review proposals that change instructional expectations or require student AI use. A faculty member may propose a public-source practice activity, but cannot independently authorize uploading student records or purchasing a service outside applicable controls. Academic merit and technical permission are separate determinations.
+
+Technical, data, and financial authority
+
+Information technology will determine supported services, identity controls, integration boundaries, operational readiness, and release or rollback requirements. Information security will assess threats and required safeguards. Technical acceptance will not establish educational suitability or authorize a data use.
+
+Data stewards, with privacy and records functions, will determine classification, purpose limitation, authorized recipients, and applicable handling obligations. Existing access permissions will not be treated as permission to process information with AI. Restricted information will require the protected-data gate described in the proposed risk policy.
+
+Procurement will conduct contracting and purchasing through established authority. The budget function will confirm resource availability; executive authority will resolve institution-wide priorities and accept residual risk only within lawful delegation. Neither a steering vote nor an executive preference may waive law, required contractual restrictions, or reserved academic authority.
+
+How a proposal becomes a decision
+
+The sponsoring function will describe the problem, alternatives, affected people, data, product configuration, oversight, and proposed measures. Coordination will route the proposal to the functions whose authority is implicated. Low-impact public-material drafting may follow a documented standing authorization only after that authorization is formally established. New integrations, protected data, public-facing automation, and consequential workflows will require individual review.
+
+A proposed monthly steering review will reconcile recommendations and unresolved conditions. A disposition will identify the exact authorized scope, accountable function, required approvals, controls, review trigger, and evidence needed before launch. “Approved with conditions” will not mean permission to start before prerequisite conditions are verified. Silence, meeting attendance, and a successful demonstration will not count as approval.
+
+Escalation and accountability
+
+If academic, technical, or stewardship reviewers disagree, the proposal will remain on hold while the disputed question goes to the relevant established authority. Executive leadership may resolve competing priorities but will not substitute for required subject-matter authorization. Staff may pause an affected workflow when a privacy, security, accessibility, or student-rights concern requires containment.
+
+For example, a proposal to draft a public orientation handout would require content verification and accessibility review. A proposal to summarize individual advising histories would additionally require restricted-data authorization and student-services oversight; it could not inherit permission from the handout project. A proposal to automate grades would not be approved under this charter’s assistance baseline.
+
+Charter review
+
+The organization will review this proposed charter annually after adoption and when responsibilities or services materially change. References to current organizational policies are reconciliation points for final review, not claims that exact policies were researched. This sample establishes no appointments, delegations, or completed decisions.

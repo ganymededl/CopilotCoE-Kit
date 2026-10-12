@@ -1,0 +1,48 @@
+ILLUSTRATIVE DRAFT FOR {{OrgNameUpper}} REVIEW
+Not adopted policy. Not evidence of an organizational decision, appointment, purchase, or completed activity.
+
+DRAFT 90-DAY DELIVERY AND READINESS PLAN
+
+Scope note: Named roles are functional responsibilities to be designated through authorized organizational processes, not claims that people have been appointed. These procedures and relative cadences are proposed draft provisions, not service-level agreements or incident-response timers.
+
+Planning basis
+
+This schedule uses relative weeks within a 90-day planning horizon following authorization of a defined scope; it does not establish an approved pilot or a start date. The CoE program lead will maintain dependencies, evidence, and gate status. Actual IT, program, legal, privacy, accessibility, data-steward, and leadership authority remains unchanged. The restricted workroom will coordinate implementation, not authorize a release by meeting consensus. A missed gate must shift dependent activities rather than compress required reviews to meet the planning horizon.
+
+Weeks 1-2: establish a bounded release
+
+The CoE program lead will translate the authorized objective into a limited user group, approved tasks, approved tools, and explicitly excluded data. The fictional starting exercise uses a published event description and synthetic meeting notes, not operational case information. The IT implementation lead will identify licensing, identity, configuration, support, and device dependencies. Availability of a licensed feature does not establish approval of its purpose.
+
+The first gate requires a reference to actual authorization, agreement on excluded uses, a documented review route, and capacity to support the intended group. The CoE program lead must keep work in preparation, without adding users, when authority is missing or a data question remains unresolved.
+
+Weeks 3-4: test technical and content readiness
+
+The IT implementation lead will test representative identities with only the access each role should hold. A negative test must verify that a synthetic restricted document is not discoverable by an unauthorized test identity. A positive test must verify that an authorized identity can retrieve the intended non-sensitive content. The lead must route unexpected results to identity/security review; broadening permissions is not an acceptable workaround.
+
+The IT implementation lead must review source sharing links, group membership, guest exposure, stale access, and handling of a user whose access is removed. Use an authorized testing method and synthetic data. Record the expected result, observed result, review disposition, and retest requirement. Evidence in the Team must summarize results without credentials, personal details, or restricted screenshots. Inherited permissions do not authorize data reuse.
+
+The training lead will arrange accessibility review of keyboard navigation, screen-reader usability, headings, reading order, contrast, captions, and a non-AI alternative for the exercises. Where a feature or material prevents equivalent participation, the training lead and IT implementation lead must remedy it or provide a reviewed alternative before asking users to rely on it.
+
+Weeks 5-6: prepare enablement and service
+
+The training lead will arrange facilitator rehearsal of safe prompts, source verification, and escalation language. The service liaison must obtain IT service review of the support handoff through existing approved channels. The training lead will provide accessible practice materials and a short explanation of information that must not enter prompts or the Team.
+
+The training lead must include a synthetic misleading response in content review. Reviewers will compare source text with the output, identify invented requirements, and correct them before reuse. Authoritative policy, eligibility, and public service notices require review by the responsible organizational content authority; fluent wording is not evidence of accuracy.
+
+Weeks 7-8: consider a limited release
+
+The launch gate requires authorization still matching the scope, satisfactory access and accessibility evidence, reviewed learning materials, support readiness, and resolution of blocking concerns. The CoE program lead will assemble the evidence and recommendation; the authorized release authority decides whether to proceed. No gate waives required policy or risk review. Missing evidence is an open gate, not an assumed pass.
+
+Only after authorization to proceed, the CoE program lead will coordinate the smallest practical release group and reviewed scenarios. The training lead and service liaison will monitor task usefulness, correction needs, accessibility barriers, and support demand without collecting prompt contents containing personal information.
+
+Weeks 9-10: evaluate and correct
+
+At the proposed weekly delivery review, the CoE program lead will compare sanitized observations with readiness assumptions. In a fictional repeated-citation-failure case, the training lead must revise source-checking guidance and arrange retesting, not report measured success. The service liaison will distinguish learning needs from configuration defects. The CoE program lead must hold expansion if support cannot sustain the existing scope.
+
+Weeks 11-13: recommend the next stage
+
+The CoE program lead will present evidence, unresolved risks, service capacity, and alternatives: continue the limited scope, revise it, expand only after review, or stop. Route policy, funding, and residual-risk questions to leadership. Favorable training feedback cannot substitute for technical or privacy approval. The final handoff must distinguish completed evidence from unresolved work and identify the next authorized decision.
+
+Pause and resume gates
+
+Suspected unauthorized exposure, unexplained access behavior, a material accessibility barrier without an acceptable alternative, or unreliable authoritative output requires an immediate protective recommendation and referral to the responsible function. The service liaison must route security/privacy concerns promptly through existing approved incident channels; do not wait for a planning milestone or meeting. Only an authorized function may change production settings. Resumption requires documented remediation, targeted retesting, and the relevant authority's decision. Agents, web search, connectors, or materially changed access require new review rather than inheriting an earlier gate.

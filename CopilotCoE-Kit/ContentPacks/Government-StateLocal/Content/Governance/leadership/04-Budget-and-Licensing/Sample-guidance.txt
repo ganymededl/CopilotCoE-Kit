@@ -1,0 +1,46 @@
+ILLUSTRATIVE DRAFT FOR {{OrgNameUpper}} REVIEW
+Not adopted policy. Not evidence of an organizational decision, appointment, purchase, or completed activity.
+
+PROPOSED AI RESOURCE ALLOCATION, PURCHASING, AND RENEWAL RULES
+
+Resource purpose
+
+The organization will allocate AI resources to approved public-service and operational purposes, not to title, enthusiasm, or the visibility of a requesting unit. A license will provide access to a service; it will not authorize every use of that service. No allocation under this proposed policy will bypass program, legal, privacy, security, accessibility, or purchasing review.
+
+The budget function will consider the full cost of a supported capability: licenses, staff training, configuration, accessibility remediation, source maintenance, output review, support, measurement, and eventual exit. Sponsors must identify reviewer workload rather than assume that generated output eliminates labor. This sample proposes no dollar amount, license quantity, spending approval, or purchasing commitment.
+
+Authority and separation of decisions
+
+Sponsoring functions will establish the need, intended users, alternatives, and expected benefit. Program leadership and human resources will review workforce implications, including any change to job duties that requires labor-management discussion. Information technology will determine supported configurations and deployment feasibility. Security, privacy, data stewardship, accessibility, and records functions will resolve their respective requirements.
+
+Procurement will determine the appropriate contracting and purchase process under established authority. The budget function will confirm available resources and any required funding authorization. Executive leadership will resolve competing {{OrgNoun}}-wide priorities within existing delegation. A pilot recommendation, steering disposition, or technical compatibility finding will not itself authorize expenditure.
+
+Allocation principles
+
+The proposed allocation process will favor approved use cases with a clear baseline, identified reviewing capacity, reusable benefits, and an accessible participation route. Requests will explain who benefits and who could be excluded. Evaluation must consider staff with different schedules, shifts, field assignments, and locations rather than relying solely on attendance at an in-person demonstration.
+
+Where demand exceeds authorized resources, the coordinating function will compare purpose and readiness using published criteria. It will document why requests are prioritized, deferred, or declined. Seniority and application order alone will not determine allocation. Shared training, public-content templates, or non-AI process improvements may offer better value than another paid license.
+
+Individual licenses must not be shared through common credentials. Reassignment will follow the actual contract and supported identity process. Supervisors must arrange continuity of authorized records and work when a user changes roles, without distributing private prompts or granting unnecessary access.
+
+Public-facing services and personal purchases
+
+Staff must not pay for or use a personal AI subscription for {{OrgNoun}} work, and no work process may depend on one. A limited staff pilot will not be advertised as a public service. Resident-facing chat, agents, or automated responses will require their own authority, accessibility and language-access review, and funding decision.
+
+Contract and configuration review
+
+Before purchase, trial, renewal, or expansion, reviewers will assess product identity, service terms, data processing, subprocessors where applicable, model-training commitments, security assurances, accessibility evidence, support, breach obligations, intellectual property, records handling, export, deletion, and exit restrictions. A free trial that accepts organizational information will receive the same purpose and data review as a paid service.
+
+Microsoft Copilot approval will not cover consumer products, extensions, connectors, agents, or separate third-party processing. Procurement and information technology must identify which capabilities are included and which require additional review. No vendor presentation will replace verification of actual terms and configuration.
+
+Pilot-to-renewal discipline
+
+A proposed quarterly allocation review will compare utilization in privacy-preserving aggregates, quality, accessibility, support demand, and the sponsor’s measured outcomes. Login totals will not establish value, and low use will not automatically indicate employee underperformance. Training barriers, job suitability, accessibility, and workload must be considered before reassignment.
+
+Before renewal, the sponsoring function will recommend continuation, reduced scope, redesign, or retirement using evidence and known limitations. The organization will not renew solely because users have become dependent on an undocumented workflow. Material cost, vendor, purpose, or integration changes will return to the relevant review authorities.
+
+Exit and records
+
+The service owner will plan for supported export, preservation of official records, removal of unnecessary access, and cessation of unapproved processing. Procurement will verify termination requirements; records management will determine applicable handling under existing schedules. The organization will avoid adopting a capability without a workable exit path.
+
+References to current purchasing, budget, labor, and records rules are final reconciliation points, not claims that exact organizational policies were researched. All allocation and renewal provisions above are proposed; no purchase or resource award is recorded.

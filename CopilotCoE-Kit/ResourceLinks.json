@@ -1,0 +1,8 @@
+[
+  {"index":0,"label":"Help center","url":"https://support.microsoft.com/en-us/microsoft-365-copilot/"},
+  {"index":1,"label":"Get Started Guides","url":"https://adoption.microsoft.com/en-us/copilot/"},
+  {"index":2,"label":"FAQs","url":"{site}/SitePages/Copilot-FAQs.aspx"},
+  {"index":3,"label":"Training calendar","url":"{site}/Lists/CopilotTrainingCalendar/Calendar.aspx"},
+  {"index":4,"label":"Give Feedback","url":"{site}/SitePages/Give-Feedback.aspx"},
+  {"index":5,"label":"Meet a Champion","url":"{site}/SitePages/Meet-your-Champions.aspx"}
+]

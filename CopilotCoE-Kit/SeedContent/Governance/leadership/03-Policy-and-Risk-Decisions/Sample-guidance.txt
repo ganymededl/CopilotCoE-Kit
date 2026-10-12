@@ -1,0 +1,84 @@
+ILLUSTRATIVE DRAFT FOR {{OrgNameUpper}} REVIEW
+Not adopted policy. Not evidence of an organizational decision, appointment, purchase, or completed activity.
+
+PROPOSED AI ACCEPTABLE-USE AND RISK DECISION POLICY
+
+1. Purpose and scope
+
+The organization will permit AI assistance only when the service, purpose, information, and oversight are appropriate to the proposed use. This policy will apply to faculty, staff, contractors, and others acting for the organization, including uses of personal accounts for organizational work. Student academic use will also remain subject to faculty course rules and adopted academic requirements. Availability of a product, possession of a license, or encouragement to innovate will not establish authorization.
+
+The organization will maintain a use-case inventory showing authorized boundaries. The sponsoring academic or business function will remain accountable for the work. Information technology will determine technical supportability; data stewards will determine permitted data use; academic governance will retain academic authority; procurement will retain purchasing authority.
+
+2. Permitted assistance and user duties
+
+Staff may use an explicitly authorized service for public-material drafting, brainstorming, and other approved low-impact assistance within its documented scope. Before distributing or relying on output, a knowledgeable person must verify facts, citations, calculations, instructions, and tone against authoritative sources. Staff must correct invented references and misleading claims, protect intellectual property, and follow applicable disclosure rules.
+
+Users must not represent generated text as an official determination, impersonate another person, fabricate records, bypass access controls, or conceal material assistance when disclosure is required. Prompts must request only information necessary for the task. Staff must not upload entire collections merely because summarizing everything is convenient. AI output must not replace the official system of record or required professional judgment.
+
+3. Information categories
+
+Public information is information intentionally released by an authorized organizational function, such as a published service description. An authorized public release does not eliminate copyright, accuracy, or purpose limitations. Public availability of personal information does not authorize collecting it to profile students or employees.
+
+Internal information is nonpublic information that the relevant steward has confirmed is nonsensitive for the proposed purpose. Examples could include a routine planning outline or a general staff process description with no identifiable student, personnel, or confidential operational details. Its use requires an approved service and configuration, an authorized business purpose, verified audience permissions, and applicable records controls. “Internal” is not a blanket category for all material stored in the organization's Microsoft 365.
+
+Restricted information has no baseline AI authorization. It includes FERPA-sensitive educational records, identifiable advising notes, grades, assessment submissions maintained as educational records, financial-aid information, accommodation information, personnel records, confidential legal material, credentials, and security-sensitive details. A mixed document will be handled at the most protective applicable level. Uncertainty about classification will result in a hold and steward review, not a user’s assumption that the data is safe.
+
+Removing names alone does not establish de-identification. Small cohorts, uncommon circumstances, free-text narratives, and combinations of attributes may identify a person. The privacy function and steward must evaluate a proposed transformed dataset before it receives a lower handling category.
+
+4. Product and configuration boundaries
+
+Approval of Microsoft Copilot will not authorize consumer AI accounts, browser extensions, agents, connectors, or third-party services. Each materially different data flow and integration must be evaluated. Grounded responses can use information available through a user’s permissions; existing permission to read information is not authorization to process it for every AI purpose.
+
+Information technology and security must evaluate oversharing, source permissions, authentication, configuration, logging, external connections, retention and deletion behavior, and changes to vendor terms. Staff must not rely on a universal claim that data never leaves the tenant. Microsoft’s published privacy documentation describes protections and processing commitments for specified services; reviewers must assess the actual service and configuration.
+
+5. Prohibited and consequential uses
+
+The organization will prohibit student surveillance and profiling through this program, including monitoring communications to infer engagement, motivation, vulnerability, misconduct, or likely success. AI detectors or generated suspicion must not be treated as proof of academic misconduct. Staff must not infer protected characteristics or use proxies for them to target services or opportunities.
+
+AI output must never be the sole basis for a consequential decision. Admissions, individualized advising, grading, financial aid, discipline, and employment involve rights, opportunities, or material consequences and fall outside baseline assistance approval. A human clicking acceptance is not meaningful review if the person lacks expertise, time, source evidence, or authority to disagree.
+
+Any proposal for AI assistance within a consequential workflow must establish lawful purpose, relevant authority, validated performance, bias and accessibility evaluation, qualified human review, understandable explanations, correction and appeal routes, and protection against automation bias. Approval of assistance would not authorize automated final decisions. Uses that remain unlawful, prohibited, or insufficiently controllable will be refused rather than assigned an exception.
+
+6. Course and research boundaries
+
+Faculty course rules will continue to determine permitted student assistance, attribution, and assessment practices within adopted academic requirements. This policy will not create a universal right to submit AI-generated work or a universal prohibition on student learning assistance. Required activities must offer an accessible, educationally equivalent route without compulsory purchase of an unapproved product.
+
+Faculty must not upload student work for feedback or grading under a public-content authorization. Research uses must additionally satisfy applicable research oversight, consent, sponsor, intellectual-property, and data requirements. Instructional or research value will not waive protected-data review.
+
+7. Intake and proposed risk levels
+
+Before a new service, integration, or materially different use begins, the sponsor will document purpose, alternatives, affected groups, information categories, data flows, audience, decision influence, reviewer capacity, accessibility, records implications, and proposed benefit measures. Testing with real restricted data is a use and must not precede authorization.
+
+Low-impact uses involve public material, reversible drafting, no individual judgments, and qualified review before distribution. They may operate under a formally established standing authorization. Moderate-impact uses include authorized internal material, broader deployment, operationally important output, or integrations, and require case-specific functional review. Restricted or consequential uses require enhanced review regardless of pilot size. Coordination will apply the highest relevant level and explain its reasoning.
+
+8. Protected-data gate
+
+Restricted-data proposals must remain on hold until the steward, privacy and legal functions, security, records management, and relevant academic or business authority have completed their respective determinations. Procurement must resolve contractual obligations where vendors are involved. Accessibility review must cover both the interface and the resulting service.
+
+The review must establish the lawful basis and permitted purpose, necessary data elements, allowed recipients, processing locations and subprocessors as applicable, retention and deletion obligations, access controls, monitoring, incident response, and exit arrangements. FERPA-sensitive records require evaluation of the applicable legal conditions and disclosures; a product contract alone will not satisfy the gate.
+
+Any remaining risk must be described to the authority empowered to accept it. Every necessary authorization must be recorded before a live pilot. Missing evidence, conflicting requirements, or unverified controls will result in hold, redesign, or refusal.
+
+9. Dispositions, conditions, and exceptions
+
+The review may authorize a defined use, authorize it subject to verified prerequisites, request redesign, hold it for evidence, refuse it, or suspend an existing use. The record must specify scope, accountable function, rationale, dissent, required controls, verification responsibility, and reassessment triggers. Conditions cannot be silently removed by the sponsor.
+
+Exceptions may address an identified operational provision only where an authorized function has discretion. They must document necessity, alternatives, compensating controls, limited scope, expiry or event-based end, and responsible oversight. Exceptions cannot waive law, FERPA requirements, contractual obligations, prohibited surveillance, or the prohibition on sole-basis consequential decisions. Consent must not be used to disguise coercion or substitute for required authority.
+
+10. Reporting and reassessment
+
+Staff must promptly report suspected disclosure, unauthorized processing, material inaccuracies, or harmful automated behavior through established organizational incident and supervisory routes. They must contain further exposure where safe, preserve necessary evidence in authorized storage, and avoid copying restricted content into ordinary feedback channels.
+
+The service owner must reassess approvals when data, purpose, integrations, models, vendor terms, audience, or decision influence changes. Repeated failures or inability to maintain a control will pause the affected use pending review. Records will follow the applicable organizational schedule; this sample invents no retention period.
+
+11. Worked risk cases
+
+FICTIONAL CASE A — ILLUSTRATIVE ONLY - NOT A {{OrgNounUpper}} DECISION.
+Student services proposes drafting a registration explainer from public web pages. The illustrative disposition is conditional low-impact authorization: a qualified reviewer must verify requirements and links, accessibility must be checked, and no student-specific data may enter prompts. Publication remains a staff responsibility. A chatbot or individualized recommendation would require a new review. Status: illustrative prerequisite review only; no launch is recorded.
+
+FICTIONAL CASE B — ILLUSTRATIVE ONLY - NOT A {{OrgNounUpper}} DECISION.
+A unit proposes uploading advising narratives to identify students likely to withdraw. The illustrative disposition is refusal as proposed: the purpose involves prohibited student profiling and restricted educational records. Removing names or using a licensed product would not cure those defects. A redesign could improve public resource explanations without ranking individuals. Status: illustrative refusal; no actual proposal or organizational ruling is asserted.
+
+12. Reconciliation and sources
+
+References to current organizational academic, privacy, security, accessibility, purchasing, and records policies are for final reconciliation, not claims that exact policies were researched. Product review should consult https://learn.microsoft.com/en-us/microsoft-365/copilot/microsoft-365-copilot-privacy and the actual applicable terms. This is a proposed institutional text for adaptation and creates no approval, delegation, or effective policy.

@@ -1,0 +1,50 @@
+ILLUSTRATIVE DRAFT FOR {{OrgNameUpper}} REVIEW
+Not adopted policy. Not evidence of an organizational decision, appointment, purchase, or completed activity.
+
+DRAFT DELIVERY MEETINGS AND ACTION FOLLOW-THROUGH
+
+Scope note: Named roles are functional responsibilities to be designated through authorized organizational processes, not claims that people have been appointed. These procedures and cadences are proposed draft provisions, not service-level agreements or incident-response timers.
+
+Purpose and authority
+
+The CoE program lead will use {{OrgName}} delivery meetings to resolve dependencies, inspect readiness evidence, improve training and service, and prepare clear handoffs. The restricted Program Governance workroom will support this operating rhythm; it does not establish a second policy-making committee or confer teaching/faculty decision authority.
+
+No attendance, decision, or completed action is claimed by this draft. Leadership and existing IT service, identity/security, academic, privacy, accessibility, and data-steward functions retain their authority. A delivery meeting may recommend a release or pause but cannot approve a policy exception, funding commitment, or new data purpose by consensus. Faculty retain control of course expectations, assignments, and assessment rules.
+
+Proposed weekly delivery review
+
+Under the proposed weekly cadence, the CoE program lead will convene a 30-minute review focused on the next release gate and the most consequential unresolved dependencies. The lead must circulate a concise sanitized brief in advance: scope under review, changes since the previous review, evidence available, blockers, and decisions requiring another authority. Sensitive incident details must remain outside the workroom.
+
+The draft agenda allocates five minutes to scope and authorization references, ten to technical/accessibility readiness, ten to training and service dependencies, and five to action confirmation and escalation. A blocking concern takes precedence over routine status reporting. The CoE program lead will invite the functions needed for the matters under review, not treat participants as a standing organizational committee. The IT implementation lead, training lead, and service liaison must identify missing evidence in their respective workstreams.
+
+The CoE program lead must issue a closing summary distinguishing recommendations, decisions by authorized functions, and actions awaiting completion. Do not interpret silence as approval. A decision reference must identify the source and scope without copying restricted supporting material. When the decision authority is absent or unresolved, retain an open decision request and route it through the existing organizational process.
+
+Fictional weekly review example
+
+In a mock relative-week-four review, the IT implementation lead presents synthetic access-test results. Authorized retrieval works, but the denied-access test is incomplete. Accessibility review also identifies unclear heading order in the practice handout. This example is fictional, not evidence of a review held or an organizational finding.
+
+Required draft conclusion: "Recommend holding the limited-release gate; preparation may continue with synthetic materials. No user expansion is recommended until denied-access testing and handout review are complete." This is illustrative wording, not an organizational decision.
+
+The IT implementation lead must complete the denied-access test before the next gate review and provide a sanitized result, including any unexpected discoverability. Identity/security determines acceptability. The training lead must revise the handout before rehearsal and obtain accessibility review of reading order and equivalent participation. Closure requires the relevant evidence, not simply a message saying "done."
+
+If access remains unexplained, the CoE program lead must route a pause recommendation and the relevant case reference to the authorized function rather than wait for another weekly meeting. The service liaison must route suspected exposure promptly through existing approved incident channels, regardless of meeting cadence.
+
+Proposed monthly handoff
+
+Under the proposed monthly cadence, the CoE program lead will prepare a handoff for leadership and relevant authoritative functions through existing organizational processes. Summarize authorized scope, readiness status, service patterns, learning needs, unresolved risks, and decisions requested. The handoff does not establish a new organizational committee.
+
+The CoE program lead must state alternatives and consequences plainly: continue a smaller reviewed scope, delay expansion until service capacity improves, or seek review of a changed capability. Funding and policy questions remain recommendations for the appropriate decision process. Do not invent amounts or approvals in minutes. Link each unresolved request to its responsible role, decision route, and effect on the relative 90-day plan.
+
+Fictional monthly handoff example
+
+A mock handoff describes a synthetic scenario in which source-only drafting is ready for further review, while a requested connector remains unreviewed. The illustrative decision request reads: "Determine whether to commission the required connector assessment or retain the source-only scope. The existing release evidence does not cover repository indexing or expanded data reuse." No assessment, approval, or deployment is claimed.
+
+The CoE program lead will prepare the bounded assessment brief for IT service, identity/security, privacy, and the relevant data steward, with technical input from the IT implementation lead. Route policy, funding, or unresolved-risk questions to leadership. The training lead will continue preparing safe source-only examples without presenting the connector as available. Earlier permissions or licensing do not authorize expanded data reuse.
+
+Action discipline and exceptions
+
+Each action must express a concrete outcome, responsible role, relative due point, and proof needed for closure. "Improve training" is insufficient; "revise the synthetic registration exercise to flag unsupported deadlines and obtain content-authority review before rehearsal" is actionable. The training lead must keep that action open until review evidence is available.
+
+The CoE program lead must return overdue work to review with its blocker, effect on the release, and revised recommendation. A change of responsible role requires a clear handoff rather than silently moving responsibility. Repeated missed dependencies require a scope or capacity discussion. Gate-dependent work must remain held when a due point passes without acceptable evidence.
+
+Meeting notes must exclude student personal details and sensitive incident evidence. Public FAQs and authoritative policy, registration, or student-support notices must follow their proper content-review routes. Before sharing a handoff, the CoE program lead will check that recommendations are not labeled as approvals, evidence references are appropriate for recipients, and fictional examples are not presented as results. Proposed cadences support coordination; they do not create organizational policy or establish that a rollout has occurred.

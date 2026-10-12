@@ -1,0 +1,64 @@
+ILLUSTRATIVE DRAFT FOR {{OrgNameUpper}} REVIEW
+Not adopted policy. Not evidence of an organizational decision, appointment, purchase, or completed activity.
+
+PROPOSED AI ACCEPTABLE-USE AND RISK DECISION POLICY
+
+1. Purpose and scope
+
+This proposed policy sets the conditions under which {{OrgName}} employees, contractors, and others acting for the {{OrgNoun}} may use AI assistance for {{OrgNoun}} work. It applies to Microsoft Copilot and to any other AI service, including personal or consumer accounts used for {{OrgNoun}} work. It supplements, and does not replace, the {{OrgNoun}}'s information security standards, data classification standard, acceptable-use policy, records retention schedules, and applicable data practices and public records law.
+
+2. Permitted assistance and user duties
+
+Users may use approved AI services, signed in with their work account, to draft, summarize, rewrite, and organize information that they are allowed to use for that purpose. The user remains responsible for the result. Before relying on or sharing an output, the user must check facts, figures, dates, citations, and requirements against the source; remove anything unsupported; and make sure the output is accessible and appropriate for its audience. AI output is not an official {{OrgNoun}} position until a person with authority adopts it.
+
+3. Information categories
+
+This draft uses three illustrative categories that must be reconciled with the {{OrgNoun}}'s adopted data classification standard.
+
+Low: public or nonsensitive information, such as published reports, public web pages, approved public notices, and general process descriptions with no identifiable person. Low information may be used with approved AI services for an authorized business purpose.
+
+Moderate: nonpublic information whose disclosure could cause limited harm, such as internal planning drafts or routine operational detail. Moderate information may be used only in an approved service configuration that keeps data within the {{OrgNoun}}'s Microsoft 365 boundary, for an authorized purpose, with permissions verified.
+
+High: information whose disclosure could cause serious harm or that carries specific legal or contractual requirements, including data classified as not public under data practices law, personnel and medical information, Social Security numbers, criminal justice information, federal tax information, protected health information, payment card data, security-sensitive details, credentials, and attorney-client material. High information has no baseline AI authorization and requires the protected-data gate.
+
+A mixed document is handled at its most protective level. Uncertainty results in a hold and steward review. Removing names alone does not make information de-identified.
+
+4. Product and configuration boundaries
+
+Approval of Microsoft Copilot does not approve consumer AI accounts, browser extensions, agents, connectors, web grounding settings, or third-party services. Each materially different data flow needs its own evaluation. Copilot can use information available through a user's permissions; permission to read information is not authorization to process it for every purpose.
+
+5. Prohibited and consequential uses
+
+Users must not use AI to make or recommend a decision about a person's eligibility, benefits, enforcement action, license, employment, or discipline; to profile or surveil residents or employees; to generate content that impersonates a person or misrepresents its origin; or to send public-facing responses without human review. Uses that support consequential decisions require an individual review, documented human oversight, and an explanation route for the affected person.
+
+6. Public records, retention, and transparency
+
+Prompts, responses, and AI-assisted drafts may be government data subject to public records requests, litigation holds, and retention schedules. Users will keep the final version of work in the system of record and follow the applicable schedule; records staff will advise on whether AI interaction logs themselves must be retained. Where AI materially contributed to public content, the program area decides how to disclose that use.
+
+7. Intake and proposed risk levels
+
+A new use case is submitted with its purpose, users, data category, service and configuration, human review step, and affected public. The coordinating function assigns a proposed level: standard (Low data, internal drafting, approved service), elevated (Moderate data, public-facing content, or new integration), or restricted (High data or consequential use). Elevated and restricted proposals receive individual review.
+
+8. Protected-data gate
+
+Before any live use of High information, the data steward, privacy and data practices, legal counsel, information security, records, and the sponsoring program area must each record a determination. The gate checks lawful purpose, applicable federal or contractual terms, minimum necessary data, access controls, retention, incident handling, and exit. Product terms or an assumed consent alone will not satisfy the gate.
+
+9. Dispositions, conditions, and exceptions
+
+A proposal can be authorized, authorized with conditions, held, refused, or suspended. Conditions must be verified before launch. Exceptions are time-limited, documented, and approved by the authority that owns the requirement; no exception can waive law or a federal requirement.
+
+10. Reporting and reassessment
+
+Suspected exposure of protected data, unexpected access, or harmful output is reported immediately through the {{OrgNoun}}'s incident reporting route, not posted in Teams. Authorized use cases are reassessed annually and whenever data, configuration, or law changes.
+
+11. Worked risk cases
+
+FICTIONAL CASE A — ILLUSTRATIVE ONLY - NOT A {{OrgNounUpper}} DECISION.
+Proposal: a program unit wants Copilot to draft plain-language versions of three published service-change notices. Data: Low (published text). Disposition: authorized with conditions. Conditions: program staff verify every date and requirement; communications and accessibility review before publication; any translation is reviewed by a qualified reviewer; the final notice is stored in the system of record.
+
+FICTIONAL CASE B — ILLUSTRATIVE ONLY - NOT A {{OrgNounUpper}} DECISION.
+Proposal: an eligibility team wants Copilot to read case files and recommend approve or deny. Data: High (not-public individual data). Disposition: refused as proposed, because it automates a consequential decision. The team may submit a narrower proposal, for example drafting a checklist of documents from the published program rules, which would be reviewed separately and could not inherit any permission from this request.
+
+12. Reconciliation and sources
+
+Before adoption, reconcile this draft with the {{OrgNoun}}'s adopted AI standards, data classification standard, security policies, records schedules, data practices and public records law, accessibility standards, labor agreements, and any federal requirements attached to program data. References here are reconciliation points, not claims that exact requirements were researched.

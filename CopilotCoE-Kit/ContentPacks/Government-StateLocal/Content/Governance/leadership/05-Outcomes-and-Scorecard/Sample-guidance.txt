@@ -1,0 +1,46 @@
+ILLUSTRATIVE DRAFT FOR {{OrgNameUpper}} REVIEW
+Not adopted policy. Not evidence of an organizational decision, appointment, purchase, or completed activity.
+
+PROPOSED AI OUTCOMES AND MEASUREMENT POLICY
+
+Purpose and honest reporting
+
+The organization will evaluate AI assistance against the work it is intended to improve. A license, demonstration, prompt count, or training completion will be an activity measure, not evidence of improved service to the public, timeliness, or quality. Sponsors must not infer {{OrgNoun}}-wide outcomes from a small voluntary pilot or describe an unmeasured benefit as an accomplishment.
+
+Each approved pilot will state its intended outcome, the comparison method, the information needed, the accountable reviewing function, and known limitations before collecting results. Measurement must be proportionate to the purpose and must not create a second, unreviewed data use.
+
+Baseline, target, and actual
+
+A baseline will describe performance before AI assistance or in a comparable non-AI workflow. The sponsor will record the task definition, sample selection, time window, and conditions that affect comparison. If no credible baseline exists, the scorecard will say “baseline not established” and explain the next measurement step.
+
+A target will be a proposed expectation approved for evaluation, not a forecast presented as certain. It must be achievable without lowering accuracy, accessibility, or review quality. An actual will be an observed result with its method and limitations. When no result exists, the report will say “not yet measured,” not zero or achieved.
+
+Sponsors must distinguish observed time differences from estimates and self-reports. Time saved will include drafting, source verification, correction, accessibility remediation, and final review. A faster first draft that creates more checking work may produce no net saving.
+
+Proposed sample scorecard measures
+
+For a plain-language rewrite of a published service notice, the proposed measures are reviewer-detected factual errors, successful identification of the next step during voluntary usability testing, and accessibility issues remaining before publication. The baseline would be the current non-AI explanation evaluated with the same rubric. The proposed target would be no publication with unresolved material errors and no deterioration in usability. Actual results are not yet measured in this illustrative example.
+
+For internal briefings drafted from published reports, the proposed measures are figures corrected in review, reviewer time, and total preparation-and-review time compared with the current process. Supervisors will evaluate the briefings, not infer productivity merely from production volume. Any study of individual work would require separate authorization, labor-management review, and privacy safeguards.
+
+For administrative drafting, the proposed measures are total task time, substantive corrections, and reviewer confidence using a defined rubric. Self-reported convenience may accompany these measures but will be labeled as perception rather than verified productivity. None of these examples represents an accomplished organizational outcome.
+
+Privacy boundaries
+
+The organization will not use measurement to monitor individual prompts for performance ratings, rank employees, or profile residents. Surveillance and profiling remain prohibited even when described as evaluation. Service security logging and program outcome measurement have different purposes; access to one will not automatically authorize the other.
+
+The measurement function will minimize personal data, restrict access, and use aggregation or suppression where small groups could expose individuals. Reports must not attach raw prompts, case records, or identifiable accommodation details. Records handling will follow applicable schedules rather than a retention period invented for this sample.
+
+Equity, accessibility, and adverse effects
+
+Sponsors will assess whether the workflow creates different burdens for users with assistive technology, varied language needs, limited connectivity, or different work schedules. Voluntary feedback must offer an accessible route and avoid pressure to disclose disability or other sensitive circumstances.
+
+Evidence of bias, inaccurate translations, inaccessible output, or unequal access will be reported alongside benefits. Aggregate improvements will not excuse a serious harm to a smaller group. Reviewers will distinguish a tested accessibility finding from a vendor claim and a reported concern from a resolved issue.
+
+Review and continuation
+
+The proposed scorecard cadence will be a baseline review before the pilot, a midpoint control check, and an end-of-pilot recommendation. A proposed quarterly portfolio summary will identify measured benefits, unmeasured claims, adverse effects, resource demands, and decisions still awaiting authority.
+
+Sponsors will recommend continuation only where the evidence supports the use and mandatory safeguards remain satisfied. Uncertain or unfavorable findings may lead to redesign, additional bounded testing, or retirement. Executive summaries must preserve caveats rather than convert preliminary estimates into savings claims.
+
+References to current organizational evaluation, privacy, accessibility, and records policies are for final reconciliation, not claims that exact policies were researched. This document proposes measurement rules and examples only; it records no results or approved targets.

@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Copilot CoE Admin Quickstart</title>
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--cp-bg);
+      color: var(--cp-text);
+      font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.45;
+    }
+    main {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+    header, section {
+      background: var(--cp-surface);
+      border: 1px solid var(--cp-border);
+      border-radius: 16px;
+      box-shadow: 0 0 2px var(--cp-border), 0 1px 2px var(--cp-border);
+      margin-bottom: 16px;
+      padding: 20px;
+    }
+    h1, h2, h3 { margin: 0 0 8px; }
+    h1 { font-size: 1.85rem; }
+    h2 { font-size: 1.25rem; color: var(--cp-accent); }
+    p { margin: 0 0 12px; }
+    code, pre {
+      font-family: Consolas, "Courier New", Courier, monospace;
+      font-size: 0.95rem;
+    }
+    pre {
+      background: var(--cp-surface-soft);
+      border: 1px solid var(--cp-border);
+      border-radius: 0.625rem;
+      overflow-x: auto;
+      padding: 14px;
+      white-space: pre-wrap;
+    }
+    .meta {
+      color: var(--cp-text-muted);
+      font-size: 0.95rem;
+    }
+    .warning {
+      background: color-mix(in srgb, var(--cp-warning) 20%, var(--cp-surface));
+      border: 2px solid var(--cp-warning);
+      border-radius: 0.625rem;
+      padding: 12px 14px;
+      margin: 12px 0;
+    }
+    .step {
+      border-left: 6px solid var(--cp-accent);
+    }
+    .checklist {
+      display: grid;
+      gap: 8px;
+      margin: 12px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    .checklist li {
+      border: 1px solid var(--cp-border);
+      border-radius: 0.625rem;
+      padding: 10px 12px;
+      background: var(--cp-surface-soft);
+    }
+    .badge {
+      display: inline-block;
+      background: var(--cp-accent);
+      color: var(--cp-accent-fg);
+      border-radius: 0.625rem;
+      padding: 2px 8px;
+      font-weight: 600;
+      margin-right: 6px;
+    }
+    table { border-collapse: collapse; margin: 0.5rem 0 1rem; width: 100%; }
+  th, td { border: 1px solid #c8c8c8; padding: 6px 8px; text-align: left; vertical-align: top; }
+</style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>01 Admin Quickstart: Copilot CoE install</h1>
+      <p class="meta">Run these steps one at a time from PowerShell 7. Keep the organization folder outside the kit so future kit updates do not overwrite customer settings.</p>
+      <div class="warning"><strong>Critical:</strong> Do not use <code>-ResumeExisting</code> for a clean build. Configure <code>Links.DataSafetyIncident</code> as an approved HTTPS incident route before install, or the installer stops before creating tenant resources.</div>
+    </header>
+
+    <section class="step">
+      <h2><span class="badge">01</span>Extract the kit and create the organization folder</h2>
+      <p>Pick the starting folder for the customer's environment. It decides the site's wording, governance drafts, learning paths and the base prompts in the Copilot Prompt Library. If you were given a completed organization folder, copy that folder instead.</p>
+      <table>
+        <tr><th>Customer</th><th>Copy this folder</th><th>Base prompts</th></tr>
+        <tr><td>Higher education</td><td><code>Org-Template</code></td><td>230 higher-ed prompts (kit default)</td></tr>
+        <tr><td>State and local government (commercial or GCC-Moderate; not GCC High or DoD)</td><td><code>ContentPacks\Government-StateLocal</code></td><td>230 general government prompts; higher-ed prompts left out</td></tr>
+      </table>
+      <pre><code>$installRoot = 'C:\CoE-Install\Contoso'
+$kitRoot = Join-Path $installRoot '03_Build\CopilotCoE-Kit'
+$orgPath = 'C:\CoE-Orgs\Contoso'
+
+Set-Location $kitRoot
+# Higher education:
+Copy-Item .\Org-Template $orgPath -Recurse -Force
+# Government (use this line instead of the one above):
+# Copy-Item .\ContentPacks\Government-StateLocal $orgPath -Recurse -Force
+notepad (Join-Path $orgPath 'Deployment-Settings.json')</code></pre>
+      <ul class="checklist">
+        <li>Set tenant fields, owner UPN, organization name, support mailbox and email domains.</li>
+        <li>Keep <code>TeamVisibility</code> as <code>Private</code>.</li>
+        <li>Fill <code>Links.ServiceDesk</code>, <code>TechnologyRequest</code>, <code>AIGuidelines</code> and <code>DataSafetyIncident</code> with real HTTPS routes.</li>
+        <li>Government only: replace every <code>&lt;placeholder&gt;</code> and set <code>TimeZone</code> (for example <code>Central Standard Time</code>).</li>
+      </ul>
+      <h3>Optional: the organization's own prompts</h3>
+      <p>The Copilot Prompt Library starts with the base prompts above. To add the customer's own prompts, put CSV files in <code>$orgPath\Content\OrgPrompts</code> in the Microsoft 365 admin center import format (<code>Title,Description,Display Prompt,Prompt Text,Products,Department,Task Type,Locale</code>) &mdash; the same files you would upload in <em>Copilot &gt; Prompts &gt; Import</em>. A new file name adds prompts; a base file's name replaces that file; an empty file with a base file's name leaves it out. The kit does not change the files. To leave the list out, set <code>"PromptLibrary": "Off"</code>.</p>
+    </section>
+
+    <section class="step">
+      <h2><span class="badge">02</span>Register or update the provisioning app</h2>
+      <p>An approved consent approver runs this once per tenant, then confirms all required permissions show Granted in Entra.</p>
+      <pre><code>Set-Location $kitRoot
+Install-Module PnP.PowerShell -RequiredVersion 3.2.0 -Scope CurrentUser
+.\01_Register-CoEProvisioningApp.ps1 -OrgPath $orgPath</code></pre>
+      <div class="warning"><strong>Check before continuing:</strong> Entra app permissions must be granted, including delegated <code>User.Read.All</code>. If consent changes after a previous sign-in, add <code>-ForceAuthentication</code> to the install command below.</div>
+    </section>
+
+    <section class="step">
+      <h2><span class="badge">03</span>Run the clean install</h2>
+      <p>The SharePoint + Teams administrator runs this after settings and app consent are ready.</p>
+      <pre><code>Set-Location $kitRoot
+.\02_Install-CopilotCoE.ps1 `
+  -OrgPath $orgPath `
+  -SeedDemoContent `
+  -AcceptOrgAssets</code></pre>
+      <p>A first install takes about 25&ndash;35 minutes; adding the 230 base prompts accounts for 5&ndash;10 of them.</p>
+      <div class="warning"><strong>Clean install only:</strong> Do not add <code>-ResumeExisting</code>. If sign-in needs refreshing, rerun the same command with <code>-ForceAuthentication</code>.</div>
+      <div class="warning"><strong>If it stops with an error:</strong> do not retry with <code>-ResumeExisting</code> and do not edit files. Every run saves a log to <code>$orgPath\RevisionAudit\*-transcript.txt</code>. Send that file to your Microsoft contact. A site that stopped partway is removed with <code>04_Remove-CopilotCoE.ps1 -Purge</code> and rebuilt from the start.</div>
+    </section>
+
+    <section class="step">
+      <h2><span class="badge">04</span>Check the result - the install is not finished until this passes</h2>
+      <p>This reads the site and changes nothing. Use the site address printed at the end of step 03.</p>
+      <pre><code>$siteUrl = 'https://contoso.sharepoint.com/sites/CopilotCoE'
+
+Set-Location $kitRoot
+.\Test-CoEInstall.ps1 -OrgPath $orgPath -SiteUrl $siteUrl</code></pre>
+      <div class="warning"><strong>Done means:</strong> the last line reads <code>ALL CHECKS PASSED</code>. Any <code>FAIL</code> line names what is wrong; send that output together with the run log.</div>
+    </section>
+
+    <section class="step">
+      <h2><span class="badge">05</span>Before readers see it</h2>
+      <ul class="checklist">
+        <li>Add at least one non-owner member/reader test account before acceptance testing.</li>
+        <li>Approve and feature one Agent Showcase entry to test both empty and populated reader layouts.</li>
+        <li>Open <em>Prompts</em> in the site menu and check the Organization prompt library shows your environment's prompts (government sites must not show higher-ed prompts).</li>
+        <li>To add or remove a catalog reviewer, edit the <code>CoE Catalog Reviewers</code> group in SharePoint; no script rerun is needed.</li>
+        <li>Use <code>.\03_Update-CoEContent.ps1 -OrgPath $orgPath -Scope All</code> only for reviewed updates, then run step 04 again.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

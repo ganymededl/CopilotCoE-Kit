@@ -1,0 +1,46 @@
+ILLUSTRATIVE DRAFT FOR {{OrgNameUpper}} REVIEW
+Not adopted policy. Not evidence of an organizational decision, appointment, purchase, or completed activity.
+
+PROPOSED AI GOVERNANCE CHARTER AND DECISION RIGHTS
+
+Purpose and public-service commitment
+
+The {{OrgNoun}} will govern artificial intelligence as a public-service capability, not as a software deployment alone. The proposed Copilot Center of Excellence will coordinate practical support, evaluation, and shared learning. It will not replace the authority of the chief information officer, the chief information security officer, data practices and records functions, legal counsel, procurement, human resources, or the program areas that deliver services to the public.
+
+The {{OrgNoun}} will prioritize assistance that leaves people accountable: clearer public communication, faster preparation of routine documents, and less repetitive administrative drafting. A faster process will not justify a less fair, less accessible, less transparent, or less reviewable process. Public trust, equal treatment, and the ability to explain a government action are the tests. This charter proposes a coordinating structure; adoption and delegation must occur through authorized organizational processes.
+
+Membership by function
+
+The proposed steering function will include executive leadership, program and service-delivery leadership, information technology, information security, data practices and privacy, records management, legal counsel, accessibility and language access, human resources and labor relations, procurement, and communications. Perspectives from frontline staff and the public will inform design and review without giving anyone access to confidential personnel, security, or individual case information they would not otherwise see.
+
+The coordinating function will maintain the use-case inventory, convene reviewers, record dispositions, and track corrective actions. Service owners will operate approved configurations. Sponsoring program areas will define the intended public or operational benefit and remain responsible for delivery. Data stewards will decide whether specific data may be used for a specific purpose. Participation in coordination will not create authority that a function does not otherwise possess.
+
+Reserved program and legal decisions
+
+Program areas keep authority over eligibility determinations, enforcement actions, benefits, licensing, inspections, and any other decision that affects a person's rights or obligations. Legal counsel determines how statutes, rules, contracts, and data practices requirements apply. The Center of Excellence must not publish a tool guide that silently changes a program procedure, a public notice, or a legal interpretation.
+
+Technical, security, and data authority
+
+Information technology will determine supported services, identity controls, integration boundaries, operational readiness, and release or rollback requirements. Information security will assess threats and required safeguards against the {{OrgNoun}}'s security standards. Technical acceptance will not establish that a use is appropriate for a program or authorize a data use.
+
+Data stewards, with data practices, privacy, and records functions, will determine classification, purpose limitation, authorized recipients, retention, and handling obligations, including any federal requirements attached to specific data (for example criminal justice information, federal tax information, protected health information, or data received from a federal partner). Existing access permissions will not be treated as permission to process information with AI.
+
+Financial and contractual authority
+
+Procurement will conduct contracting and purchasing through established authority and state contracts. The budget function will confirm available appropriations; executive authority will resolve {{OrgNoun}}-wide priorities and accept residual risk only within lawful delegation. Neither a steering vote nor an executive preference may waive law, contractual restrictions, or a collective bargaining obligation.
+
+How a proposal becomes a decision
+
+The sponsoring program area will describe the problem, alternatives, affected people (including members of the public), data, product configuration, human oversight, and proposed measures. Coordination will route the proposal to the functions whose authority is implicated. Low-impact drafting with public or low-risk material may follow a documented standing authorization only after that authorization is formally established. New integrations, protected data, public-facing automation, and anything touching a determination about a person will require individual review.
+
+A proposed monthly steering review will reconcile recommendations and unresolved conditions. A disposition will identify the authorized scope, accountable function, required approvals, controls, review trigger, and evidence needed before launch. "Approved with conditions" will not mean permission to start before conditions are verified. Silence, meeting attendance, and a successful demonstration will not count as approval.
+
+Escalation and accountability
+
+If program, technical, legal, or stewardship reviewers disagree, the proposal will remain on hold while the disputed question goes to the relevant established authority. Executive leadership may resolve competing priorities but will not substitute for a required subject-matter determination. Staff may pause an affected workflow when a privacy, security, accessibility, or civil-rights concern requires containment.
+
+For example, a proposal to draft a plain-language version of a published service notice would require content verification and accessibility review. A proposal to summarize individual case files would additionally require restricted-data authorization, legal review, and program oversight; it could not inherit permission from the notice project. A proposal to let AI decide eligibility would not be approved under this charter's assistance baseline.
+
+Charter review
+
+The {{OrgNoun}} will review this proposed charter annually after adoption and whenever responsibilities, services, or applicable law change. References to existing policies and standards are reconciliation points for final review, not claims that exact requirements were researched. This sample establishes no appointments, delegations, or completed decisions.

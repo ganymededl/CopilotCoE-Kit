@@ -1,0 +1,48 @@
+ILLUSTRATIVE DRAFT FOR {{OrgNameUpper}} REVIEW
+Not adopted policy. Not evidence of an organizational decision, appointment, purchase, or completed activity.
+
+DRAFT SERVICE AND CHANGE PROCEDURE
+
+Scope note: Named roles are functional responsibilities to be designated through authorized organizational processes, not claims that people have been appointed. These procedures are draft provisions for review.
+
+Service boundary
+
+The CoE program lead will use the {{OrgName}} delivery workroom to coordinate service quality for an authorized Copilot scope, tracking sanitized patterns, training needs, release dependencies, and change recommendations. Existing approved IT service and incident channels remain the routes for user support and incident handling. The Team must not become a parallel help desk or sensitive case repository.
+
+The service liaison will connect delivery planning with the actual IT support function and verify the applicable approved reporting routes before a release recommendation. This role does not establish a service address. Actual support hours, priority definitions, response commitments, and authority remain those of existing organizational services.
+
+Support, feedback, and incidents
+
+Ordinary support includes sign-in assistance, a missing licensed capability, formatting questions, and difficulty locating approved training materials. The service liaison must direct such requests through the existing approved support route. Share sanitized themes such as "several users need source-checking guidance" in the workroom; do not copy individual account details or prompt contents there.
+
+General feedback includes suggestions about exercise clarity, usefulness, or a desired future capability. The training lead will assess learning improvements; the CoE program lead will route new capability requests to change review. Feedback does not authorize a deployment or establish that the requested purpose is approved.
+
+Anyone receiving a report of suspected unauthorized exposure, compromised credentials, unexpected access, or another security/privacy concern must report it promptly through existing approved incident channels. Do not post personal details about residents or employees, screenshots of restricted content, or copied sensitive output in the Team. The responsible incident function determines investigation, severity, containment, and appropriate disclosure. The service liaison will obtain only an authorized sanitized status or case reference for the workroom.
+
+Proposed service targets
+
+For workroom coordination, the service liaison will aim to acknowledge ordinary delivery questions within two business days of receipt. The CoE program lead will aim to route unresolved cross-functional blockers within five business days of identification. These are proposed draft coordination targets, not adopted service-level agreements, support hours, or incident-response timers or commitments. They do not promise resolution within either period. Incidents must not wait for these targets or the next delivery meeting.
+
+At the proposed weekly review, the service liaison will distinguish delays caused by unclear guidance, access configuration, product behavior, or insufficient service capacity. Use aggregated or synthetic examples for trends. The CoE program lead will recommend improvements without claiming unverified measured benefits or exposing individuals. Record missed coordination targets with the dependency, next handoff, and impact on release readiness, not as a substitute for the actual service record.
+
+Change intake and review
+
+The CoE program lead must assemble a change proposal explaining the intended user task, present approved scope, proposed difference, affected data and users, access implications, expected support impact, testing approach, accessibility considerations, and rollback method. The IT implementation lead will supply technical evidence; the training lead and service liaison will identify learning and support impacts. Route the proposal to the functions with actual authority before implementation.
+
+An agent, web-search capability, connector, new repository, changed access model, or expanded data use requires new review. Existing licensing or earlier approval of a different scenario does not carry approval forward automatically. The CoE program lead must seek IT service and identity/security assessment of technical behavior; privacy and relevant data-steward assessment of purpose and reuse; program, legal, and accessibility review of impacts in their domains. Leadership retains policy, risk, and funding decisions.
+
+User rights and access checks
+
+Before a reviewed access change, the IT implementation lead must test authorized access and denied access with synthetic material. Review must cover joiner, role-change, and removal scenarios; stale group membership; sharing links; guests; and whether cached or indexed content can remain discoverable after access changes. Unclear behavior requires assessment before release. Retain sanitized expected and observed results and the relevant review disposition.
+
+The team must not solve retrieval failures by granting broader access. Permissions inherited from a source do not authorize reuse of that data. The service liaison must route requests involving rights to access, correct, or remove personal information to the appropriate existing organizational process and privacy/data-steward functions. Do not adjudicate them in chat.
+
+Pause, rollback, and resume
+
+The CoE program lead must recommend a pause of the affected scenario when access behavior is unexplained, sensitive disclosure is suspected, essential accessibility fails without a reviewed alternative, or authoritative output cannot be reliably checked. The responsible authorized function determines production containment or rollback. The CoE program lead will communicate only reviewed operational guidance; a workroom recommendation does not confer production-change authority.
+
+Resumption requires remediation evidence, targeted retesting, support readiness, and confirmation from the relevant authority. The CoE program lead may recommend a smaller reviewed scope while other work remains paused, but must record its limits and authority reference. Absence of new complaints does not prove that a defect was fixed. The service liaison must confirm support instructions reflect the reviewed scope before users resume.
+
+Fictional change example
+
+A synthetic public-event drafting exercise works, but users request web search to add background facts. Under this draft procedure, the CoE program lead must retain source-only drafting while new review examines external information, unsupported claims, accessibility, and publication controls. The training lead must not demonstrate search as approved during that review. The decision request is whether to authorize a bounded search-enabled use case, revise it, or decline it. Any real public communication still requires responsible content-authority review. No decision or deployment is claimed.

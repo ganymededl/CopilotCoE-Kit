@@ -1,0 +1,69 @@
+{
+  "_instructions": "Government content pack (state and local, GCC-Moderate or commercial tenants) for the Copilot CoE kit 3.6 or later. Copy this whole folder out of the kit (for example to C:\\CoE-Orgs\\<Agency>), replace every <placeholder>, then run the kit's scripts with -OrgPath <that folder>.",
+  "Tenant": "<your-tenant>.onmicrosoft.com",
+  "AdminFQDN": "<your-tenant>-admin.sharepoint.com",
+  "SiteFQDN": "<your-tenant>.sharepoint.com",
+  "PnPClientID": "",
+  "SharedChannelOwnerUPN": "<coe-owner>@<your-domain>",
+  "OrgName": "<Agency name, for example Department of Example Services>",
+  "OrgNoun": "agency",
+  "ShortName": "",
+  "MailNickname": "CopilotCoE",
+  "DisplayName": "",
+  "TeamVisibility": "Private",
+  "CoESiteSharingCapability": "Disabled",
+  "OrganizationEmailDomains": [
+    "<your-domain>"
+  ],
+  "GovernanceAdditionalAllowedMembers": [],
+  "CatalogReviewerUPNs": [],
+  "EnvironmentLabel": "Pilot",
+  "SampleNotice": "",
+  "SupportEmail": "<copilot-help>@<your-domain>",
+  "NavigationOrder": "TaskFirst",
+  "NavigationPinFirst": [
+    "Home"
+  ],
+  "TimeZone": "Eastern Standard Time",
+  "PromptLibrary": "On",
+  "ChampionDepartments": [
+    "<Division name, for example Office of the Commissioner>",
+    "<Another division>"
+  ],
+  "Links": {
+    "ServiceDesk": "",
+    "TechnologyRequest": "",
+    "DataSafetyIncident": "",
+    "AIGuidelines": "",
+    "AboutOrg": "",
+    "PromptLibrary": "",
+    "LearningSystem": ""
+  },
+  "GovernanceLinks": [
+    {
+      "label": "<Name of the organization's AI policy>",
+      "url": ""
+    }
+  ],
+  "TrainingLinks": [
+    {
+      "label": "<Library or training resource name>",
+      "url": ""
+    }
+  ],
+  "Agents": {
+    "name": "<Agent name>",
+    "description": "<One or two sentences: what the agent does>",
+    "audience": "<Who it is for>",
+    "examplePrompt": "<A prompt to try>",
+    "owner": "<Owner name or team>",
+    "url": ""
+  },
+  "GuidesIntro": "Practical guidance for staff, supervisors, and IT. Start with the guide that matches your role.",
+  "StoryAudiences": [
+    "Staff",
+    "Supervisors",
+    "IT"
+  ],
+  "ScenarioLibraryUrl": "https://adoption.microsoft.com/en-us/scenario-library/government/"
+}

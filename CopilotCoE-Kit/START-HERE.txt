@@ -1,0 +1,290 @@
+MICROSOFT 365 COPILOT COE - IMPLEMENTATION KIT
+Master kit | Prepared by David Shih Chun Liu
+This is a Teams/SharePoint CoE, not the
+Power Platform CoE Starter Kit. All seeded content is starter material for the
+organization's review; none of it is adopted policy.
+
+ONE KIT, ANY ORGANIZATION
+  The kit is the same for every organization. Everything organization-specific
+  (tenant, names, support mailbox, policy links, Top 10 deck, policies, videos)
+  lives in an ORGANIZATION FOLDER that you pass to every script with -OrgPath.
+  Start from Org-Template (higher education) or ContentPacks\Government-StateLocal (state and
+  local government, commercial or GCC-Moderate), or from your supplied organization folder.
+  The choice also sets the base prompts in the Copilot Prompt Library (higher-ed or government);
+  the organization's own prompts go in <OrgPath>\Content\OrgPrompts (see the README there).
+  Building for another organization never requires repackaging the ZIP.
+
+READ FIRST
+  01_Admin-Quickstart.html  short admin checklist with highlighted commands to run one at a time.
+  The Installation Runbook and Deck for your organization, delivered next to this ZIP
+    (for example <Org>-Copilot-CoE-Installation-Runbook.docx). Each runbook starts with a
+    Start here research summary for that organization.
+  Org-Template\README.txt   (organization folder reference: every setting and override)
+
+QUICK START - RUN THE NUMBERED SCRIPTS IN ORDER (01, 02, then 03 when needed; 04 only to undo)
+  1. Right-click the ZIP > Properties > Unblock (if shown), then Extract All.
+     Keep the folder structure.
+  2. Open PowerShell 7 and run:
+       cd <extracted-folder>\03_Build\CopilotCoE-Kit
+       Install-Module PnP.PowerShell -RequiredVersion 3.2.0 -Scope CurrentUser
+  3. Create the organization folder, outside the kit, for example:
+       Copy-Item .\Org-Template C:\CoE-Orgs\Contoso -Recurse
+     (or use your supplied organization folder). In its Deployment-Settings.json
+     replace every <placeholder>: Tenant, AdminFQDN, SiteFQDN, SharedChannelOwnerUPN,
+     OrgName, SupportEmail. OrgNoun is optional; blank means "organization".
+     OrgName is the actual organization name; DisplayName is the optional hub/Team title.
+     If OrgName is blank, DisplayName supplies the organization name. One shared resolver
+     supplies all page tokens for install and update; no previous tenant name is reused.
+     Keep TeamVisibility set to Private. Confirm
+     OrganizationEmailDomains and GovernanceAdditionalAllowedMembers with your security owner.
+     AdminFQDN and SiteFQDN are host names only,
+     e.g. contoso-admin.sharepoint.com and contoso.sharepoint.com. Add policy and
+     training links if you have them. Configure Links.ServiceDesk, TechnologyRequest,
+     AIGuidelines and DataSafetyIncident before launch. The incident route is separate
+     from ordinary support. Missing routes are visibly marked, not treated as working
+     endpoints. Leave PnPClientID empty; script 01 fills it in.
+  4. Optional: list agent seed proposals (name, description, Copilot Chat link) under Agents in
+     the settings file, and drop files to host into the folder's Assets subfolders
+     (Top10, RAI-Policies, Roadmap, Success-Stories, Training, Service-Catalog, Agents).
+     The installer lists them and asks before hosting anything.
+     New agent links default to pending approval with legacy status Submitted. Reviewed seed publication and
+     catalog reviewer membership are described in Org-Template\README.txt.
+  5. An approved consent approver with just-in-time admin access runs (once per tenant):
+       .\01_Register-CoEProvisioningApp.ps1 -OrgPath C:\CoE-Orgs\Contoso
+     Then confirm in Entra > App registrations > Copilot CoE Provisioning (PnP)
+     > API permissions that all five permissions show Granted (including delegated User.Read.All,
+     used to verify governance users' Member/Guest account type). User.ReadBasic.All cannot
+     read userType. For an existing app, add User.Read.All, grant admin consent, then clear
+     sign in again with installer -ForceAuthentication before installation. Another organization
+     in the same tenant can reuse the app: copy PnPClientID into its settings file.
+     Review the delegated scopes with your security team. The app uses SharePoint
+     AllSites.FullControl; delete the app and revoke consent when it is no longer
+     needed, and clear the persisted PnP sign-in after the work is complete.
+  6. SharePoint + Teams administrator runs (once):
+       .\02_Install-CopilotCoE.ps1 -OrgPath C:\CoE-Orgs\Contoso -SeedDemoContent
+     Do NOT add -ResumeExisting to a fresh build. Every run saves a transcript to
+     <organization folder>\RevisionAudit\<run id>-transcript.txt, including runs that fail.
+     A site that stopped partway is removed (04_Remove-CopilotCoE.ps1 -Purge) and rebuilt.
+  6b. Check the result (read-only). The install is not finished until this prints ALL CHECKS PASSED:
+       .\Test-CoEInstall.ps1 -OrgPath C:\CoE-Orgs\Contoso -SiteUrl https://contoso.sharepoint.com/sites/CopilotCoE
+      Interactive browser sign-in is the default. After app consent changes, add
+      -ForceAuthentication to obtain a fresh sign-in; no cache-file rename is needed.
+      -AuthenticationMode DeviceLogin remains available where interactive sign-in
+      is unsuitable; -ForceAuthentication applies only to Interactive.
+  7. Read the final ADMIN HANDOFF: customer external sharing is OFF (Disabled).
+     Keep the customer organization settings Disabled. Verify the site and Teams
+     as described in runbook section 5.
+
+CUSTOMER DEFAULT - EXTERNAL SHARING OFF; LAB PREVIEW IS OPT-IN
+  CoESiteSharingCapability ships as "Disabled"; a missing setting also defaults
+  to Disabled. Customer installations stay internal-only and do not need guest
+  sharing enabled. Keep the Team Private and sharing owner-controlled.
+
+  Only a separate, explicitly approved lab organization settings file should use
+  "ExistingExternalUserSharingOnly" for authenticated existing-guest preview.
+  The customer folder must stay Disabled. Never copy lab settings into a handoff.
+  For lab preview, an owner grants Visitors Read access (site-wide read) or a
+  "Specific people - Can view" link to selected reviewed files. Do not add preview
+  guests to the Team or Members group: membership grants edit, not read-only access.
+  Confirm the guest has no other edit grants. No anonymous/Anyone links are allowed.
+  "ExternalUserSharingOnly" (New and existing guests) is an explicit lab option
+  only if invitations are approved. The kit never invites guests.
+  Leadership and Program Governance shared channels/sites remain internal-only;
+  adding someone to the parent Team does not grant those governance permissions.
+  The standard "Governance and Responsible AI" channel is on the parent site and
+  is on the parent preview boundary if lab access is granted. Review ALL parent
+  content before a site-wide Visitors grant; file links have a narrower scope.
+  Site sharing ON is not proof that a guest can sign in. Tenant sharing, Teams/Groups
+  guest settings, Entra B2B/cross-tenant policies, labels and conditional access can
+  still block access. If preview is blocked, keep Disabled; do not loosen tenant
+  policy to complete installation. Test each intended lab guest's read-only access.
+
+  TURN OFF NOW (SharePoint administrator):
+    SharePoint admin center > Active sites > select the CoE parent site > Settings
+    > More sharing settings > Only people in your organization > Save.
+  Or use an authenticated SharePoint-admin PnP session:
+    Set-PnPTenantSite -Identity <exact-CoE-site-URL> -SharingCapability Disabled -Wait
+    . .\Internal\SecurityPosture.ps1
+    Set-CoENonOwnerSharingDisabled -SiteUrl <exact-CoE-site-URL> -Connection (Get-PnPConnection)
+  Confirm SharingCapability is Disabled. Remove lab Visitors grants and Specific
+  people links. If guests were previously added to the Team, also remove them
+  under Team > Manage team > Members and guests to end Teams access.
+  Disabling sharing does not delete grants; they may work again if sharing is restored.
+  KEEP IT OFF: set "CoESiteSharingCapability": "Disabled" in the organization's
+  Deployment-Settings.json BEFORE another 02 install/resume or 03 update.
+  Reruns apply that setting; omission defaults to Disabled. An explicit lab ON
+  setting can still undo a portal-only shutdown. Every successful install/update
+  prints actual per-site ON/OFF status, the safe-default rationale and shutdown steps.
+
+ADOPTION CATALOGS - LEARNING AND EXISTING INTERNAL AGENTS
+  Training and Enablement now embeds 18 starter learning steps across six roles.
+  Each step has Learn, Practice and What good looks like, with suggested practice time
+  and explicit access prerequisites. The existing calendar, guides and Teams tabs remain.
+  Use Content\Learning-Paths.json to tailor steps and Links.PromptLibrary/LearningSystem
+  for customer-approved resources. The kit does not import EDU CSVs or track completion.
+  Agent Showcase keeps the same list and launch links. Approved-agent and Featured views use
+  one list; new metadata explains sources, allowed data, access/billing, owner/backup and review.
+  The page purpose and review notice appear before the compact lists. Practice links open named prompts.
+  Learning steps and Published are the default reader views on both new and existing lists.
+  Open the list links open those views, not the bare All Items view. Learning roles use
+  a defined order; details hide Learning ID and show Step, Learn and Practice first.
+  Actual learning owners and review dates must be assigned/confirmed before launch.
+  Native SharePoint content approval protects publication; existing list access is kept.
+  CatalogReviewerUPNs receive Contribute plus ApproveItems, not Edit. Drafts remain visible
+  to authors and approvers. Previously Published/Featured entries retain their visibility;
+  new configuration links default to pending approval. Both views are always on the page,
+  so approving or featuring entries does not require republishing it. Approval is the only
+  publication gate; status Retired excludes an agent. Other legacy status values do not gate display.
+  Apply with the usual 02 install or 03 -Scope Guides/All update after customer review.
+  Existing page overrides stay in the organization folder. See Org-Template\README.txt
+  for approval, permission review, prompt links and migration guidance.
+  To retire an approved agent, set Retired and approve the change from Manage all entries.
+  The previous approved version can remain visible until that retirement is approved.
+  Revision 3.4 includes live list/permission fixes and verified Word-opening links for the
+  Leadership and Program governance pages. Those links open Word in a separate browser tab,
+  not a direct .docx download; the existing Word files and governance permissions are preserved.
+  Install/resume explicitly verifies standard channel and resource-tab identities instead of
+  trusting captured template IDs. Resume does not replay captured welcome posts.
+  A content update preserves an intentionally removed Top 10 tab unless you explicitly run
+  03_Update-CoEContent.ps1 -Scope All -EnsureResourceTabs to restore required resource tabs.
+  Validate a fresh installation and your organization's overrides before production rollout.
+
+HOME AND NAVIGATION
+  Fresh Home tiles expose Start, Learning paths, Prompts, Agents and Get help.
+  Explore Copilot also links Success stories, guides, governance and champions.
+  NavigationOrder TaskFirst groups managed links as Start, Learn, Prompts, Agents,
+  Get help and Governance; customer links are preserved. AToZ and AsBuilt remain opt-ins.
+  To repair the captured Home, titles, banners and Mechanics page on an existing site:
+    .\03_Update-CoEContent.ps1 -OrgPath <folder> -Scope All -RepairCapturedPages
+  Review this LIVE update first. It preserves unrelated Home controls and backs up Home.
+  A normal resume does not replace captured pages. Update the organization's
+  NavigationOrder to TaskFirst if its older profile explicitly selected AToZ.
+  Previously created orphan pages are preserved for administrator review; fresh builds
+  omit the empty News-and-Updates page. No test agent is automatically approved or featured.
+
+IF THE BUILD STOPS PARTWAY
+  Fix the cause named in the red message, then re-run with the same settings:
+       .\02_Install-CopilotCoE.ps1 -OrgPath <folder> -SeedDemoContent -ResumeExisting
+  Resume reuses the Team and site. It finishes the site template only when no
+  CoE pages exist yet. With -SeedDemoContent, a resume keeps existing managed pages;
+  use 03_Update-CoEContent only when you intend to republish managed content.
+
+IF SHAREPOINT REPORTS AN HTTPCLIENT TIMEOUT
+  If the error names Get-PnPFile and says "The request was canceled due to the
+  configured HttpClient.Timeout of 100 seconds elapsing", the SharePoint request
+  did not finish within the client timeout. The Team and site may already exist.
+  Do not start a fresh install or purge the CoE. Confirm that the existing Team
+  and site are the intended CoE, then run the same command again with
+  -ResumeExisting:
+       .\02_Install-CopilotCoE.ps1 -OrgPath <folder> -SeedDemoContent -ResumeExisting
+  Resume reuses the existing Team and site and preserves existing managed pages.
+  If the timeout repeats, stop and provide the full error output to your
+  administrator or support contact.
+
+UNDO - REMOVE THE COE (script 04)
+       .\04_Remove-CopilotCoE.ps1 -OrgPath <folder> -WhatIf   (preview only)
+       .\04_Remove-CopilotCoE.ps1 -OrgPath <folder>           (delete; restorable 30 days)
+       .\04_Remove-CopilotCoE.ps1 -OrgPath <folder> -Purge    (permanent; frees the alias)
+  Removes the Team, its SharePoint site, and only the related channel sites shown
+  in the reviewed plan after you type the alias. A purge requires typing each exact
+  reviewed site URL, one by one; the script executes only that frozen target list.
+  The kit changes no tenant-wide sharing policy. The sign-in app is
+  kept; delete it in Entra admin center if you no longer need it.
+
+START OVER - PURGE AND REBUILD (runbook section 10.1)
+  BACK UP FIRST: save the WHOLE organization folder, not just Deployment-Settings.json.
+  It holds the settings (tenant, PnPClientID, owner, alias, agents, navigation), your
+  Content\ overrides, and your Assets\ files. Use the copy that matches the tenant you
+  are rebuilding (a copy with <placeholders> cannot drive a run). Also export anything
+  added by hand in SharePoint or Teams; the purge deletes it.
+  Survives the purge, no backup needed: the sign-in app and consent, Copilot agents,
+  and user accounts. A local PnP sign-in cache is separate; clear it when no longer needed.
+    1. Move-Item <kit>\Orgs\<org> C:\CoE-Orgs\<org>   (keep the org folder outside the kit)
+    2. .\04_Remove-CopilotCoE.ps1 -OrgPath C:\CoE-Orgs\<org> -Purge
+       (check AliasReusable : True; if not, run it again a few minutes later)
+    3. Delete the kit folder, unblock the ZIP, and extract it again.
+    4. .\02_Install-CopilotCoE.ps1 -OrgPath C:\CoE-Orgs\<org> -SeedDemoContent
+       (skip 01: the app still exists; do not add -ResumeExisting)
+
+CHANGE THE CONTENT LATER (script 03, as often as needed)
+  For one organization: copy any kit text file from SeedContent into
+  <folder>\Content at the same path, edit the copy, or add files to
+  <folder>\Assets. Example: Content\Sections\04-Service-Catalog-and-Support.md
+  to remove the "Request a license" row. Runbook section 6 lists everything an
+  organization can and should customize. Edit SeedContent only to change the
+  default for every organization.
+  Then run one of:
+    .\03_Update-CoEContent.ps1 -OrgPath <folder> -Scope Guides     (pages, guides, sections, hosted files)
+    .\03_Update-CoEContent.ps1 -OrgPath <folder> -Scope Governance -ReplaceFiles
+    .\03_Update-CoEContent.ps1 -OrgPath <folder> -Scope All        (also the Top 10 deck)
+    Add -ReplaceOrgAssets only after reviewing an existing asset; files are overwritten
+    in place, not deleted before upload. Recovery depends on the library's version settings.
+    Empty guide overrides remove managed navigation links but preserve existing pages.
+    Empty policy overrides remove the proposed-policy link but preserve existing files.
+    Review and retire previously published pages/files separately when necessary.
+  Edit champion people and training dates directly in the SharePoint lists.
+
+SCRIPTS (run only the numbered ones)
+  01_Register-CoEProvisioningApp.ps1  Creates the sign-in app (approved consent approver, once per tenant)
+  02_Install-CopilotCoE.ps1        Builds the CoE for the organization folder
+  03_Update-CoEContent.ps1            Republishes edited content and new organization files
+  04_Remove-CopilotCoE.ps1         Undo: removes the Team, site, and channel sites
+  Internal\                           Helpers called by 02 and 03. Do not run.
+  Common switches: -OrgPath <folder>; -AcceptOrgAssets (answer Yes to every
+  "Host these files?" question, for unattended runs).
+
+SAFETY
+  Scripts 01-03 never delete groups or sites; content completion/update can recycle
+  managed files, pages, and sample list items. Organization assets are never replaced
+  unless you pass -ReplaceOrgAssets; managed governance files require -ReplaceManagedFiles.
+  Only 04 removes the Team/sites after confirmation. The installer stops if the alias or
+  site already exists; use -ResumeExisting only for your own partial build.
+  Organization files are uploaded only after you answer Yes (or -AcceptOrgAssets);
+  an existing file is preserved unless -ReplaceOrgAssets is supplied.
+  A before-copy of replaced pages is kept in RevisionAudit.
+  The installer requires a Private Team, disables parent-site external sharing
+  by default, keeps governance sites internal-only, and prevents
+  non-owners and members from sharing.
+  Before publishing, it checks each governance channel's effective Graph allMembers
+  roster (including indirect members), shared-Team relationships, and immutable
+  in-tenant user and tenant IDs against the approved allowlist. Unknown, incomplete,
+  cross-tenant, or unapproved governance access blocks publication. External-user
+  entries on governance sites also block publishing; parent-site guests are reported
+  for admin review, not rejected. A fresh security posture report is printed at the
+  end of install and every content update. Existing anonymous/specific-people links,
+  item-level grants, and the tenant cross-tenant access policy are not enumerated
+  and still require separate review.
+  The configured in-tenant owner is added to the Team if needed; membership notifications
+  may be sent by Microsoft 365. The scripts do not invite external guests or invent people.
+  Tenant-wide sharing policy is not changed.
+  Do not run the original vendor InstallPackage-New.ps1 in SourceOriginal.
+  SourceOriginal is a legacy folder name: the shipped PnP template is a hardened
+  derivative (IsPublic=false, MembersCanShare=false), not byte-original vendor content.
+  Never put tokens, passwords, or confidential records in the kit or org folders.
+
+STARTER CONTENT (replace before go-live)
+  Thirteen Copilot guides and a guides hub (including Start in 10 minutes, Is this OK
+  to use?, a prompt library by role, Questions and concerns, a Champions toolkit, and
+  Copilot operations for IT); 13 FAQs; Give Feedback / report a concern.
+  Six CoE sections, each a page + Teams channel with a Start here tab:
+    Training and Enablement - role-based learning path and resources
+    Success Stories - organization-approved videos and an approval-only list;
+      four SAMPLE rows remain Submitted drafts, with no mock video or claimed savings
+    Governance and Responsible AI - the organization's policy links and hosted
+      policy documents, data levels, risk tiers, and a sample RACI
+    Service Catalog and Support - six request types routed to SupportEmail
+    Feedback and Roadmap - Roadmap Decks folder for Copilot roadmap briefings
+    Agent Showcase - native approved/Featured views; configuration seeds proposals,
+      never a second publication route. Existing access and approval permissions apply.
+  Top 10 to try tab: the organization's deck from Assets\Top10, or Microsoft's handout.
+  Department Champions list with five sample departments marked Not assigned.
+  Six draft training sessions (Oct-Dec 2026) in Training-Calendar.csv.
+  Program and Leadership Governance: a Start here document and six drafts each, published as Word documents with descriptive names.
+  Proposed organization-wide AI Governance Policy (draft) in Leadership Governance.
+  Set the site's regional time zone before relying on event times.
+
+KNOWN LIMITS
+  Earlier versions were exercised in lab tenants; this is not a customer-tenant
+  security certification. Teams can be slow
+  to recognize a new Team owner or to add tabs; the installer retries, and -ResumeExisting
+  continues a stopped build. Test with a normal non-governance user before announcing the Team.

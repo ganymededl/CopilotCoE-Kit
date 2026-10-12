@@ -1,0 +1,287 @@
+{
+  "version": "3.6",
+  "scope": "Government starter content; no real appointments, adopted policies, or contacts are created",
+  "champions": {
+    "title": "Find your division Copilot champion",
+    "intro": "Champions help colleagues choose safe prompts, learn everyday workflows, and share feedback. They do not replace the service desk, approve access, or handle sensitive incidents. Select your division or agency in the directory below. Appointed profiles can include a short summary and an approved profile-photo link. If its status is Not assigned, ask the CoE program owner to nominate a champion; no person or contact is implied by the sample rows.",
+    "columns": [
+      "Department",
+      "Primary champion",
+      "Backup champion",
+      "Contact or Teams link",
+      "Expertise",
+      "Champion profile summary",
+      "Approved profile photo link",
+      "Office hours",
+      "Appointment status",
+      "Directory owner",
+      "Last verified"
+    ],
+    "sampleRows": [
+      {
+        "department": "Program and service delivery - demonstration",
+        "expertise": "Plain-language public notices and correspondence drafts",
+        "status": "Not assigned"
+      },
+      {
+        "department": "Communications - demonstration",
+        "expertise": "Accessible public content and translation review routes",
+        "status": "Not assigned"
+      },
+      {
+        "department": "IT and service desk - demonstration",
+        "expertise": "Troubleshooting, safe use, and support escalation",
+        "status": "Not assigned"
+      },
+      {
+        "department": "Human resources - demonstration",
+        "expertise": "Approved policy summaries and generic onboarding",
+        "status": "Not assigned"
+      },
+      {
+        "department": "Finance and procurement - demonstration",
+        "expertise": "Non-sensitive planning and purchasing guidance",
+        "status": "Not assigned"
+      }
+    ],
+    "maintenance": "The directory owner confirms primary and backup champions with each department, obtains permission before publishing a person's name, profile photo, summary, or contact route, and updates office hours and Last verified monthly and whenever assignments change. Use person fields for real tenant accounts and approved organizational contact links; do not invent people or publish personal phone numbers.",
+    "profiles": []
+  },
+  "program": {
+    "title": "Program Governance - delivery and operations",
+    "intro": "This is the CoE delivery team's restricted workroom: plan an authorized rollout, confirm release readiness, prepare training, coordinate support, and take unresolved policy or funding questions to the proper authority. It is not another policy-making committee or a place for individual case records. The documents below are substantive illustrative drafts for {{OrgName}} review, not adopted procedures or evidence of completed work.",
+    "ownerChecklist": {
+      "title": "Approved-member launch checklist",
+      "intro": "These setup steps are kept in the allowlisted Program Governance workroom, so they do not appear on the CoE pages. Only people listed as SharedChannelOwnerUPN or GovernanceAdditionalAllowedMembers can access this channel. Finish the steps before inviting the wider audience. Each one is changed in the organization folder (Deployment-Settings.json or a Content override) and published with 03_Update-CoEContent.ps1.",
+      "items": [
+        {
+          "where": "Ordinary IT support route",
+          "action": "Set Links.ServiceDesk to the real approved IT support endpoint. Test it as a non-owner and keep it distinct from incident reporting. Do not invent a ticket category."
+        },
+        {
+          "where": "Service Catalog and Support",
+          "action": "Replace sample SupportEmail with the real monitored CoE mailbox, confirm who handles ordinary requests, and confirm response times and service hours before launch. Verify every email link; an unconfigured or sample address is not a live support route."
+        },
+        {
+          "where": "Data or safety incident route",
+          "action": "Set Links.DataSafetyIncident to the organization's real approved incident reporting endpoint, separately from Links.ServiceDesk. Confirm receiving responsibility, confidentiality, access and escalation before launch. No mandatory ticket category is implied. Test this route on Governance, Service Catalog, Give Feedback, Feedback and Roadmap, Start in 10 minutes and Is this OK. If absent, keep the visible route-not-configured caution and do not treat the internal Get Help fallback as a submitted incident."
+        },
+        {
+          "where": "Technology requests",
+          "action": "Set Links.TechnologyRequest to the real approved technology request endpoint, confirm the approval authority and access, and test the route as a non-owner before launch. A missing link does not authorize purchase, installation or agent deployment."
+        },
+        {
+          "where": "AI guidelines",
+          "action": "Set Links.AIGuidelines to the organization's actual approved AI guidance. Verify the policy owner, adoption status and access before launch; starter examples and a not-configured link are not adopted policy."
+        },
+        {
+          "where": "Governance and Responsible AI page",
+          "action": "Open every published policy link and hosted document yourself, including PDFs, and confirm each one loads for a non-member account."
+        },
+        {
+          "where": "Feedback and Roadmap page",
+          "action": "Confirm where each roadmap document came from and who may see it. Microsoft roadmap briefings are often under NDA even without markings; keep those in Leadership Governance, not in the public Roadmap folder."
+        },
+        {
+          "where": "Copilot Chat scope",
+          "action": "Confirm which Microsoft 365 apps show Copilot Chat and what Copilot Chat in Outlook can reach for unlicensed users (check the Message center), and make the Start in 10 minutes and Who gets what guides, the FAQ, and the Governance page match."
+        },
+        {
+          "where": "Who gets what guide",
+          "action": "Publish how people request paid Copilot or join a pilot interest list, who is eligible, and when requests are reviewed."
+        },
+        {
+          "where": "Data readiness for IT guide",
+          "action": "Record the owner, completion date, and evidence for each step in this channel before the release gate."
+        },
+        {
+          "where": "Using and building agents guide",
+          "action": "Confirm the agent tiers and the approval route in Leadership Governance before announcing agent building."
+        },
+        {
+          "where": "Pay-as-you-go agents",
+          "action": "Decide whether pay-as-you-go (metered) billing is enabled for agents. Without it, Copilot Chat users can't use agents grounded on SharePoint or other organizational content, so the agent tiers and examples must say so."
+        },
+        {
+          "where": "Agent Showcase",
+          "action": "Confirm native content approval and draft visibility in the Copilot Agent Showcase list before launch. Review proposals and evidence, mark selected entries Featured before approval if appropriate, then select Approve for ready non-retired entries. Approval is the only publication gate, including edits and retirement. Test with a reader account: pending revisions retain the last approved version, and an approved retirement removes the entry. Seed proposals only; do not autoapprove or create fake approved or Featured test agents."
+        },
+        {
+          "where": "Success Stories",
+          "action": "Confirm native content approval and draft visibility in the Copilot Success Stories list before launch. Keep active submissions Status Submitted and select Approve after content, consent, captions, evidence and video permissions are reviewed; legacy Published remains compatible, not a second publication gate. Revisions and Status Retired also require approval. Test with a reader account that pending revisions show the last approved version and approved retirement removes it. Starter stories remain unapproved drafts without claimed savings. Host no MOCK files, and do not expose draft videos through broadly shared folders."
+        },
+        {
+          "where": "Measuring impact guide",
+          "action": "Choose the tasks, owners, and targets with Leadership Governance before reporting any result."
+        },
+        {
+          "where": "Copilot FAQs",
+          "action": "Replace the starter answers with organization-approved guidance (Content\\Copilot-FAQs.md)."
+        },
+        {
+          "where": "Copilot Prompt Library",
+          "action": "The list is filled from the OrgPrompts CSV files (the environment's base set plus any files in Content\\OrgPrompts). Upload the same CSV files in the Microsoft 365 admin center (Copilot > Prompts > Import) if you publish organization prompts there, so both places match. Prompts people add on the site wait in the Review view until a catalog reviewer approves them."
+        },
+        {
+          "where": "Roles and contacts page",
+          "action": "The installer does not invite users or assign roles. Name the approved owners and contacts on the page and confirm governance-channel membership before inviting the wider audience. Use a shared-channel owner account whose display name is suitable for a customer walkthrough (SharedChannelOwnerUPN)."
+        },
+        {
+          "where": "Champions directory",
+          "action": "Confirm the division or agency names with HR and communications, appoint a primary and backup champion for each, fill Last verified, and remove units that do not appoint one."
+        },
+        {
+          "where": "Champions toolkit guide",
+          "ifGuide": "Champions-Toolkit",
+          "action": "Name who refreshes the prompts of the week each quarter and who sends champion recognition, and set up the private champions space the guide names before appointing champions."
+        },
+        {
+          "where": "Data-level tags",
+          "action": "Ask the information security team to confirm the data levels and every data-level tag on the Prompt library, Start in 10 minutes, the Is this OK check, and any champions material before launch, so the tags carry the organization's authority."
+        },
+        {
+          "where": "Is this OK check",
+          "ifGuide": "Is-This-OK",
+          "action": "Replace the example data levels and common-case ratings with the organization's own. Confirm Links.AIGuidelines, Links.ServiceDesk, Links.TechnologyRequest and the separate Links.DataSafetyIncident in Deployment-Settings.json, and test configured and route-not-configured journeys without submitting real incidents."
+        },
+        {
+          "where": "Concerns and myths guide",
+          "ifGuide": "Concerns-and-Myths",
+          "action": "Have HR, labor relations, and legal review the answers about jobs, public records, AI detection, and accessibility before publishing; these are the answers most likely to be quoted."
+        },
+        {
+          "where": "Translated content",
+          "action": "Name a fluent reviewer for any notice translated with Copilot before it is published."
+        },
+        {
+          "where": "Learning paths and self-paced resources",
+          "action": "Assign actual learning owners and reviewers, then record real reviewedOn dates after checking each resource, practice task, access requirement and local guidance. Leave unknown owner and review fields blank until confirmed; never seed an invented owner or review. Verify Microsoft 365 Copilot training URLs and Clipchamp video documentation, and preserve the seven existing prompt headings used by practice anchors."
+        },
+        {
+          "where": "Training calendar",
+          "action": "Replace the DRAFT - DEMONSTRATION sessions with scheduled sessions, or delete them."
+        },
+        {
+          "where": "Learning Series time zone",
+          "action": "Open the Learning Series and confirm the sessions show the intended local time (TimeZone in Deployment-Settings.json sets the site's regional settings)."
+        },
+        {
+          "where": "Every page",
+          "action": "Launch only after real SupportEmail, Links.ServiceDesk, Links.TechnologyRequest, Links.AIGuidelines and Links.DataSafetyIncident are confirmed; learning ownership and actual reviews are recorded; and agent/story approval and reader-visibility checks pass. Verify every published route and file as a non-owner. Keep sample notices while content is unapproved or launch prerequisites are unresolved. When content and launch are approved, set SampleNotice to none and run 03_Update-CoEContent.ps1 -Scope All (Installation Runbook section 6.7)."
+        }
+      ]
+    },
+    "groups": [
+      "Plan and release",
+      "Enable and support",
+      "Monitor and escalate"
+    ],
+    "sections": [
+      {
+        "folder": "01-Charter-and-Roles",
+        "group": "Plan and release",
+        "title": "Delivery charter and responsibilities",
+        "file": "Governance\\program\\01-Charter-and-Roles\\Sample-guidance.txt",
+        "text": "Defines the program lead, IT implementation lead, training lead, and service liaison; separates coordination from program, legal, privacy, security, and purchasing authority; walks through a request from intake to the authorized decision-maker."
+      },
+      {
+        "folder": "02-Delivery-and-Readiness",
+        "group": "Plan and release",
+        "title": "90-day rollout and release gates",
+        "file": "Governance\\program\\02-Delivery-and-Readiness\\Sample-guidance.txt",
+        "text": "A relative-week rollout plan with permission and denied-access checks, accessible training, source verification, support handoff, launch prerequisites, and pause criteria. It does not claim a pilot has been authorized."
+      },
+      {
+        "folder": "03-Risks-and-Issues",
+        "group": "Monitor and escalate",
+        "title": "Operational risks and worked issue responses",
+        "file": "Governance\\program\\03-Risks-and-Issues\\Sample-guidance.txt",
+        "text": "Four fictional cases cover unexpected document discovery, an invented deadline in a public notice, a keyboard-access barrier, and pressure to enable an unreviewed connector."
+      },
+      {
+        "folder": "04-Champions-and-Training",
+        "group": "Enable and support",
+        "title": "Champion and training operating playbook",
+        "file": "Governance\\program\\04-Champions-and-Training\\Sample-guidance.txt",
+        "text": "Sets peer-coaching boundaries, safe exercise design, accessible participation, and the six draft October-December training topics. No champions or sessions are established."
+      },
+      {
+        "folder": "05-Service-and-Change",
+        "group": "Enable and support",
+        "title": "Support, incidents, and controlled changes",
+        "file": "Governance\\program\\05-Service-and-Change\\Sample-guidance.txt",
+        "text": "Distinguishes ordinary support from product feedback and privacy/security incidents; defines review before new agents, connectors, searches, or data use; specifies access tests, rollback, and evidence needed to resume."
+      },
+      {
+        "folder": "06-Meetings-and-Actions",
+        "group": "Monitor and escalate",
+        "title": "Delivery review and action follow-through",
+        "file": "Governance\\program\\06-Meetings-and-Actions\\Sample-guidance.txt",
+        "text": "A proposed weekly working review and monthly leadership handoff, with fictional worked actions and escalation examples. Completion requires evidence; a meeting or assigned action is not an approval."
+      }
+    ]
+  },
+  "leadership": {
+    "title": "Leadership Governance - policy, risk, and resources",
+    "intro": "This restricted workroom supports {{OrgNoun}}-level choices: which AI uses are acceptable, who can authorize them, what protections apply, how resources are allocated, and what evidence justifies continuation. Program, legal, IT, security, data practices, records, accessibility, and purchasing authorities retain their decision rights. Every document here is an illustrative {{OrgName}} review draft, not adopted policy.",
+    "groups": [
+      "Policy and authority",
+      "Priorities and resources",
+      "Evidence and decisions"
+    ],
+    "sections": [
+      {
+        "folder": "01-Charter-and-Decision-Rights",
+        "group": "Policy and authority",
+        "title": "AI governance charter and decision authority",
+        "file": "Governance\\leadership\\01-Charter-and-Decision-Rights\\Sample-guidance.txt",
+        "text": "Defines reserved program and legal decisions, data-use authorization, technical acceptance, purchasing authority, conditional decisions, and escalation. Coordination or a steering vote cannot override another function's required authorization."
+      },
+      {
+        "folder": "02-Strategy-and-Priorities",
+        "group": "Priorities and resources",
+        "title": "First-year AI priorities and selection rules",
+        "file": "Governance\\leadership\\02-Strategy-and-Priorities\\Sample-guidance.txt",
+        "text": "Proposes clear public communication, everyday administrative drafting, and IT knowledge work; includes equitable participation, sequencing, non-AI alternatives, and explicit exclusions for automated decisions about people."
+      },
+      {
+        "folder": "03-Policy-and-Risk-Decisions",
+        "group": "Policy and authority",
+        "title": "AI acceptable-use and risk decision policy",
+        "file": "Governance\\leadership\\03-Policy-and-Risk-Decisions\\Sample-guidance.txt",
+        "text": "A full draft policy with Low/Moderate/High data boundaries, public records and retention duties, human review, prohibited consequential uses, a protected-data gate, and two fictional worked decisions."
+      },
+      {
+        "folder": "04-Budget-and-Licensing",
+        "group": "Priorities and resources",
+        "title": "Resource allocation, purchase, and renewal rules",
+        "file": "Governance\\leadership\\04-Budget-and-Licensing\\Sample-guidance.txt",
+        "text": "Defines equitable license allocation, full support and review costs, accessible alternatives, separate spending authority, trial/vendor review, evidence for renewal, and an exit path. Purchase and license quantities are left for the organization to set."
+      },
+      {
+        "folder": "05-Outcomes-and-Scorecard",
+        "group": "Evidence and decisions",
+        "title": "Outcomes and honest measurement policy",
+        "file": "Governance\\leadership\\05-Outcomes-and-Scorecard\\Sample-guidance.txt",
+        "text": "Separates baselines, targets, and actuals; includes concrete sample measures and review effort; prohibits employee ranking or resident profiling from usage; requires reporting errors, accessibility issues, and limitations alongside benefits."
+      },
+      {
+        "folder": "06-Steering-Meetings-and-Decisions",
+        "group": "Evidence and decisions",
+        "title": "Review, dispositions, and corrective actions",
+        "file": "Governance\\leadership\\06-Steering-Meetings-and-Decisions\\Sample-guidance.txt",
+        "text": "Defines proposed participation, required functional determinations, holds, conditional authorization, refusal, suspension, and closure evidence. Two fully worked fictional dispositions demonstrate the procedure without implying organizational decisions."
+      }
+    ]
+  },
+  "repairs": {
+    "topTen": "Keep the Top 10 to try label, host the original Microsoft handout in the CoE SharePoint library, and configure the Teams tab for the tenant-hosted file rather than an external download URL. Include an Open in browser fallback.",
+    "forum": "https://techcommunity.microsoft.com/category/microsoft-copilot/discussions/microsoft-copilot",
+    "remove": "Remove the Early Access Program Details control and obsolete EAP links from both the live site and the generated provisioning templates."
+  },
+  "deliverables": {
+    "word": "Illustrated implementation guide based on the original HU_MOD Word template, preserving Microsoft branding, David Shih Chun Liu author block, typography, and table of contents.",
+    "deck": "High-level companion PowerPoint explaining each CoE section with clickable live demo links and clearly labelled lab screenshots.",
+    "scripts": "Portable PowerShell reproduction scripts with {{OrgShort}}-specific parameters, safe resume behavior, and access checks; commands and expected results included in the guide."
+  }
+}

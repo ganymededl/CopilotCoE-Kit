@@ -1,0 +1,33 @@
+ILLUSTRATIVE DRAFT FOR {{OrgNameUpper}} REVIEW
+Not adopted policy. Not evidence of an organizational decision, appointment, purchase, or completed activity.
+
+LEADERSHIP GOVERNANCE: POLICY, RISK, AND RESOURCES
+
+Why this workroom exists
+
+The organization needs more than instructions for using a product. It needs a defensible position on permitted AI assistance, protected information, student and employee rights, academic expectations, resource allocation, and evidence of value. This restricted workroom brings those questions together without transferring authority away from the functions that already hold it.
+
+The draft documents propose institutional rules and worked examples. They are not blank worksheets and do not describe decisions already made. Each is written for review and amendment through authorized organizational processes. References to existing policies are reconciliation points, not claims that their exact requirements have been researched.
+
+Three practical starting points
+
+POLICY AND AUTHORITY
+Start with the proposed {{OrgNoun}}-wide AI Governance Policy in the draft in folder 03-Policy-and-Risk-Decisions. It establishes the overall purpose, data boundaries, academic responsibilities, human oversight, accessibility, prohibited profiling, and review obligations. The charter in the draft in folder 01-Charter-and-Decision-Rights separates coordination from academic, technical, stewardship, and purchasing authority. The full acceptable-use and risk decision policy in the draft in folder 03-Policy-and-Risk-Decisions explains the protected-data gate, dispositions, exceptions, and fictional case decisions.
+
+PRIORITIES AND RESOURCES
+The strategy in the draft in folder 02-Strategy-and-Priorities favors bounded teaching support, clear public student-service explanations, and administrative drafting. It identifies excluded baseline uses and explains why a non-AI improvement may be preferable. The resource rules in the draft in folder 04-Budget-and-Licensing address equitable allocation, accessible alternatives, support and verification costs, purchasing authority, renewal, and exit.
+
+EVIDENCE AND DECISIONS
+The measurement policy in the draft in folder 05-Outcomes-and-Scorecard distinguishes activity from outcomes and baselines from targets and actuals. It supplies practical measures without inventing results. The procedure in the draft in folder 06-Steering-Meetings-and-Decisions shows how a proposal is reviewed, held, conditioned, refused, or suspended, and how unresolved safeguards prevent launch. Its sample decisions are fictional, not organizational rulings.
+
+How a question reaches leadership
+
+The CoE program lead will assemble a concise, sanitized decision request: the problem, alternatives, affected people, information categories, service configuration, required determinations, foreseeable harms, and the recommendation. The functions with relevant authority will make their respective determinations. Missing evidence will result in a hold rather than approval by silence. A steering discussion, license, or successful demonstration will not authorize protected-data use or expenditure.
+
+For example, a staff-reviewed public registration explainer can be considered separately from an individualized advising tool. The latter cannot inherit permission from the former. The worked risk cases explain that distinction without using student records.
+
+What does not belong here
+
+This Team is not a repository for individual student files, personnel investigations, credentials, or sensitive incident evidence. Actual cases must remain in approved systems with appropriate access. Leadership can review an authorized summary or restricted reference without copying underlying records into chat.
+
+The six folders are navigation containers, not a requirement to create six committees. The organization may consolidate them into the three groupings above. Preserve substantive policies and decision evidence, not folder count. No appointments, delegations, approvals, or meetings are established by this draft.

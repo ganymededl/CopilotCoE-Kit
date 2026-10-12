@@ -1,0 +1,48 @@
+ILLUSTRATIVE DRAFT FOR {{OrgNameUpper}} REVIEW
+Not adopted policy. Not evidence of an organizational decision, appointment, purchase, or completed activity.
+
+PROGRAM GOVERNANCE: THE COE DELIVERY WORKROOM
+
+Scope note: Named roles are functional responsibilities to be designated through authorized organizational processes, not claims that people have been appointed. The procedures below are draft provisions for review, not descriptions of current practice.
+
+Why this channel exists
+
+The {{OrgName}} Copilot Center of Excellence delivery team will use this restricted workroom to coordinate work within an authorized scope, check readiness, prepare training, track service quality, and follow through on escalations. The CoE program lead will connect work across the organization's schools, campuses, and online programs without creating another policy-making committee. Nothing in these drafts establishes an approved pilot.
+
+The practical question here is: "Can the delivery team carry out the authorized work safely, consistently, and with a clear handoff?" The question is not: "Can this Team grant itself permission to use a new tool, new data, or a new teaching practice?" A Team tab adds no delegated authority.
+
+Who will use it
+
+The CoE program lead will identify participants whose delivery responsibilities require access and route membership requests through the authorized access process. Leadership retains policy, risk, and funding decisions through existing organizational processes. Existing IT service, identity, security, academic, privacy, accessibility, and data-steward functions retain their actual authority. A delivery meeting cannot substitute for their decisions.
+
+Three plain navigation groups
+
+PLAN / RELEASE
+the Word draft in folder 01-Charter-and-Roles
+Use this to agree on delivery boundaries and route a request such as "help staff draft a public event summary" to the right review functions.
+the Word draft in folder 02-Delivery-and-Readiness
+Use this to prepare a limited release, inspect permissions and accessibility, and decide whether evidence supports proceeding or pausing.
+
+ENABLE / SUPPORT
+the Word draft in folder 04-Champions-and-Training
+Use this to prepare training sessions, safe practice exercises, and champion escalation habits; the draft does not appoint champions or book sessions.
+the Word draft in folder 05-Service-and-Change
+Use this to separate ordinary support from incidents and to review changes before an agent, connector, web search, or access change reaches users.
+
+MONITOR / ESCALATE
+the Word draft in folder 03-Risks-and-Issues
+Use the fictional worked cases to handle a readiness concern or operational issue without copying sensitive evidence into the Team.
+the Word draft in folder 06-Meetings-and-Actions
+Use the fictional meeting examples to turn review findings into accountable follow-through and a monthly handoff.
+
+What belongs here
+
+Record release scope, sanitized readiness evidence, training materials, service trends, unresolved dependencies, and references to authorized decisions. The CoE program lead must close each discussion with a next step, responsible role, relative due point, and evidence required for closure. The IT implementation lead will maintain technical evidence; the training lead will maintain reviewed learning materials; the service liaison will coordinate support handoffs. Proposed weekly and monthly cadences and two-/five-business-day coordination targets are draft provisions, not organizational policy, service-level agreements, or incident-response timers. Incidents must follow existing approved reporting routes promptly, without waiting for a target or meeting.
+
+What does not belong here
+
+Do not store student personal details, credentials, sensitive incident evidence, or restricted data extracts. Use existing approved reporting and case-management channels for incidents. This is not a public FAQ, a faculty decision forum, or a substitute for authoritative policy and student-support communications.
+
+How to adapt the pack
+
+Before operational use, the CoE program lead must route these draft provisions for the applicable organizational review, confirm role designations and reporting routes, and identify the authorization covering each release. The relative 90-day plan begins only after authorization of a defined scope; training dates remain unbooked proposals. Preparation with synthetic materials does not permit production use. The organization may consolidate these files into fewer folders or existing workspaces; keeping all six is not a requirement. Retain authority boundaries, evidence gates, faculty controls, and safe handoffs when changing the layout.

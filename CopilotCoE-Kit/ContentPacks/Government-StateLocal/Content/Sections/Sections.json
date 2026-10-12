@@ -1,0 +1,105 @@
+{
+  "_instructions": "One entry per CoE section: a SharePoint page (from its .md file), a standard Teams channel with a 'Start here' tab, a left-navigation link, kit sample files under Files\\<channel>, and optional organization files from <OrgPath>\\Assets\\<category> (the installer asks before hosting them; they replace kit samples in the same folder). Tokens such as {{OrgName}} are filled from the organization's Deployment-Settings.json. Featured agents are approved, non-retired rows with AgentFeatured=true in the Copilot Agent Showcase list. Both agent views are always embedded and update from the list. Agents in Deployment-Settings.json seed new proposals only.",
+  "sections": [
+    {
+      "file": "01-Training-and-Enablement.md",
+      "page": "CoE-Training-and-Enablement",
+      "channel": "Training and Enablement",
+      "description": "Learning paths, live sessions, and recordings for staff, supervisors, IT, champions, and agent makers.",
+      "orgAssets": {
+        "category": "Training",
+        "folder": "Training Materials",
+        "question": "Host these training decks, handouts, or recordings in Training and Enablement > Training Materials?"
+      }
+    },
+    {
+      "file": "02-Success-Stories.md",
+      "page": "CoE-Success-Stories",
+      "channel": "Success Stories",
+      "description": "Approved videos and write-ups showing how the community uses Copilot.",
+      "orgAssets": {
+        "category": "Success-Stories",
+        "folder": "Videos",
+        "question": "Host these success-story videos in Success Stories > Videos? Confirm audience permissions and review before sharing; hosting a file is not story approval."
+      }
+    },
+    {
+      "file": "03-Governance-and-Responsible-AI.md",
+      "page": "CoE-Governance-and-Responsible-AI",
+      "channel": "Governance and Responsible AI",
+      "description": "Your organization's official AI guidance and a Copilot quick reference. Approved guidance only.",
+      "orgAssets": {
+        "category": "RAI-Policies",
+        "folder": "Official Documents",
+        "question": "Host these Responsible AI / AI policy documents in Governance and Responsible AI > Official Documents?"
+      }
+    },
+    {
+      "file": "04-Service-Catalog-and-Support.md",
+      "page": "CoE-Service-Catalog-and-Support",
+      "channel": "Service Catalog and Support",
+      "description": "What the CoE offers and how to request help, workshops, licenses, or agent reviews.",
+      "orgAssets": {
+        "category": "Service-Catalog",
+        "folder": "Service Documents",
+        "question": "Host these service catalog or support documents in Service Catalog and Support > Service Documents?"
+      }
+    },
+    {
+      "file": "05-Feedback-and-Roadmap.md",
+      "page": "CoE-Feedback-and-Roadmap",
+      "channel": "Feedback and Roadmap",
+      "description": "Copilot roadmap decks, what is new, the organization's plan, and your ideas.",
+      "orgAssets": {
+        "category": "Roadmap",
+        "folder": "Roadmap Decks",
+        "question": "Host these Copilot roadmap decks in Feedback and Roadmap > Roadmap Decks?"
+      }
+    },
+    {
+      "file": "06-Agent-Showcase.md",
+      "page": "CoE-Agent-Showcase",
+      "channel": "Agent Showcase",
+      "description": "Approved agents: what they do and a link that opens each one in Copilot Chat.",
+      "orgAssets": {
+        "category": "Agents",
+        "folder": "Agent Guides",
+        "question": "Host these agent guides or demo files in Agent Showcase > Agent Guides?"
+      }
+    }
+  ],
+  "successStories": [
+    {
+      "Title": "SAMPLE - Plain-language rewrite of a public notice",
+      "Audience": "Staff",
+      "Task": "A program specialist asks Copilot Chat to rewrite a published service-change notice in plain language, then checks every date and requirement against the original.",
+      "TimeSaved": "",
+      "Video": "",
+      "Status": "Submitted"
+    },
+    {
+      "Title": "SAMPLE - Meeting notes to an action list",
+      "Audience": "Supervisors",
+      "Task": "A supervisor turns their own non-sensitive meeting notes into decisions and next steps with owners, then confirms owners and dates with the team.",
+      "TimeSaved": "",
+      "Video": "",
+      "Status": "Submitted"
+    },
+    {
+      "Title": "SAMPLE - Briefing from public reports",
+      "Audience": "Supervisors",
+      "Task": "A program manager drafts a one-page briefing from two published reports and has a subject matter expert verify each figure before it goes to leadership.",
+      "TimeSaved": "",
+      "Video": "",
+      "Status": "Submitted"
+    },
+    {
+      "Title": "SAMPLE - Drafting a service desk knowledge article",
+      "Audience": "IT",
+      "Task": "A service desk analyst drafts a how-to article from public Microsoft documentation and has a colleague review it before publishing.",
+      "TimeSaved": "",
+      "Video": "",
+      "Status": "Submitted"
+    }
+  ]
+}

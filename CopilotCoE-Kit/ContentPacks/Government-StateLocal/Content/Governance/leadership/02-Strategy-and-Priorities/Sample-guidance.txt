@@ -1,0 +1,36 @@
+ILLUSTRATIVE DRAFT FOR {{OrgNameUpper}} REVIEW
+Not adopted policy. Not evidence of an organizational decision, appointment, purchase, or completed activity.
+
+PROPOSED FIRST-YEAR AI STRATEGY AND PRIORITY PORTFOLIO
+
+Strategic direction
+
+The {{OrgNoun}} will use AI to give staff more time for the work that needs human judgment: serving residents, solving problems, and making defensible decisions. It will not use AI to automate judgments about people. The first-year portfolio should support every part of the {{OrgNoun}}, including field and regional offices and staff who work in shifts, without assuming that everyone has the same license, device, schedule, or connectivity.
+
+Priority one: clear communication with the public
+
+Staff will use Copilot to draft plain-language versions of published notices, letters, and web content; to suggest clearer structure; and to prepare first drafts of translations for review by a qualified reviewer. Program staff will check every requirement, date, and amount against the authoritative source, and communications and accessibility staff will review public content before release. Language-access obligations remain with the program area; a machine translation is never published without human review.
+
+Priority two: everyday administrative productivity
+
+Staff will use Copilot to summarize their own meetings, draft routine correspondence, outline briefings from published reports, and turn notes into action lists. Supervisors will set review expectations for their teams. The portfolio counts preparation-and-review time, not only drafting time, so that the reported benefit is honest.
+
+Priority three: IT and service-desk knowledge
+
+The service desk and IT teams will use Copilot to draft knowledge articles from public vendor documentation and reviewed internal procedures, and to summarize non-sensitive ticket themes. Security-sensitive configuration details, credentials, and incident evidence stay out of prompts.
+
+Selection and sequencing
+
+A candidate use case is selected when it has an identified sponsor, a measurable current baseline, data that is public or low-risk under the {{OrgNoun}}'s classification standard, a reviewer with time to check outputs, and an accessible path for staff who cannot use the tool. Use cases that serve the public directly come after internal drafting use cases have shown that review works. A non-AI improvement (a better template, a clearer form, a fixed process) is preferred when it solves the same problem with less risk.
+
+Equitable participation
+
+Licenses and training will not be allocated by title or visibility alone. Field staff, part-time staff, and staff who rely on assistive technology will have equivalent access to training and support. Participation in a pilot is voluntary unless a program area has established it as part of the job through the appropriate labor-management process.
+
+Excluded baseline uses
+
+The first-year baseline excludes: making or recommending eligibility, benefit, enforcement, licensing, hiring, discipline, or other consequential decisions about a person; processing criminal justice information, federal tax information, protected health information, or other restricted data; monitoring or ranking employees from prompt activity; generating public-facing responses that are sent without human review; and any use of consumer AI accounts for {{OrgNoun}} work. Any of these requires a separate proposal and the protected-data gate described in the risk policy.
+
+Portfolio oversight
+
+The coordinating function will report quarterly on the portfolio: which use cases are authorized, what was measured, what went wrong, and what changed. Benefits are reported alongside errors found in review, accessibility issues, and limitations. A use case that cannot show its review is working is paused, not expanded.

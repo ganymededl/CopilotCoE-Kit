@@ -1,0 +1,60 @@
+ILLUSTRATIVE DRAFT FOR {{OrgNameUpper}} REVIEW
+Not adopted policy. Not evidence of an organizational decision, appointment, purchase, or completed activity.
+
+PROPOSED STEERING REVIEW AND DECISION PROCEDURE
+
+Purpose and authority
+
+The organization will use a proposed AI steering review to coordinate responsible decisions, identify missing evidence, and track corrective actions. The review will not create purchasing authority, displace program or legal authority, or grant access to protected data. Required functional determinations will remain with the authorities responsible for those matters.
+
+The proposed operating cadence is monthly, with additional review when an incident, material service change, or time-sensitive control failure warrants it. This cadence is a proposed provision, not evidence that an existing organizational committee meets on that schedule.
+
+Preparation and routing
+
+The sponsoring function will provide a clear account of the problem, non-AI alternatives, proposed users, affected groups, data categories, product configuration, decision influence, accessibility, records implications, reviewer capacity, costs, and measures. Coordination will check completeness, assign a proposed risk level, and route the proposal to the relevant functions.
+
+A proposal involving restricted information must pass the protected-data gate before live testing. Coordination may place an incomplete proposal on hold without treating that hold as a final substantive refusal. Meeting materials must use public, synthetic, or appropriately authorized information; reviewers must not receive unnecessary individual resident, case, or employee records.
+
+Proposed participation and quorum
+
+For adoption, this procedure proposes that a coordinated disposition require participation by the program or business sponsor, information technology, and the coordinating function, together with every function whose required determination is implicated. Restricted-data review requires stewardship, privacy and legal review, security, records, and the relevant program or business authority; accessibility and procurement participate where applicable.
+
+This is a proposed functional quorum, not a statement of an existing delegation. A majority vote cannot override a missing required authorization. If a necessary function is absent or a determination remains unresolved, the disposition will be hold or referral. Conflicts of interest will be disclosed and managed through appropriate organizational processes; sponsors will not certify their own unresolved safeguards.
+
+Review and recorded disposition
+
+The review will confirm purpose and classification, examine evidence and alternatives, identify foreseeable harms, and test whether controls can be maintained in practice. Reviewers will distinguish a vendor assurance from an independently verified configuration and an attractive demonstration from validated operational readiness.
+
+Available dispositions are authorize within scope, conditional authorization, hold for evidence, redesign and resubmit, refuse, suspend, or retire. The decision record will state rationale, scope, accountable functions, necessary approvals, prerequisites, verification responsibility, remaining risks, dissent, review triggers, and corrective actions. Records will follow the applicable organizational schedule.
+
+Conditional authorization will not permit launch until prerequisite controls have been verified by the responsible functions. Coordination will communicate the disposition and permitted boundaries to the sponsor and service owner. No action will be recorded as completed simply because it was assigned.
+
+Escalation and corrective action
+
+Unresolved program questions will go to the relevant program authority; legal questions to counsel; data-use questions to stewardship and privacy/legal authority; technical risk to technology and security; resource conflicts to authorized budget and executive functions. Executive escalation cannot waive law or reserved authority.
+
+A control failure will trigger containment, incident routing where warranted, and review of affected approvals. Corrective actions will name the responsible function, required evidence, and a proposed completion milestone determined for that case. Coordination will track unresolved actions, verify closure, and return overdue or ineffective remedies to the appropriate authority. Expansion remains blocked while material prerequisites are unresolved.
+
+Worked fictional disposition one
+
+Status: ILLUSTRATIVE ONLY - NOT A {{OrgNounUpper}} DECISION.
+
+Proposal: draft a plain-language "how to apply" checklist from the program's published web pages.
+Illustrative disposition: conditional authorization for staff-reviewed drafting only.
+Rationale: the task is reversible, uses public sources, and makes no individual eligibility determination.
+Conditions: program staff verify steps and links; accessibility reviews the final format; technology confirms the approved service boundary; the sponsor excludes case-specific prompts. Publication remains with authorized staff.
+Follow-up: coordination would verify prerequisites before release and require a new review for interactive or personalized advice. No condition is represented as fulfilled, and no publication is recorded.
+
+Worked fictional disposition two
+
+Status: ILLUSTRATIVE ONLY - NOT A {{OrgNounUpper}} DECISION.
+
+Proposal: generate recommended eligibility decisions from individual case files.
+Illustrative disposition: refuse as proposed and refer any materially different assistance design for enhanced review.
+Rationale: the proposal combines restricted information with consequential eligibility judgments and lacks a lawful, validated oversight model. Human acceptance of generated recommendations would not by itself cure these defects.
+Conditions for reconsidering a different proposal: remove automated eligibility judgment, define a legitimate bounded assistance task, establish qualified review, and complete all required protected-data and consequential-workflow determinations before live testing.
+Follow-up: no pilot, file transfer, or exception is authorized in this fictional record.
+
+Final reconciliation
+
+References to current organizational governance, incident, program, purchasing, and records procedures are for reconciliation before adoption, not claims that exact procedures were researched. This sample establishes no meeting, quorum in force, delegation, appointment, or organizational decision.

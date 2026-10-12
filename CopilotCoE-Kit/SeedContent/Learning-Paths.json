@@ -1,0 +1,132 @@
+{
+  "version": 1,
+  "_instructions": "Reviewable starter learning paths, not assigned training or completion records. Practice time is a suggested exercise length, not a verified course duration. Override this file in <OrgPath>\\Content\\Learning-Paths.json; keep each id stable. Set Links.PromptLibrary to the customer's approved existing prompt library, or use the existing CoE prompt guide. Owner and reviewedOn blanks mean unassigned and unreviewed, not completed checks. Before launch, assign real learning owners and record actual review dates after checking links, practice tasks, access requirements and local guidance. No EDU CSVs or sensitive records are imported.",
+  "items": [
+    {
+      "id": "faculty-01", "title": "Start safely with one teaching task", "path": "Teaching with Copilot", "audience": "Faculty",
+      "step": 1, "minutes": 10, "requirement": "Recommended", "product": "Approved Copilot Chat",
+      "resourceUrl": "SitePages/Guide-Start-in-10-Minutes.aspx", "practicePromptTitle": "Clear communication",
+      "practiceUrl": "SitePages/Guide-Prompt-Library.aspx#clear-communication", "expectedResult": "Preserve dates and requirements; verify wording and follow the course's AI rules.",
+      "owner": "", "reviewedOn": "", "lmsUrl": ""
+    },
+    {
+      "id": "faculty-02", "title": "Improve a course description", "path": "Teaching with Copilot", "audience": "Faculty",
+      "step": 2, "minutes": 15, "requirement": "Recommended", "product": "Approved Copilot Chat with permitted source text",
+      "resourceUrl": "SitePages/Guide-Teaching-and-Learning.aspx", "practicePromptTitle": "Course description editor",
+      "practiceUrl": "SitePages/Guide-Prompt-Library.aspx#course-description-editor", "expectedResult": "Improve clarity without changing learning outcomes, prerequisites, commitments or assessment rules.",
+      "owner": "", "reviewedOn": "", "lmsUrl": ""
+    },
+    {
+      "id": "faculty-03", "title": "Review and share a reusable teaching pattern", "path": "Teaching with Copilot", "audience": "Faculty",
+      "step": 3, "minutes": 15, "requirement": "Recommended", "product": "Approved Copilot Chat; public or synthetic teaching material",
+      "resourceUrl": "SitePages/CoE-Success-Stories.aspx", "practicePromptTitle": "Rubric builder",
+      "practiceUrl": "SitePages/Guide-Prompt-Library.aspx#rubric-builder", "expectedResult": "Check accuracy and accessibility; share instructions and review steps, not student records or assessed student work.",
+      "owner": "", "reviewedOn": "", "lmsUrl": ""
+    },
+    {
+      "id": "staff-01", "title": "Start safely with everyday writing", "path": "Everyday work", "audience": "Staff",
+      "step": 1, "minutes": 10, "requirement": "Recommended", "product": "Approved Copilot Chat",
+      "resourceUrl": "SitePages/Guide-Start-in-10-Minutes.aspx", "practicePromptTitle": "Clear communication",
+      "practiceUrl": "SitePages/Guide-Prompt-Library.aspx#clear-communication", "expectedResult": "Improve a public announcement while preserving dates, requirements and commitments.",
+      "owner": "", "reviewedOn": "", "lmsUrl": ""
+    },
+    {
+      "id": "staff-02", "title": "Choose the right source and experience", "path": "Everyday work", "audience": "Staff",
+      "step": 2, "minutes": 15, "requirement": "Recommended", "product": "Copilot Chat with supplied public or synthetic notes; Microsoft 365 Copilot for work-data search where licensed and enabled",
+      "resourceUrl": "SitePages/Guide-Who-Gets-What.aspx", "practicePromptTitle": "Action list from your notes",
+      "practiceUrl": "SitePages/Guide-Prompt-Library.aspx#action-list-from-your-notes", "expectedResult": "Use only supplied or actually accessible sources; mark missing owners and dates instead of inventing them.",
+      "owner": "", "reviewedOn": "", "lmsUrl": ""
+    },
+    {
+      "id": "staff-03", "title": "Measure a repeatable improvement", "path": "Everyday work", "audience": "Staff",
+      "step": 3, "minutes": 15, "requirement": "Recommended", "product": "Approved Copilot Chat with non-sensitive practice material",
+      "resourceUrl": "SitePages/Guide-Measuring-Impact.aspx", "practicePromptTitle": "Clear communication",
+      "practiceUrl": "SitePages/Guide-Prompt-Library.aspx#clear-communication", "expectedResult": "Repeat the writing task. Record actual time including review and correction; compare quality and state limitations.",
+      "owner": "", "reviewedOn": "", "lmsUrl": ""
+    },
+    {
+      "id": "students-01", "title": "Check course rules before using AI", "path": "Study responsibly", "audience": "Students",
+      "step": 1, "minutes": 10, "requirement": "Recommended", "product": "Eligible approved school-account Copilot experience",
+      "resourceUrl": "SitePages/Guide-Students-and-AI.aspx", "practicePromptTitle": "Check your syllabus and allowed study uses",
+      "practiceUrl": "", "expectedResult": "Explain what the instructor permits, what must be disclosed and where to ask when rules are unclear.",
+      "owner": "", "reviewedOn": "", "lmsUrl": ""
+    },
+    {
+      "id": "students-02", "title": "Understand a concept, not just an answer", "path": "Study responsibly", "audience": "Students",
+      "step": 2, "minutes": 15, "requirement": "Recommended", "product": "Approved Copilot Chat; public concepts or your own permitted notes",
+      "resourceUrl": "SitePages/Guide-Start-in-10-Minutes.aspx", "practicePromptTitle": "Learn a new topic",
+      "practiceUrl": "SitePages/Guide-Prompt-Library.aspx#learn-a-new-topic", "expectedResult": "Explain the concept in your own words and check it against authoritative course material.",
+      "owner": "", "reviewedOn": "", "lmsUrl": ""
+    },
+    {
+      "id": "students-03", "title": "Check and disclose AI assistance", "path": "Study responsibly", "audience": "Students",
+      "step": 3, "minutes": 10, "requirement": "Recommended", "product": "Approved Copilot Chat; no third-party personal records",
+      "resourceUrl": "SitePages/Guide-Is-This-OK.aspx", "practicePromptTitle": "Review a study explanation",
+      "practiceUrl": "SitePages/Guide-Prompt-Library.aspx#review-a-study-explanation", "expectedResult": "Verify facts and citations; do not substitute AI output for assessed work; disclose assistance as required.",
+      "owner": "", "reviewedOn": "", "lmsUrl": ""
+    },
+    {
+      "id": "champions-01", "title": "Prepare a safe ten-minute demonstration", "path": "Help colleagues adopt Copilot", "audience": "Champions",
+      "step": 1, "minutes": 15, "requirement": "Recommended", "product": "Approved Copilot Chat with public or synthetic demo material",
+      "resourceUrl": "SitePages/Guide-Champions-Toolkit.aspx", "practicePromptTitle": "Clear communication",
+      "practiceUrl": "SitePages/Guide-Prompt-Library.aspx#clear-communication", "expectedResult": "Demonstrate the prompt after local approval. Show the source boundary, one follow-up, manual corrections and the applicable data rules.",
+      "owner": "", "reviewedOn": "", "lmsUrl": ""
+    },
+    {
+      "id": "champions-02", "title": "Know where questions belong", "path": "Help colleagues adopt Copilot", "audience": "Champions",
+      "step": 2, "minutes": 10, "requirement": "Recommended", "product": "Existing institution support and governance routes",
+      "resourceUrl": "SitePages/CoE-Service-Catalog-and-Support.aspx", "practicePromptTitle": "Route a synthetic access or policy question",
+      "practiceUrl": "", "expectedResult": "Distinguish coaching from access approval, policy decisions and incident response.",
+      "owner": "", "reviewedOn": "", "lmsUrl": ""
+    },
+    {
+      "id": "champions-03", "title": "Share a useful pattern and honest result", "path": "Help colleagues adopt Copilot", "audience": "Champions",
+      "step": 3, "minutes": 15, "requirement": "Recommended", "product": "Approved practice prompt and existing community channels",
+      "resourceUrl": "SitePages/CoE-Success-Stories.aspx", "practicePromptTitle": "Record a reviewed prompt pattern",
+      "practiceUrl": "SitePages/Guide-Prompt-Library.aspx#record-a-reviewed-prompt-pattern", "expectedResult": "Share non-sensitive instructions, the result, review effort and measured limits with appropriate consent.",
+      "owner": "", "reviewedOn": "", "lmsUrl": ""
+    },
+    {
+      "id": "it-01", "title": "Confirm access and readiness", "path": "Operate a safe rollout", "audience": "IT",
+      "step": 1, "minutes": 20, "requirement": "Recommended", "product": "Authorized IT review; no platform configuration is changed by this learning list",
+      "resourceUrl": "SitePages/Guide-Data-Readiness-for-IT.aspx", "practicePromptTitle": "Document readiness checks for a non-production pilot",
+      "practiceUrl": "", "expectedResult": "Identify source owners, access boundaries and unresolved prerequisites; do not treat a checklist as completed controls.",
+      "owner": "", "reviewedOn": "", "lmsUrl": ""
+    },
+    {
+      "id": "it-02", "title": "Test the user support journey", "path": "Operate a safe rollout", "audience": "IT",
+      "step": 2, "minutes": 15, "requirement": "Recommended", "product": "Authorized test accounts and existing support routes",
+      "resourceUrl": "SitePages/Guide-Copilot-Operations.aspx", "practicePromptTitle": "Walk through a synthetic missing-access case",
+      "practiceUrl": "", "expectedResult": "Separate license, source access, rollout and policy causes; record the support owner without exposing private records.",
+      "owner": "", "reviewedOn": "", "lmsUrl": ""
+    },
+    {
+      "id": "it-03", "title": "Review a proposed internal agent", "path": "Operate a safe rollout", "audience": "IT",
+      "step": 3, "minutes": 20, "requirement": "Recommended", "product": "Customer-authorized reviewer and appropriate test environment",
+      "resourceUrl": "SitePages/Guide-Agents.aspx", "practicePromptTitle": "Review agent purpose, sources and permissions",
+      "practiceUrl": "", "expectedResult": "Record access/billing prerequisites, positive and negative access tests, support and review dates before publication.",
+      "owner": "", "reviewedOn": "", "lmsUrl": ""
+    },
+    {
+      "id": "makers-01", "title": "Choose a permitted agent task", "path": "Build and share a reviewed agent", "audience": "Agent makers",
+      "step": 1, "minutes": 15, "requirement": "Recommended", "product": "Agent Builder or Copilot Studio only where enabled and licensed",
+      "resourceUrl": "SitePages/Guide-Agents.aspx", "practicePromptTitle": "Describe a narrow public-information helper",
+      "practiceUrl": "", "expectedResult": "Define purpose, audience and authoritative sources; exclude consequential decisions and unapproved external actions.",
+      "owner": "", "reviewedOn": "", "lmsUrl": ""
+    },
+    {
+      "id": "makers-02", "title": "Test evidence and access boundaries", "path": "Build and share a reviewed agent", "audience": "Agent makers",
+      "step": 2, "minutes": 20, "requirement": "Recommended", "product": "Approved agent test environment with permitted synthetic or public sources",
+      "resourceUrl": "SitePages/Guide-Copilot-Operations.aspx", "practicePromptTitle": "Test an answer, missing evidence and denied access",
+      "practiceUrl": "", "expectedResult": "Check traceable answers, uncertainty and permission behavior; document connectors/actions and failures for review.",
+      "owner": "", "reviewedOn": "", "lmsUrl": ""
+    },
+    {
+      "id": "makers-03", "title": "Submit the agent for customer review", "path": "Build and share a reviewed agent", "audience": "Agent makers",
+      "step": 3, "minutes": 10, "requirement": "Recommended", "product": "Existing institution review process; catalog publication does not share or enable an agent",
+      "resourceUrl": "SitePages/CoE-Agent-Showcase.aspx", "practicePromptTitle": "Prepare the agent's before-you-open information",
+      "practiceUrl": "", "expectedResult": "Supply the launch link, owner/backup, sources, allowed data, access, support and test evidence; a reviewer decides publication.",
+      "owner": "", "reviewedOn": "", "lmsUrl": ""
+    }
+  ]
+}

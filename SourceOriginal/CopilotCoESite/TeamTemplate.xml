@@ -1,0 +1,206 @@
+<pnp:Provisioning xmlns:pnp="http://schemas.dev.office.com/PnP/2022/09/ProvisioningSchema"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  Author="Microsoft"
+                  Generator="PNP"
+                  Version="1.0"
+                  Description="Copilot CoE"
+                  DisplayName="Copilot CoE">
+  <pnp:Preferences Generator="PnP.Framework, Version=1.13.1.0, Culture=neutral, PublicKeyToken=0d501f89f11b748c" />
+  <pnp:Teams>
+    <pnp:Team GroupId="{parameter:groupid}" MailNickname="{parameter:mailNickname}" DisplayName="{parameter:displayName}" Description="Your Center of Excellence for all things Copilot including training content, Champion guidance and updates from Microsoft." ProvisioningTemplateId="CopilotCoE" Archived="false" Specialization="None" Visibility="Private">
+      <pnp:FunSettings />
+      <pnp:GuestSettings AllowCreateUpdateChannels="false" />
+      <pnp:MembersSettings AllowDeleteChannels="false" AllowCreatePrivateChannels="false" />
+      <pnp:MessagingSettings AllowTeamMentions="false" />
+      <pnp:DiscoverySettings ShowInTeamsSearchAndSuggestions="false" />
+      <pnp:Channels>
+        <pnp:Channel DisplayName="Share Your Prompt" Description="Share your favourite prompts and understand the essential ingredients to crafting the perfect prompt." IsFavoriteByDefault="true" ID="19:01626a329de847cf82a233d95069362a@thread.tacv2" AllowNewMessageFromBots="true" AllowNewMessageFromConnectors="true">
+          <pnp:Tabs>
+            <pnp:Tab DisplayName="Prompt Lab" TeamsAppId="com.microsoft.teamspace.tab.web" ID="0e6870b6-037b-4cad-a029-7d8bb2e71bff" Remove="false">
+              <pnp:Configuration EntityId="" ContentUrl="https://copilot.cloud.microsoft/en-US/prompts/all" RemoveUrl="" WebsiteUrl="https://copilot.cloud.microsoft/en-US/prompts/all" />
+            </pnp:Tab>
+            <pnp:Tab DisplayName="Scenario Library" TeamsAppId="com.microsoft.teamspace.tab.web" ID="318624be-470d-4566-8f69-80f5791264ae" Remove="false">
+              <pnp:Configuration EntityId="" ContentUrl="https://adoption.microsoft.com/en-us/copilot-scenario-library/" RemoveUrl="" WebsiteUrl="https://adoption.microsoft.com/en-us/copilot-scenario-library/" />
+            </pnp:Tab>
+            <pnp:Tab DisplayName="Prompt Ingredients" TeamsAppId="com.microsoft.teamspace.tab.file.staticviewer.pdf" ID="6835718c-1468-4b9c-9009-e1d80afe6641" Remove="false">
+              <pnp:Configuration EntityId="" ContentUrl="https://{fqdn}/{parameter:inclusionPath}/{parameter:mailNickname}/Shared%20Documents/Share%20Your%20Prompt/Prompt-ingredients-one-pager.pdf" RemoveUrl="" WebsiteUrl="https://{fqdn}/{parameter:inclusionPath}/{parameter:mailNickname}/Shared%20Documents/Share%20Your%20Prompt/Prompt-ingredients-one-pager.pdf" />
+            </pnp:Tab>
+            <pnp:Tab DisplayName="Scenario Use Case Template" TeamsAppId="com.microsoft.teamspace.tab.file.staticviewer.powerpoint" ID="d9d75275-0d0d-42b2-b42a-b6bd18df2b83" Remove="false">
+              <pnp:Configuration EntityId="" ContentUrl="https://{fqdn}/{parameter:inclusionPath}/{parameter:mailNickname}/Shared%20Documents/Share%20Your%20Prompt/ScenarioUseCaseTemplate.pptx" RemoveUrl="" WebsiteUrl="https://{fqdn}/{parameter:inclusionPath}/{parameter:mailNickname}/Shared%20Documents/Share%20Your%20Prompt/ScenarioUseCaseTemplate.pptx" />
+            </pnp:Tab>
+          </pnp:Tabs>
+          <pnp:Messages>
+            <pnp:Message>
+              <![CDATA[ 
+                {
+                  "subject": "Share your favourite prompts and understand the essential ingredients to crafting the perfect prompt",
+                  "body": {
+                    "contentType": "html",
+                    "content": "<attachment id=\"ba9e630a0f06446f93b2eedaf8c608a1\"></attachment>In this channel you will be able to learn practical guidance of prompting, understand use cases and be first to understand new scenarios for Microsoft 365 Copilot capabilities.<br><br>We believe the best way to learn is from each other! So please use this space to share your experiences, where are your finding the best productivity gains and help us build a library of use cases for the rest of our organisation.<br><br>Explore the resources in the tabs above and reach out to your Project team with any questions here in this channel."
+                  },
+                  "attachments": [
+                      {
+                          "id": "ba9e630a0f06446f93b2eedaf8c608a1",
+                          "contentType": "application/vnd.microsoft.teams.messaging-announcementBanner",
+                          "contentUrl": null,
+                          "content": "{\"title\":\"Welcome to Prompting 101\",\"cardImageType\":\"colorTheme\",\"cardImageDetails\":{\"colorTheme\":\"rose\"}}",
+                          "name": null,
+                          "thumbnailUrl": null
+                      }
+                  ]
+                }
+              ]]>
+            </pnp:Message>
+          </pnp:Messages>
+        </pnp:Channel>
+        <pnp:Channel DisplayName="Ask Us Anything 📢" Description="Join the conversation in this channel to ask questions, get training and learn about new features of Microsoft 365 Copilot." IsFavoriteByDefault="true" ID="19:09d4d9ff18cf4580bc7be26579127b3d@thread.tacv2" AllowNewMessageFromBots="true" AllowNewMessageFromConnectors="true">
+          <pnp:Tabs>            
+            <pnp:Tab DisplayName="Top 10 to try" TeamsAppId="com.microsoft.teamspace.tab.web" ID="f99a0d55-8870-4ecc-9aeb-353453a0c1d1" Remove="false">
+              <pnp:Configuration EntityId="" ContentUrl="https://aka.ms/Copilot/Top10TryFirst" RemoveUrl="" WebsiteUrl="https://aka.ms/Copilot/Top10TryFirst" />
+            </pnp:Tab>
+            <pnp:Tab DisplayName="Copilot Lab" TeamsAppId="com.microsoft.teamspace.tab.web" ID="38f6aef9-694c-421c-b1b4-b3bd54b3780b" Remove="false">
+              <pnp:Configuration EntityId="" ContentUrl="https://aka.ms/CopilotLab" RemoveUrl="" WebsiteUrl="https://aka.ms/CopilotLab" />
+            </pnp:Tab>
+            <pnp:Tab DisplayName="Copilot Roadmap" TeamsAppId="com.microsoft.teamspace.tab.web" ID="158d353c-da24-4d5a-961d-20ad74f9354d" Remove="false">
+              <pnp:Configuration EntityId="" ContentUrl="https://www.microsoft.com/en-au/microsoft-365/roadmap?filters=Microsoft%20Copilot%20for%20Microsoft%20365" RemoveUrl="" WebsiteUrl="https://www.microsoft.com/en-au/microsoft-365/roadmap?filters=Microsoft%20Copilot%20for%20Microsoft%20365" />
+            </pnp:Tab>
+            <pnp:Tab DisplayName="Meet your Champions" TeamsAppId="0ae35b36-0fd7-422e-805b-d53af1579093" ID="5f3950a7-0cce-4ee9-9a84-736dfb03828d" Remove="false">
+              <pnp:Configuration EntityId="sharepointtab_0.07258658134918039" ContentUrl="https://{fqdn}/{parameter:inclusionPath}/{parameter:mailNickname}/_layouts/15/teamslogon.aspx?spfx=true&amp;dest=https%3A%2F%2F{fqdn}%2F{parameter:inclusionPath}%2F{parameter:mailNickname}%2FSitePages%2FMeet-your-Champions.aspx" RemoveUrl="" WebsiteUrl="https://{fqdn}/{parameter:inclusionPath}/{parameter:mailNickname}/SitePages/Meet-your-Champions.aspx" />
+            </pnp:Tab>
+          </pnp:Tabs>
+          <pnp:Messages>
+            <pnp:Message>
+              <![CDATA[ 
+                {
+                  "subject": "Ask your questions, get inspired and give feedback",
+                  "body": {
+                    "contentType": "html",
+                    "content": "<attachment id=\"ba9e630a0f06446f93b2eedaf8c608a1\"></attachment>Welcome to the Ask Us Anything channel. In this channel you can:<br>
+<ol><li>Ask all your questions whether they are technical or adoption related. Your <a href='https://{fqdn}/{parameter:inclusionPath}/{parameter:mailNickname}/SitePages/Meet-your-Champions.aspx'>Champions</a> and <a href='https://{fqdn}/{parameter:inclusionPath}/{parameter:mailNickname}/SitePages/Meet-your-ProjectTeam.aspx'>Project Team</a> will help answer any of your questions.</li>
+<li>Find information that will help you get the most from Microsoft 365 Copilot leveraging <a href='https://aka.ms/CopilotLab'>Copilot Lab</a>.</li>
+<li>Stay on top of new features as they are being released through our <a href='https://www.microsoft.com/en-au/microsoft-365/roadmap?filters=Microsoft%20Copilot%20for%20Microsoft%20365'>roadmap</a></li>
+</ol>
+<br>
+Most important is your feedback. Use the feedback button at the bottom right of your Copilot results and help us out by using the thumbs up/thumbs down buttons. Your feedback will be sent directly to our product engineering teams and help shape the future of Microsoft 365 Copilot. 
+<br><br>Explore the resources in the tabs above and reach out to your Project team with any questions here in this channel."
+                  },
+                  "attachments": [
+                      {
+                          "id": "ba9e630a0f06446f93b2eedaf8c608a1",
+                          "contentType": "application/vnd.microsoft.teams.messaging-announcementBanner",
+                          "contentUrl": null,
+                          "content": "{\"title\":\"Welcome to your Copilot for M365 Program\",\"cardImageType\":\"colorTheme\",\"cardImageDetails\":{\"colorTheme\":\"rose\"}}",
+                          "name": null,
+                          "thumbnailUrl": null
+                      }
+                  ]
+                }
+              ]]>
+            </pnp:Message>
+          </pnp:Messages>
+        </pnp:Channel>
+        <pnp:Channel DisplayName="Program Team" Description="Private location for Customer Enablement Team, stakeholders and Microsoft staff to collaborate on Copilot usage, issues and adoption." ID="19:2505fa5877ca442bb48aa0042c73af49@thread.tacv2" MembershipType="Private">
+          <pnp:Tabs>
+            <pnp:Tab DisplayName="Adoption Resources" TeamsAppId="0ae35b36-0fd7-422e-805b-d53af1579093" ID="c15ffc2a-7aa5-4efe-9134-5eaff2ddbb47" Remove="false">
+              <pnp:Configuration EntityId="sharepointtab_0.18536859988287668" ContentUrl="https://{fqdn}/{parameter:inclusionPath}/{parameter:mailNickname}/_layouts/15/teamslogon.aspx?spfx=true&amp;dest=https%3A%2F%2F{fqdn}%2F{parameter:inclusionPath}%2F{parameter:mailNickname}%2FSitePages%2FAdoption-Best-Practices.aspx" RemoveUrl="" WebsiteUrl="https://{fqdn}/{parameter:inclusionPath}/{parameter:mailNickname}/SitePages/Adoption-Best-Practices.aspx" />
+            </pnp:Tab>      
+            <pnp:Tab DisplayName="Customer Success Kit" TeamsAppId="com.microsoft.teamspace.tab.web" ID="dfb28606-9211-42cd-b04f-24130ef8d2d9" Remove="false">
+              <pnp:Configuration EntityId="" ContentUrl="https://adoption.microsoft.com/en-us/copilot/success-kit/" RemoveUrl="" WebsiteUrl="https://adoption.microsoft.com/en-us/copilot/success-kit/" />
+            </pnp:Tab>
+            <pnp:Tab DisplayName="Copilot Explained" TeamsAppId="com.microsoft.teamspace.tab.web" ID="98f5cc40-7a66-48bd-ad97-776ba8f10502" Remove="false">
+              <pnp:Configuration EntityId="" ContentUrl="https://learn.microsoft.com/en-us/microsoftsearch/semantic-index-for-copilot" RemoveUrl="" WebsiteUrl="https://learn.microsoft.com/en-us/microsoftsearch/semantic-index-for-copilot" />
+            </pnp:Tab>      
+            <pnp:Tab DisplayName="Technical Readiness Guide" TeamsAppId="com.microsoft.teamspace.tab.web" ID="2831a35e-47e4-45a4-87c8-e7b99386db54" Remove="false">
+              <pnp:Configuration EntityId="" ContentUrl="https://techcommunity.microsoft.com/t5/copilot-for-microsoft-365/your-path-to-value-with-copilot-for-microsoft-365/ba-p/4078744" RemoveUrl="" WebsiteUrl="https://techcommunity.microsoft.com/t5/copilot-for-microsoft-365/your-path-to-value-with-copilot-for-microsoft-365/ba-p/4078744" />
+            </pnp:Tab>
+          </pnp:Tabs>
+          <pnp:Messages>
+            <pnp:Message>
+              <![CDATA[ 
+                {
+                  "subject": "Resolve issues, decide policy and coordinate with program leaders",
+                  "body": {
+                    "contentType": "html",
+                    "content": "<attachment id=\"ba9e630a0f06446f93b2eedaf8c608a1\"></attachment>This private channel is designed for early adoption change and technical leaders to coordinate on issues before sharing with the broad user audience that will also be included in this team.  Conversations here are only viewable by private channel members.  Files stored in this area are not accessible to general team members. <br><br>✔️ Make sure you download the <b><a href='https://adoption.microsoft.com/en-us/copilot/success-kit/'>Customer Success Kit</a></b> to accelerate your time to value with Copilot. <br><br>✔️ For more information on data privacy please visit <a href='https://learn.microsoft.com/en-us/microsoft-365-copilot/microsoft-365-copilot-privacy'>Data, Privacy, and Security for Microsoft Copilot for Microsoft 365</a>. "
+                  },
+                  "attachments": [
+                      {
+                          "id": "ba9e630a0f06446f93b2eedaf8c608a1",
+                          "contentType": "application/vnd.microsoft.teams.messaging-announcementBanner",
+                          "contentUrl": null,
+                          "content": "{\"title\":\"Core Team Conversation\",\"cardImageType\":\"colorTheme\",\"cardImageDetails\":{\"colorTheme\":\"oceanGreen\"}}",
+                          "name": null,
+                          "thumbnailUrl": null
+                      }
+                  ]
+                }
+              ]]>
+            </pnp:Message>
+          </pnp:Messages>
+        </pnp:Channel>
+         <pnp:Channel DisplayName="Executive Lounge" Description="Private location for executive support and information" ID="19:6002ec6b4fcf4bdbb08e489e7d1137b1@thread.tacv2" MembershipType="Private">
+          <pnp:Tabs>
+            <pnp:Tab DisplayName="Business Leaders Scenarios" TeamsAppId="com.microsoft.teamspace.tab.web" ID="e2a91f11-f06c-4c24-8995-eed14afa9ad0" Remove="false">
+              <pnp:Configuration EntityId="" ContentUrl="https://www.microsoft.com/en-us/worklab/how-business-leaders-are-using-copilot-right-now" RemoveUrl="" WebsiteUrl="https://www.microsoft.com/en-us/worklab/how-business-leaders-are-using-copilot-right-now" />
+            </pnp:Tab>
+            <pnp:Tab DisplayName="Scenario Library" TeamsAppId="com.microsoft.teamspace.tab.web" ID="ef00c476-035a-4da7-bad9-134c56a8b9c0" Remove="false">
+              <pnp:Configuration EntityId="" ContentUrl="https://aka.ms/Copilot/ScenarioLibrary" RemoveUrl="" WebsiteUrl="https://aka.ms/Copilot/ScenarioLibrary" />
+            </pnp:Tab>
+          </pnp:Tabs>
+          <pnp:Messages>
+            <pnp:Message>
+              <![CDATA[ 
+                {
+                  "subject": "Ask questions of your peers, leaders and our Copilot Enablement Team",
+                  "body": {
+                    "contentType": "html",
+                    "content": "<attachment id=\"ba9e630a0f06446f93b2eedaf8c608a1\"></attachment>Welcome to your private lounge to explore useful scenarios with Microsoft 365 Copilot.  We value your time and feedback.  Please ask your questions here or provide us with your insights so that we can continuously improve your experience and the effectiveness of our Copilot capabilites in your business."
+                  },
+                  "attachments": [
+                      {
+                          "id": "ba9e630a0f06446f93b2eedaf8c608a1",
+                          "contentType": "application/vnd.microsoft.teams.messaging-announcementBanner",
+                          "contentUrl": null,
+                          "content": "{\"title\":\"Welcome to your Copilot Exec Lounge\",\"cardImageType\":\"colorTheme\",\"cardImageDetails\":{\"colorTheme\":\"lavender\"}}",
+                          "name": null,
+                          "thumbnailUrl": null
+                      }
+                  ]
+                }
+              ]]>
+            </pnp:Message>
+          </pnp:Messages>
+        </pnp:Channel>
+        <pnp:Channel DisplayName="General" Description="Your Center of Excellence for all things Copilot including training content, Champion guidance and updates from Microsoft." ID="19:BvcQwaoi3q0CxS_DXWD9ehMZDmcojEKYjbrrwbeir2U1@thread.tacv2">
+          <pnp:Messages>
+            <pnp:Message>
+              <![CDATA[ 
+                {
+                  "subject": "Resources and tools to help you get the most from Microsoft 365 Copilot",
+                  "body": {
+                    "contentType": "html",
+                    "content": "<attachment id=\"ba9e630a0f06446f93b2eedaf8c608a1\"></attachment>Welcome to the Microsoft 365 Center of Excellence team.  This template was configured for your use as you deploy, configure and use Microsoft 365 Copilot features.  It leverages best practices from the Microsoft 365 Adoption Framework and can be tailored to your own best practices and team culture.<br/><br/>Each channel has a specific purpose in program operations.<br>
+                    <ol><li><b>General</b> - Introduction to the Copilot Center of Excellence</li>
+<li><b>Ask Us Anything</b> - Ask your Champions & Project Team technical or adoption questions, view Copilot training links and best practices, look at what's coming on the Copilot roadmap</li>
+<li><b>Share your Prompt</b> - Everything and anything to do with Prompting! Share your favourite prompts and use cases, find out more information on prompt engineering and the top 4 ingredients of a prompt</li>
+</ol>"
+                  },
+                  "attachments": [
+                      {
+                          "id": "ba9e630a0f06446f93b2eedaf8c608a1",
+                          "contentType": "application/vnd.microsoft.teams.messaging-announcementBanner",
+                          "contentUrl": null,
+                          "content": "{\"title\":\"Your Copilot Center of Excellence\",\"cardImageType\":\"colorTheme\",\"cardImageDetails\":{\"colorTheme\":\"flaxYellow\"}}",
+                          "name": null,
+                          "thumbnailUrl": null
+                      }
+                  ]
+                }
+              ]]>
+            </pnp:Message>
+          </pnp:Messages>
+        </pnp:Channel>
+      </pnp:Channels>
+    </pnp:Team>
+  </pnp:Teams>
+</pnp:Provisioning>
