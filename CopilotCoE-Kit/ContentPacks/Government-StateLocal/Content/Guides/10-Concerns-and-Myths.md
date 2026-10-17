@@ -5,11 +5,11 @@ These are the concerns people raise most often about Copilot. If yours isn't her
 
 ## "Microsoft trains its AI on what I type."
 
-Not when you sign in with your work account. With the green shield showing, enterprise data protection applies: Microsoft doesn't use your prompts and responses to train its foundation models. With a personal account or a consumer AI tool, those protections don't apply, so use Public information only. See [Enterprise data protection](https://learn.microsoft.com/en-us/copilot/microsoft-365/enterprise-data-protection).
+Not when you sign in with your work account. With the enterprise data protection indicator showing, enterprise data protection applies: Microsoft doesn't use your prompts and responses to train its foundation models. With a personal account or a consumer AI tool, those protections don't apply, so use Public information only. See [Enterprise data protection](https://learn.microsoft.com/en-us/copilot/microsoft-365/enterprise-data-protection).
 
 ## "Copilot can see all my files and email."
 
-Copilot Chat works with what you type or upload, information from the web, and the file or email you have open when you use it inside a Microsoft 365 app. In Outlook it may also use your inbox, calendar, and meetings. It can never open anything you don't already have access to. The paid Microsoft Copilot license can also search across the files and mail you can access; see [Who gets what](Guide-Who-Gets-What.aspx) for what your organization offers.
+Copilot Chat works with what you type or upload and information from the web. In Outlook it may also use the email you have open, your inbox, calendar, and meetings - that in-app reading does not extend to Word, Excel, PowerPoint, or OneNote. It can never open anything you don't already have access to. The paid Microsoft Copilot license adds the in-app experience inside Word/Excel/PowerPoint/OneNote and can search across the files and mail you can access; see [Who gets what](Guide-Who-Gets-What.aspx) for what your organization offers. Exact in-app availability varies by tenant configuration and rollout status per Microsoft's own documentation, so confirm your organization's current state (including any GCC/GCC-Moderate differences) rather than relying on this alone.
 
 ## "What I type into Copilot is never a public record."
 
@@ -41,7 +41,7 @@ The CoE recommends that an AI tool is never the only way to complete a required 
 
 ## "I'll get in trouble just for trying it."
 
-No. Refining your own writing, brainstorming, and drafting announcements from public information are low-risk ways to start. Use your work account, check the green shield, and use the [Is this OK to use?](Guide-Is-This-OK.aspx) check when you're unsure.
+No. Refining your own writing, brainstorming, and drafting announcements from public information are low-risk ways to start. Use your work account, check for the enterprise data protection indicator, and use the [Is this OK to use?](Guide-Is-This-OK.aspx) check when you're unsure.
 
 ## "Other AI tools are better. Why Copilot?"
 

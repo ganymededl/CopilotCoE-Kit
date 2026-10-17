@@ -21,6 +21,8 @@
   "SampleNotice": "",
   "SupportEmail": "<copilot-help>@<your-domain>",
   "NavigationOrder": "TaskFirst",
+  "LearningEnvironment": "HigherEducation",
+  "EnableDeveloperTrack": false,
   "NavigationPinFirst": [
     "Home"
   ],

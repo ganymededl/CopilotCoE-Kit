@@ -28,9 +28,9 @@ Each month, tell the CoE if your details or office hours change, so it can updat
 Use the same five steps each time, and change the example to suit your department.
 
 1. **Why it matters (1 min).** Confirm Copilot Chat is available with your work or school account. Today's example explores a task this department does every week; record any time saved rather than assuming it.
-2. **Sign in and the green shield (1 min).** Show copilot.cloud.microsoft, work or school sign-in, and the green shield.
+2. **Sign in and the protection indicator (1 min).** Show copilot.cloud.microsoft, work or school sign-in, and the enterprise data protection indicator.
 3. **One real task (4 min).** Run one prompt from the [Prompt library](Guide-Prompt-Library.aspx) on Public material from your department. Show the first result, one follow-up prompt, and what you changed by hand.
-4. **The data rule (2 min).** Public: yes. Internal: only with the green shield, and only if the organization's rules allow it. Confidential: no, unless the organization has approved that use. Point to the [Is this OK to use?](Guide-Is-This-OK.aspx) check.
+4. **The data rule (2 min).** Public: yes. Internal: only with the enterprise data protection indicator showing, and only if the organization's rules allow it. Confidential: no, unless the organization has approved that use. Point to the [Is this OK to use?](Guide-Is-This-OK.aspx) check.
 5. **Where to go next (2 min).** Learning Series, Prompt library, your office hours, and Ask Us Anything.
 
 Don't demonstrate with real student, personnel, or other confidential information, even on your own screen.

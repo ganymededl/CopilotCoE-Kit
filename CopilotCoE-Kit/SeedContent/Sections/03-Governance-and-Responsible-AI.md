@@ -11,15 +11,9 @@ Documents published by {{OrgName}} are the authoritative source. Documents hoste
 
 {{LinkList:GovernanceLinks}}
 
-## Which data can go into which AI tool
+## Protect data before using Copilot
 
-Use your organization's data classification policy and {{Link:AIGuidelines|AI guidelines}}.{{IfRouteMissing:AIGuidelines| If a route is not configured, these starter examples do not authorize data use; confirm the applicable policy before using non-public information.}}
-
-| Data level | Examples | Typical AI guidance (confirm with your organization) |
-|---|---|---|
-| Public | Published web pages, catalog descriptions, public announcements | Any approved tool |
-| Internal | Planning, administrative, or academic data for internal use | Enterprise tools with work or school sign-in only, after review |
-| Confidential or regulated | Student records, health, financial, personnel, or research data protected by law or contract | Only where your organization has explicitly approved the tool and use |
+Use your organization's classification policy and {{Link:AIGuidelines|AI guidelines}}. The [Data protection](Data-Protection.aspx) page groups data levels with permissions, labels, DLP, oversharing checks and guidance for agent builders. [Data readiness for IT](Guide-Data-Readiness-for-IT.aspx) is the separate operational checklist. Neither page authorizes restricted-data use.
 
 ## How the CoE classifies Copilot uses (risk tiers)
 

@@ -44,7 +44,8 @@ param(
     [switch]$ReplaceManagedFiles,
     [switch]$ReplaceOrgAssets,
     [switch]$AcceptOrgAssets,
-    [switch]$AllowMissingDataSafetyIncidentRoute
+    [switch]$AllowMissingDataSafetyIncidentRoute,
+    [ValidateSet("Customer", "Demo")][string]$ContentMode = "Customer"
 )
 
 Set-StrictMode -Version Latest
@@ -104,6 +105,7 @@ foreach ($name in @("AdminFQDN", "SiteFQDN", "PnPClientID", "Tenant", "MailNickn
     Set-Variable -Name $name -Value $value
 }
 . (Join-Path $PSScriptRoot "Internal\OrganizationProfile.ps1")
+$null = Get-CoELearningEnvironment -Settings $settings
 $profileOverrides = @{}
 foreach ($name in @("OrgName", "OrgNoun", "ShortName", "DisplayName", "SampleNotice")) {
     if ($PSBoundParameters.ContainsKey($name)) { $profileOverrides[$name] = $PSBoundParameters[$name] }
@@ -175,13 +177,11 @@ if ($PnPClientID -notmatch "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-
 }
 
 $prepareScript = Join-Path $PSScriptRoot "Internal\Prepare-CopilotCoE.ps1"
-# Optional HomeTiles in Deployment-Settings.json: five { "title", "page" [, "image"] } entries for the home page hero.
-$homeTilesJson = ""
-if ($settings -and $settings.PSObject.Properties["HomeTiles"] -and $settings.HomeTiles) {
-    $homeTilesJson = ConvertTo-Json @($settings.HomeTiles) -Depth 5 -Compress
+if ($settings -and $settings.PSObject.Properties["HomeTiles"] -and @($settings.HomeTiles).Count) {
+    throw "HomeTiles belongs to the old Home layout. Remove it before installing the 3.7 Home."
 }
 $prepareArgs = @{ DisplayName = $DisplayName; ShortName = $ShortName; EnvironmentLabel = $EnvironmentLabel
-    SampleNotice = $sampleNoticeArgument; OrgName = $OrgName; OrgNoun = $OrgNoun; HomeTilesJson = $homeTilesJson }
+    SampleNotice = $sampleNoticeArgument; OrgName = $OrgName; OrgNoun = $OrgNoun }
 # Optional ScenarioLibraryUrl: the Teams Scenario Library tab (default: education scenarios).
 if ($settings -and $settings.PSObject.Properties["ScenarioLibraryUrl"] -and $settings.ScenarioLibraryUrl) {
     $scenarioUri = $null
@@ -338,10 +338,30 @@ $siteConnection = Connect-PnPOnline `
 $segments = ([uri]$coeUrl).Segments
 $inclusionPath = $segments[$segments.Length - 2].TrimEnd("/")
 $coePath = "$inclusionPath/$MailNickname"
-Set-PnPWebHeader `
-    -SiteLogoUrl "/$coePath/SiteAssets/copilot/copilotlogo_transp.png" `
-    -Connection $siteConnection `
-    -ErrorAction Stop
+if ($DisplayName.Length -gt 30) {
+    Write-Warning ("The site title '$DisplayName' is $($DisplayName.Length) characters. Titles longer than " +
+        "about 30 characters make the Teams group chrome and site title more likely to crowd the mega-menu " +
+        "row off screen at 1366px even on a header layout that usually has room; confirm with a screenshot.")
+}
+# Extended gives the site title its own full-width row, separate from the Teams group chrome (icon, Private
+# group, Added to favorites, member count), so the mega-menu's seven sections stay visible at 1366px instead
+# of collapsing behind "...". Not every Teams-connected site offers Extended yet. Standard is the fallback
+# (it showed every section but Help at 1366px in review); Compact is NOT used as a fallback here because an
+# earlier review already found its header hides the menu behind "..." on these same sites.
+try {
+    Set-PnPWebHeader `
+        -SiteLogoUrl "/$coePath/SiteAssets/copilot/copilotlogo_transp.png" `
+        -HeaderLayout Extended `
+        -Connection $siteConnection `
+        -ErrorAction Stop
+} catch {
+    Write-Warning "Extended header layout is not available on this site; falling back to Standard. $_"
+    Set-PnPWebHeader `
+        -SiteLogoUrl "/$coePath/SiteAssets/copilot/copilotlogo_transp.png" `
+        -HeaderLayout Standard `
+        -Connection $siteConnection `
+        -ErrorAction Stop
+}
 
 if ($ResumeExisting) {
     $requiredPageNames = @(
@@ -363,6 +383,11 @@ if ($ResumeExisting) {
         # A site with none of the CoE pages means the first site-package run stopped
         # part-way; finish it. Partially customized sites are never overwritten.
         Write-Host "The existing site has none of the CoE pages, so the first site-package run did not finish. Applying the site package to complete it."
+        # -WarningAction SilentlyContinue: Invoke-PnPSiteTemplate's own engine warns "Folder 'X' already exists
+        # in parent folder 'Y'" for the default SiteAssets/_SiteTemplates scaffolding that Teams/SharePoint
+        # already creates on every fresh site, before the vendor template ever runs - expected and harmless on
+        # every single clean install, but reads as a failure to an admin watching the console. -ErrorAction
+        # Stop is unaffected: a genuine template application failure still throws and stops the run.
         Invoke-PnPSiteTemplate `
             -Path $pnpPackage `
             -TemplateId "CopilotCoETemplate" `
@@ -371,6 +396,7 @@ if ($ResumeExisting) {
                 mailNickname = $MailNickname
             } `
             -Connection $siteConnection `
+            -WarningAction SilentlyContinue `
             -ErrorAction Stop
         $existingPageNames = @(
             Get-PnPPage -Connection $siteConnection -ErrorAction Stop |
@@ -734,7 +760,7 @@ if ($SeedDemoContent) {
         -OrgName $OrgName -OrgNoun $OrgNoun -DisplayName $DisplayName `
         -RepairCapturedPages:(!$ResumeExisting) `
         -AllowMissingDataSafetyIncidentRoute:$AllowMissingDataSafetyIncidentRoute `
-        -SettingsPath $SettingsPath -OrgPath $OrgPath -AcceptOrgAssets:$AcceptOrgAssets
+        -SettingsPath $SettingsPath -OrgPath $OrgPath -AcceptOrgAssets:$AcceptOrgAssets -ContentMode $ContentMode
 } else {
     Write-CoESecurityPosture -SiteUrl $coeUrl -TeamId $coeGroup.GroupId -ExpectedVisibility $TeamVisibility `
         -CoESiteSharingCapability $CoESiteSharingCapability -SettingsPath $SettingsPath `

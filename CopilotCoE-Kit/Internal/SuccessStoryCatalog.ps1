@@ -100,6 +100,13 @@ function Sync-CoESuccessStoryCatalog {
     assets. Missing mappings omit videos; StoriesFolderUrl never fabricates a video link.
     All seeds are validated before mutation and inserted Submitted/pending, regardless of
     configured Status. SAMPLE titles receive no measured TimeSaved claim.
+    ContentMode Customer never ADDS a SAMPLE-titled seed to a fresh or growing catalog - the
+    kit's own "SAMPLE - " title prefix (the same kit-wide convention used by the Training
+    Calendar) is filtered out of the seed list before insertion. This does not delete or
+    otherwise touch a SAMPLE row a prior Demo-mode run (or a Demo-to-Customer switch on the
+    same site) already added - unlike the Training Calendar, this catalog's own established
+    invariant below is that nothing here ever auto-deletes existing content, sample or not;
+    an admin reviews and removes old samples deliberately, same as everything else in Review.
     Only a previously unmoderated list is migrated: authentic Published -> approved,
     Retired -> rejected, everything else (including old SAMPLE/MOCK stories) -> pending.
     Existing fields, content, status, assets, and moderated item versions are preserved.
@@ -112,11 +119,19 @@ function Sync-CoESuccessStoryCatalog {
         [Parameter(Mandatory)][AllowEmptyCollection()][object[]]$Seeds,
         [Parameter(Mandatory)][AllowEmptyCollection()][object[]]$ResolvedReviewers,
         [string]$StoriesFolderUrl = "", [hashtable]$StoryVideoUrls = @{},
-        [string[]]$Audiences = @("Faculty", "Staff", "Student"))
+        [string[]]$Audiences = @("Faculty", "Staff", "Student"), [ValidateSet("Demo", "Customer")][string]$ContentMode = "Demo")
     $site = Assert-CoECatalogSiteUrl $SiteUrl
     $Audiences = @(Assert-CoEStoryAudiences $Audiences)
     $validated = @(ConvertTo-CoESuccessStorySeeds -Seeds $Seeds -StoriesFolderUrl $StoriesFolderUrl `
         -StoryVideoUrls $StoryVideoUrls -Audiences $Audiences)
+    if ($ContentMode -eq "Customer") {
+        # A fresh or growing Customer-mode install never gets the kit's own illustrative SAMPLE rows seeded
+        # into it in the first place - confirmed live: without this filter, a brand-new Customer-mode site
+        # still ended up with 5 "SAMPLE - ..." success stories because nothing here previously looked at
+        # ContentMode at all. "SAMPLE - " is the same kit-wide title prefix the Training Calendar already
+        # keys off of.
+        $validated = @($validated | Where-Object { $_.Title -notmatch '^SAMPLE - ' })
+    }
     $reviewerIds = @{}
     foreach ($reviewer in $ResolvedReviewers) {
         $id = Get-CoECatalogValue $reviewer "Id"

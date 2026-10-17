@@ -15,7 +15,7 @@ This check summarizes your organization's {{Link:AIGuidelines|AI guidelines}}. T
 | Internal: day-to-day organizational business such as planning notes, draft procedures, or committee drafts | Go to question 2. |
 | Public: published or public information | Go to question 3. Any AI tool your organization allows is fine. |
 
-**2. Are you signed in with your work or school account, with the green shield showing?**
+**2. Are you signed in with your work or school account, with the enterprise data protection indicator showing?**
 
 | If... | Then... |
 |---|---|

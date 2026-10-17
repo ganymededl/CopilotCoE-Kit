@@ -14,6 +14,13 @@ ONE KIT, ANY ORGANIZATION
   the organization's own prompts go in <OrgPath>\Content\OrgPrompts (see the README there).
   Building for another organization never requires repackaging the ZIP.
 
+COPILOT HUB CREDIT
+  Navigation, tool-comparison, guided-learning and agent-lifecycle patterns were informed
+  by the Copilot Hub release at https://github.com/MSPFE2019/Copilot-Hub.
+  Its release ZIP includes an MIT license. Review that release license and attribution
+  when distributing adaptations. This kit retains its own CoE theme and Microsoft's
+  original marketing and vendor assets; no live customer site was recaptured as a template.
+
 READ FIRST
   01_Admin-Quickstart.html  short admin checklist with highlighted commands to run one at a time.
   The Installation Runbook and Deck for your organization, delivered next to this ZIP
@@ -64,9 +71,13 @@ QUICK START - RUN THE NUMBERED SCRIPTS IN ORDER (01, 02, then 03 when needed; 04
        .\02_Install-CopilotCoE.ps1 -OrgPath C:\CoE-Orgs\Contoso -SeedDemoContent
      Do NOT add -ResumeExisting to a fresh build. Every run saves a transcript to
      <organization folder>\RevisionAudit\<run id>-transcript.txt, including runs that fail.
-     A site that stopped partway is removed (04_Remove-CopilotCoE.ps1 -Purge) and rebuilt.
+     If a run stops partway, verify the exact Team and site, fix the cause, and
+     use -ResumeExisting as described below. A fresh kit acceptance run instead
+     needs a new alias or a separately reviewed removal; never purge on an error alone.
   6b. Check the result (read-only). The install is not finished until this prints ALL CHECKS PASSED:
        .\Test-CoEInstall.ps1 -OrgPath C:\CoE-Orgs\Contoso -SiteUrl https://contoso.sharepoint.com/sites/CopilotCoE
+      Before accepting a fresh install, visually check and capture Home (readable linked card titles),
+      one Copilot tool page, Guided learning, and the Agents menu at normal laptop width.
       Interactive browser sign-in is the default. After app consent changes, add
       -ForceAuthentication to obtain a fresh sign-in; no cache-file rename is needed.
       -AuthenticationMode DeviceLogin remains available where interactive sign-in
@@ -150,17 +161,57 @@ ADOPTION CATALOGS - LEARNING AND EXISTING INTERNAL AGENTS
   Validate a fresh installation and your organization's overrides before production rollout.
 
 HOME AND NAVIGATION
-  Fresh Home tiles expose Start, Learning paths, Prompts, Agents and Get help.
-  Explore Copilot also links Success stories, guides, governance and champions.
-  NavigationOrder TaskFirst groups managed links as Start, Learn, Prompts, Agents,
-  Get help and Governance; customer links are preserved. AToZ and AsBuilt remain opt-ins.
-  To repair the captured Home, titles, banners and Mechanics page on an existing site:
+  Fresh Home has two introduction links (Start in 10 minutes; Which Copilot should I use?),
+  tool cards and four area links. Demo mode also shows a live upcoming-sessions view (only
+  approved future entries in Lists/CopilotTrainingCalendar appear; samples remain drafts).
+  Customer mode never shows that live view - SharePoint's List web part reserves blank space
+  up to its row count regardless of how many rows actually match, which reads as broken with
+  zero or few real sessions - so Customer mode shows a "No sessions scheduled yet" heading
+  next to the "See the full training calendar" link instead, until the organization adds
+  real events.
+  NavigationOrder TaskFirst builds the horizontal mega menu with a Standard site header
+  so the section labels have their own row on the existing Teams site:
+  Home, Get started, Copilot tools, Training, Agents, Governance, Community, Help.
+  Headers do not navigate; each destination is one or two clicks away. Training contains
+  Technical readiness, Microsoft Mechanics, Learning series and the Training calendar.
+  Home and every managed section page link back to Home. AToZ and AsBuilt remain opt-ins.
+  To deliberately rebuild a customized Home on an existing site after review:
     .\03_Update-CoEContent.ps1 -OrgPath <folder> -Scope All -RepairCapturedPages
-  Review this LIVE update first. It preserves unrelated Home controls and backs up Home.
+  This replaces the Home controls and backs up the prior page; it does not capture
+  tenant-specific site content into the kit. Ordinary updates preserve existing Home.
+  Guided learning shows Microsoft Learn course cards: four common tracks, Educators and
+  Students in higher education, and optional Developers. Set LearningEnvironment and
+  EnableDeveloperTrack in the organization profile. Verify all course destinations and
+  local policy before launch. Tools, agents and data pages show their actual review date.
+  Data protection is under Governance; the incident menu item uses Links.DataSafetyIncident.
+  No paid-license request call-to-action is created.
   A normal resume does not replace captured pages. Update the organization's
   NavigationOrder to TaskFirst if its older profile explicitly selected AToZ.
   Previously created orphan pages are preserved for administrator review; fresh builds
   omit the empty News-and-Updates page. No test agent is automatically approved or featured.
+
+UPGRADING A SITE BUILT BY KIT 3.8 OR EARLIER
+  A plain rerun of 03_Update-CoEContent.ps1 does NOT bring an already-built site's content pages up to
+  date with every kit fix - most content page HTML (breadcrumbs, section labels, guide text, including the
+  3.8.2 breadcrumb and "Learning paths" naming fixes) is written once by Write-ManagedPage and then
+  preserved on every later run unless you pass -ReplaceManagedPages; an ordinary rerun intentionally leaves
+  an already-existing page alone so it never overwrites a customer's own edits. Home's welcome-text block
+  (Repair-CoEHubPages / Set-CoEHomeWelcomeText) follows the SAME rule, not an exception to it: it only runs
+  when -RepairCapturedPages is passed (a fresh, non-resumed install always passes it; 03_Update-CoEContent.ps1
+  only passes it through when you explicitly ask for it). A plain rerun never touches it, same as every
+  other content page - it does not refresh itself automatically, and no earlier claim that it did was ever
+  implemented that way.
+  For a site built on an earlier kit version, to actually pick up content-page fixes (breadcrumbs, guide
+  wording, section labels, Home's welcome text) do ONE of:
+    .\03_Update-CoEContent.ps1 -OrgPath <folder> -Scope All -ReplaceManagedPages -RepairCapturedPages
+        (rewrites every managed page from the current kit content, including Home; review the page's own
+        prior version first - a backup of its previous field values is written to RevisionAudit before it
+        is overwritten)
+    or a fresh install into a new site, if you do not need to preserve the existing site's history.
+  Test-CoEInstall.ps1 checks the CURRENT kit's expected content (current breadcrumb labels, "Learning
+  paths" naming, and so on); a site that has not been through -ReplaceManagedPages/-RepairCapturedPages or a
+  fresh install since the fix it is checking for will still show those specific checks as FAIL, and that is
+  expected until one of the two upgrade paths above is used - it is not evidence the kit itself is broken.
 
 IF THE BUILD STOPS PARTWAY
   Fix the cause named in the red message, then re-run with the same settings:
@@ -210,7 +261,7 @@ CHANGE THE CONTENT LATER (script 03, as often as needed)
   For one organization: copy any kit text file from SeedContent into
   <folder>\Content at the same path, edit the copy, or add files to
   <folder>\Assets. Example: Content\Sections\04-Service-Catalog-and-Support.md
-  to remove the "Request a license" row. Runbook section 6 lists everything an
+  to set approved service offerings. Runbook section 6 lists everything an
   organization can and should customize. Edit SeedContent only to change the
   default for every organization.
   Then run one of:

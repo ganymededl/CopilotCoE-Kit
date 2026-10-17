@@ -269,22 +269,36 @@ function Get-CoETeamRoster(
     }
 }
 
+function Get-CoEChannelFilesFolder(
+    [string]$TeamId,
+    [object]$Channel,
+    [object]$Connection
+) {
+    for ($attempt = 1; $attempt -le 6; $attempt++) {
+        $folder = $null
+        try {
+            $folder = Get-PnPTeamsChannelFilesFolder -Team $TeamId -Channel $Channel.Id -Connection $Connection -ErrorAction Stop
+        } catch {
+            $message = $_.Exception.Message
+            if ($message -match '401|403|Unauthorized|Forbidden|Access.?Denied|insufficient.*privilege|invalid.?token|authentication' -or
+                $message -notmatch 'Timeout|canceled|cancelled|429|TooManyRequests|502|503|504|temporarily|ServiceUnavailable|GatewayTimeout|404|NotFound|Not Found') {
+                throw
+            }
+            if ($attempt -eq 6) { throw }
+        }
+        if ($folder -and $folder.webUrl) { return $folder }
+        if ($attempt -lt 6) { Start-Sleep -Seconds 10 }
+    }
+    throw "SharePoint files site for '$($Channel.DisplayName)' is not ready."
+}
+
 function Get-CoEChannelSiteUrl(
     [string]$TeamId,
     [object]$Channel,
     [string]$ParentSiteUrl,
     [object]$Connection
 ) {
-    $folder = $null
-    for ($attempt = 1; $attempt -le 6 -and -not $folder; $attempt++) {
-        try {
-            $folder = Get-PnPTeamsChannelFilesFolder -Team $TeamId -Channel $Channel.Id -Connection $Connection -ErrorAction Stop
-        } catch {
-            if ($attempt -eq 6) { throw }
-        }
-        if (-not $folder -and $attempt -lt 6) { Start-Sleep -Seconds 10 }
-    }
-    if (-not $folder -or -not $folder.webUrl) { throw "SharePoint files site for '$($Channel.DisplayName)' is not ready." }
+    $folder = Get-CoEChannelFilesFolder -TeamId $TeamId -Channel $Channel -Connection $Connection
     $folderUri = [uri]$folder.webUrl
     $channelSiteUrl = "$($folderUri.Scheme)://$($folderUri.Host)$($folderUri.AbsolutePath.Substring(0, $folderUri.AbsolutePath.LastIndexOf('/')))"
     if ($channelSiteUrl.TrimEnd("/") -eq $ParentSiteUrl.TrimEnd("/")) {

@@ -465,12 +465,16 @@ function Sync-CoEManagedResourceTab {
     $tabs = @(Get-CoEResourceTabs -Team $Team -Channel $Channel -DisplayName $Specification.DisplayName -Connection $Connection)
     $intended = @($tabs | Where-Object { Test-CoEManagedTabTarget $_ $Specification "" })
     if (-not $intended.Count) {
-        $args = @{ Type = $Specification.Type }
-        if ($Specification.Type -eq "WebSite") { $args.ContentUrl = $Specification.ContentUrl }
-        elseif ($Specification.Type -eq "SharePointPageAndList") { $args.WebsiteUrl = $Specification.WebsiteUrl }
+        # Named $tabArgs, not $args: $args is PowerShell's own automatic variable (the non-declared argument
+        # list available inside any function/script) - the same class of mistake caught and fixed in
+        # Complete-CopilotCoE.ps1's page-header loop. Harmless here too (nothing downstream reads the real
+        # $args in this scope), but renamed for the same reason: never shadow an automatic variable.
+        $tabArgs = @{ Type = $Specification.Type }
+        if ($Specification.Type -eq "WebSite") { $tabArgs.ContentUrl = $Specification.ContentUrl }
+        elseif ($Specification.Type -eq "SharePointPageAndList") { $tabArgs.WebsiteUrl = $Specification.WebsiteUrl }
         else { throw "Unsupported managed resource tab type '$($Specification.Type)'." }
         Add-TeamsTabWithRetry -Team $Team -Channel $Channel -DisplayName $Specification.DisplayName `
-            -TabArgs $args -Specification $Specification -Connection $Connection | Out-Null
+            -TabArgs $tabArgs -Specification $Specification -Connection $Connection | Out-Null
     }
     $tabs = @(Get-CoEResourceTabs -Team $Team -Channel $Channel -DisplayName $Specification.DisplayName -Connection $Connection)
     $intended = @($tabs | Where-Object { Test-CoEManagedTabTarget $_ $Specification "" })

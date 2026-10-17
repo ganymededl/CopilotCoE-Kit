@@ -13,7 +13,7 @@ The list does not record personal completion. Use your organization's learning s
 
 ## Live sessions
 
-The Learning Series on the CoE home page lists upcoming live sessions.
+The Learning Series below and the Home page's upcoming sessions both read the Copilot Training Calendar. If no sessions are listed, none have been approved for display yet. Open the Training calendar for the full schedule.
 
 ## Self-paced resources
 

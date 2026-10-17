@@ -1,0 +1,114 @@
+{
+  "reviewedOn": "2026-10-12",
+  "sources": [
+    "https://learn.microsoft.com/en-us/office365/servicedescriptions/office-365-platform-service-description/microsoft-365-copilot#feature-availability",
+    "https://learn.microsoft.com/en-us/microsoft-copilot-studio/fundamentals-what-is-copilot-studio",
+    "https://learn.microsoft.com/en-us/microsoft-copilot-studio/requirements-licensing-gcc"
+  ],
+  "tools": [
+    {
+      "title": "Copilot Chat",
+      "page": "Tool-Copilot-Chat",
+      "bestFor": "Drafting, summarizing and brainstorming with information you supply",
+      "description": "Use the Microsoft Copilot app with a work or school account. Availability and the information Chat can reach depend on the tenant and the context in which it is open.",
+      "access": "Eligible work or school account; check your tenant",
+      "where": "Microsoft Copilot app (work account), if enabled",
+      "gcc": "Available in GCC; check your tenant rollout",
+      "openUrl": "https://copilot.cloud.microsoft/",
+      "learnUrl": "https://learn.microsoft.com/en-us/copilot/overview",
+      "governmentLearnUrl": "https://learn.microsoft.com/en-us/microsoft-365/copilot/gov-overview"
+    },
+    {
+      "title": "Microsoft 365 Copilot",
+      "page": "Tool-Microsoft-365-Copilot",
+      "bestFor": "Work-grounded help in eligible Microsoft 365 apps",
+      "description": "The paid Microsoft 365 Copilot product uses work information the signed-in person can already access. The Microsoft Copilot app is an interface, not a new name for the product or license.",
+      "access": "Microsoft 365 Copilot license and tenant enablement",
+      "where": "Eligible Microsoft 365 apps and Microsoft Copilot app (work account)",
+      "gcc": "Available in GCC; check your tenant rollout",
+      "openUrl": "https://copilot.cloud.microsoft/",
+      "learnUrl": "https://learn.microsoft.com/en-us/microsoft-365/copilot/microsoft-365-copilot-overview"
+    },
+    {
+      "title": "Researcher",
+      "page": "Tool-Researcher-and-Analyst",
+      "bestFor": "Multistep research with citations",
+      "description": "Researcher can synthesize complex questions from authorized work and web sources. Review the sources, findings and any generated citations.",
+      "access": "Microsoft 365 Copilot license; check your tenant",
+      "where": "Agents in the Microsoft Copilot app (work account), if enabled",
+      "gcc": "Check your tenant",
+      "openUrl": "https://copilot.cloud.microsoft/",
+      "learnUrl": "https://support.microsoft.com/en-us/microsoft-365-copilot/get-started-with-researcher-in-microsoft-365-copilot"
+    },
+    {
+      "title": "Analyst",
+      "page": "Tool-Researcher-and-Analyst",
+      "bestFor": "Analysis of uploaded data and authorized work files",
+      "description": "Analyst helps inspect data, explain patterns and create analyses. Check the source data and calculations before relying on its conclusions.",
+      "access": "Microsoft 365 Copilot license; check your tenant",
+      "where": "Agents in the Microsoft Copilot app (work account), if enabled",
+      "gcc": "Check your tenant",
+      "openUrl": "https://copilot.cloud.microsoft/",
+      "learnUrl": "https://support.microsoft.com/en-us/microsoft-365-copilot/get-started-with-analyst-in-microsoft-365-copilot"
+    },
+    {
+      "title": "Copilot Cowork",
+      "page": "Tool-Copilot-Cowork",
+      "bestFor": "Multistep work across Microsoft 365 with actions you review",
+      "description": "Describe an outcome and review the plan, sources and actions as Cowork works across Microsoft 365.",
+      "access": "Microsoft 365 Copilot license, with usage-based billing and Cowork billing both enabled for your tenant. The built-in App skill additionally requires Frontier program access.",
+      "where": "Microsoft Copilot app (work account), in Outlook and Teams, if enabled",
+      "gcc": "Commercial availability only as of this writing - Microsoft's own Cowork documentation makes no GCC availability statement. Confirm current GCC status with Microsoft before relying on Cowork in a GCC tenant.",
+      "openUrl": "https://copilot.cloud.microsoft/",
+      "learnUrl": "https://learn.microsoft.com/en-us/microsoft-365/copilot/cowork/get-started"
+    },
+    {
+      "title": "Copilot Studio",
+      "page": "Tool-Copilot-Studio",
+      "bestFor": "Building and governing low-code agents",
+      "description": "Create agents with approved knowledge, topics and actions. Check the environment, security review, billing and cloud-specific features before sharing.",
+      "access": "Capacity and consumption vary; check your tenant",
+      "where": "Copilot Studio portal in your cloud",
+      "gcc": "Available in GCC with feature differences; check your tenant",
+      "openUrl": "https://copilotstudio.microsoft.com/",
+      "governmentUrl": "https://gcc.powerva.microsoft.us/",
+      "learnUrl": "https://learn.microsoft.com/en-us/microsoft-copilot-studio/fundamentals-what-is-copilot-studio",
+      "governmentLearnUrl": "https://learn.microsoft.com/en-us/microsoft-copilot-studio/requirements-licensing-gcc"
+    },
+    {
+      "title": "SharePoint agents",
+      "page": "Tool-SharePoint-Agents",
+      "bestFor": "Answers grounded in approved SharePoint content",
+      "description": "Start from a site or library you can access. Sharing an agent does not grant people access to its source content; check the permissions and review path.",
+      "access": "Check your tenant and any capacity requirements",
+      "where": "Authorized SharePoint site or document library, if enabled",
+      "gcc": "Check your tenant",
+      "openUrl": "https://support.microsoft.com/en-us/sharepoint/copilot-in-sharepoint/get-started-with-agents-in-sharepoint",
+      "learnUrl": "https://support.microsoft.com/en-us/sharepoint/copilot-in-sharepoint/get-started-with-agents-in-sharepoint"
+    },
+    {
+      "title": "Microsoft Foundry",
+      "page": "Tool-Developer-Copilots",
+      "optional": true,
+      "bestFor": "Pro-code AI applications and agents",
+      "description": "Microsoft Foundry serves Azure AI development, not the Microsoft 365 Copilot license. Azure Government and Microsoft 365 GCC are different clouds; verify your cloud's portal and supported services.",
+      "access": "Azure resources and consumption; check your cloud",
+      "where": "Microsoft Foundry portal, where supported",
+      "gcc": "Check your tenant; Azure Government is not GCC",
+      "openUrl": "https://ai.azure.com/",
+      "learnUrl": "https://learn.microsoft.com/en-us/azure/foundry/what-is-foundry"
+    },
+    {
+      "title": "GitHub Copilot",
+      "page": "Tool-Developer-Copilots",
+      "optional": true,
+      "bestFor": "AI assistance for software development",
+      "description": "GitHub Copilot is a separate product for supported developer workflows. Entitlements and organization policies are independent of Microsoft 365 Copilot.",
+      "access": "Separate organization plan or seat; check your tenant",
+      "where": "Supported IDE or GitHub, if enabled",
+      "gcc": "Check your tenant",
+      "openUrl": "https://github.com/features/copilot",
+      "learnUrl": "https://docs.github.com/en/copilot/how-tos/copilot-on-github/chat-with-copilot/chat-in-github"
+    }
+  ]
+}

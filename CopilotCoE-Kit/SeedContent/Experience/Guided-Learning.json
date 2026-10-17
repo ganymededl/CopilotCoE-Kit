@@ -1,0 +1,91 @@
+{
+  "reviewedOn": "2026-10-12",
+  "tracks": [
+    {
+      "name": "Everyone",
+      "page": "Guided-Learning-Everyone",
+      "audience": "All staff",
+      "higherEducationAudience": "All faculty and staff",
+      "context": "Start in 10 minutes; Is this OK to use?; Prompt library",
+      "courses": [
+        { "title": "Work smarter with AI", "url": "https://learn.microsoft.com/en-us/training/modules/explore-microsoft-copilot-business-users/" },
+        { "title": "Work smarter with Microsoft Copilot Chat", "url": "https://learn.microsoft.com/en-us/training/modules/work-smarter-with-microsoft-365-copilot-chat/" },
+        { "title": "Use AI for everyday tasks", "url": "https://learn.microsoft.com/en-us/training/modules/use-ai-everyday-tasks/" },
+        { "title": "Get ready to work with Microsoft Copilot", "url": "https://learn.microsoft.com/en-us/training/modules/get-ready-work-microsoft-365-copilot/" }
+      ]
+    },
+    {
+      "name": "Supervisors and leaders",
+      "page": "Guided-Learning-Supervisors-and-Leaders",
+      "audience": "People managers and business leaders",
+      "context": "Measuring impact; Roles and contacts",
+      "courses": [
+        { "title": "Explore the business value of generative AI solutions", "url": "https://learn.microsoft.com/en-us/training/paths/explore-business-value-generative-ai-solutions/" },
+        { "title": "Understand the foundations of generative AI for business leaders", "url": "https://learn.microsoft.com/en-us/training/modules/understand-foundations-generative-ai-business-leaders/" },
+        { "title": "Explore prebuilt Microsoft Copilot agents", "url": "https://learn.microsoft.com/en-us/training/modules/explore-prebuilt-microsoft-365-copilot-agents/" }
+      ]
+    },
+    {
+      "name": "Agent makers",
+      "page": "Guided-Learning-Agent-Makers",
+      "audience": "Agent builders and reviewers",
+      "context": "Where agents are built; Agent lifecycle and approval; Agent Showcase",
+      "courses": [
+        { "title": "Transform your everyday business processes with agents", "url": "https://learn.microsoft.com/en-us/training/paths/implement-no-code-copilot-agents-microsoft-365-sharepoint/" },
+        { "title": "Build and manage an agent", "url": "https://learn.microsoft.com/en-us/training/modules/build-manage-no-code-copilot-agent-sharepoint/" },
+        { "title": "Agent in a day - Online workshop", "url": "https://learn.microsoft.com/en-us/training/paths/agents-online-workshop/", "governmentNote": "Module 4 covers autonomous triggers, which may not be available in GCC. Check your tenant's current feature support before attempting that module." },
+        { "title": "Get started with Microsoft Copilot Studio", "url": "https://learn.microsoft.com/en-us/training/modules/power-virtual-agents-bots/" }
+      ]
+    },
+    {
+      "name": "IT and admins",
+      "page": "Guided-Learning-IT-and-Admins",
+      "audience": "IT, security and admin-center owners",
+      "context": "Data readiness for IT; Data protection; Technical readiness",
+      "courses": [
+        { "title": "Explore Microsoft 365 Copilot and agent administration", "url": "https://learn.microsoft.com/en-us/training/paths/explore-microsoft-365-copilot-agent-administration/" },
+        { "title": "Prepare your organization for Microsoft 365 Copilot", "url": "https://learn.microsoft.com/en-us/training/paths/prepare-your-organization-microsoft-365-copilot/" },
+        { "title": "Perform basic administrative tasks for Microsoft 365 Copilot agents", "url": "https://learn.microsoft.com/en-us/training/modules/perform-admin-tasks-microsoft-365-copilot-agents/" },
+        { "title": "Examine data security and compliance in Microsoft 365 Copilot", "url": "https://learn.microsoft.com/en-us/training/modules/examine-data-security-microsoft-365-copilot/" }
+      ]
+    },
+    {
+      "name": "Educators",
+      "page": "Guided-Learning-Educators",
+      "audience": "Faculty and instructional staff",
+      "environment": "HigherEducation",
+      "context": "Teaching and learning; Data protection; Is this OK to use?",
+      "courses": [
+        { "title": "AI for educators", "url": "https://learn.microsoft.com/en-us/training/paths/ai-education/" },
+        { "title": "Know where to leverage AI in your classroom", "url": "https://learn.microsoft.com/en-us/training/modules/know-where-leverage-ai-classroom/" },
+        { "title": "Enhance teaching and learning with Copilot Chat", "url": "https://learn.microsoft.com/en-us/training/modules/enhance-teaching-learning-microsoft-copilot/" },
+        { "title": "Build a reflective AI practice over time", "url": "https://learn.microsoft.com/en-us/training/modules/build-reflective-ai-practice-over-time/" }
+      ]
+    },
+    {
+      "name": "Students",
+      "page": "Guided-Learning-Students",
+      "audience": "Students whose institution permits AI study support",
+      "environment": "HigherEducation",
+      "context": "Students and AI; Start in 10 minutes; Get help",
+      "courses": [
+        { "title": "Use AI for everyday tasks", "url": "https://learn.microsoft.com/en-us/training/modules/use-ai-everyday-tasks/" },
+        { "title": "Boost your productivity with Microsoft Copilot", "url": "https://learn.microsoft.com/en-us/training/modules/boost-productivity-with-copilot/" },
+        { "title": "Work smarter with Microsoft Copilot Chat", "url": "https://learn.microsoft.com/en-us/training/modules/work-smarter-with-microsoft-365-copilot-chat/" }
+      ]
+    },
+    {
+      "name": "Developers",
+      "page": "Guided-Learning-Developers",
+      "audience": "Developers using approved GitHub Copilot or Microsoft Foundry",
+      "optional": true,
+      "context": "Developer tools; Where agents are built",
+      "courses": [
+        { "title": "Introduction to building AI agents", "url": "https://learn.microsoft.com/en-us/training/paths/build-foundation-extend-microsoft-365-copilot/" },
+        { "title": "Introduction to retrieval-augmented generation concepts", "url": "https://learn.microsoft.com/en-us/training/modules/rag-fundamentals/" },
+        { "title": "Get started with GitHub Copilot", "url": "https://learn.microsoft.com/en-us/training/modules/get-started-github-copilot/" },
+        { "title": "Responsible AI with GitHub Copilot", "url": "https://learn.microsoft.com/en-us/training/modules/responsible-ai-with-github-copilot/" }
+      ]
+    }
+  ]
+}

@@ -11,16 +11,16 @@ This check summarizes your organization's {{Link:AIGuidelines|AI guidelines}}. T
 
 | If it is... | Then... |
 |---|---|
-| Not public or restricted: personal information about residents or employees, case files, health, tax, criminal justice, personnel, or financial information, or anything protected by law or contract | **Don't**, unless your organization has approved that specific use. |
-| Internal: day-to-day agency business such as planning notes, draft procedures, or working drafts | Go to question 2. |
-| Public: published or public information | Go to question 3. Any AI tool your organization allows is fine. |
+| High (protected or regulated): personal information about residents or employees, case files, health, tax, criminal justice, personnel, or financial information, or anything protected by law or contract | **Don't**, unless your organization has approved that specific use. |
+| Moderate (not public): day-to-day agency business such as planning notes, draft procedures, or working drafts | Go to question 2. |
+| Low (public): published or public information | Go to question 3. Any AI tool your organization allows is fine. |
 
-**2. Are you signed in with your work account, with the green shield showing?**
+**2. Are you signed in with your work account, with the enterprise data protection indicator showing?**
 
 | If... | Then... |
 |---|---|
 | Yes | Go to question 3. |
-| No, or you're using a personal account or another AI tool | **Don't** use Internal information. Use Public information only, or sign in with your work account. |
+| No, or you're using a personal account or another AI tool | **Don't** use Moderate (not public) information. Use Low (public) information only, or sign in with your work account. |
 
 **3. Will the result be used to decide something about a person?** For example, eligibility for a benefit or service, a hire, discipline, an enforcement action, or an accommodation.
 
@@ -48,7 +48,7 @@ These are starting points. Use your organization's own ratings where they exist.
 | Summarize a document | Depends on the document | Check the document's data level first. Read the original before making any important decision. |
 | Analyze data or survey responses | Depends on the data | Remove identifying information first, even in a protected tool. Ask IT if you're unsure. |
 | Draft a policy or procedure | Ask first | A subject matter expert must review it before it is used. |
-| Draft wording for a performance review | Ask first | The judgments must be yours. Don't include confidential information. |
+| Draft wording for a performance review | Ask first | The judgments must be yours. Don't include High (protected or regulated) information. |
 | Screen job applicants, evaluate bids, or decide eligibility | Don't | AI can introduce bias, and these are decisions about people or contracts. |
 | Record or summarize a meeting with an AI notetaker | Ask first | Use only notetakers your organization has approved, and never when confidential matters are discussed. |
 | Paste case files or residents' personal information | Don't | Not without explicit organizational approval for that use. |

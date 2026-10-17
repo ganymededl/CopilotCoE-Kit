@@ -1,9 +1,10 @@
-GOVERNMENT CONTENT PACK (STATE AND LOCAL) - COPILOT COE KIT 3.6
+GOVERNMENT CONTENT PACK (STATE AND LOCAL) - COPILOT COE KIT
 =================================================================
 
 What this is
   An organization folder for the Copilot CoE kit, pre-filled with government wording. It uses the
-  same kit and the same scripts as the higher-education build. Only the content differs.
+  same kit and the same scripts as the higher-education build. LearningEnvironment "Government"
+  automatically loads this pack before any files in the organization folder override it.
 
   Works with: commercial and GCC-Moderate Microsoft 365 tenants (both use sharepoint.com and
   graph.microsoft.com). Not for GCC High or DoD.
@@ -16,14 +17,16 @@ How to use it
      SupportEmail, ChampionDepartments and the Links (service desk, technology request,
      data/safety incident, AI guidelines). Set TimeZone to the agency's Windows time zone ID,
      for example "Central Standard Time".
-  3. Put the agency's own files in Assets\ (see each README), and replace any Content\ file
-     you want to change. Each file in Content\ replaces the kit file at the same path.
+  3. Put the agency's own files in Assets\ (see each README). Keep only agency-specific
+     changes in Content\; unmodified government content is loaded from this pack.
   4. From the kit folder run, in order:
        .\01_Register-CoEProvisioningApp.ps1 -OrgPath <folder>     (once per tenant)
        .\02_Install-CopilotCoE.ps1 -OrgPath <folder> -SeedDemoContent -AcceptOrgAssets
        .\Test-CoEInstall.ps1 -OrgPath <folder> -SiteUrl <site URL printed by the install>
-     Do not use -ResumeExisting to recover a failed install; remove the site with
-     04_Remove-CopilotCoE.ps1 -Purge and install again.
+     If the same build stops partway, check its transcript and exact Team/site
+     identity, fix the cause, and resume as described in START-HERE. To prove
+     a changed kit, use a new alias or a separately reviewed removal and fresh
+     install. Never purge a site merely because an installer run stopped.
 
 What the pack changes (compared with the kit's higher-education content)
   Settings   OrgNoun "agency"; GuidesIntro for staff, supervisors and IT; story audiences
@@ -39,7 +42,9 @@ What the pack changes (compared with the kit's higher-education content)
              (Content\OrgPrompts\gcc_prompt_library_import_1..3_of_3.csv, admin center import format).
              The three empty highered_prompt_library_*.csv files keep the higher-ed prompts out.
              Add the agency's own prompt CSVs to Content\OrgPrompts (see the README there).
-  Calendar   Six DRAFT - DEMONSTRATION sessions (October to December 2026).
+  Calendar   Six sample sessions (three Approved, three DRAFT - DEMONSTRATION) dated relative to the
+             install date (StartOffsetDays in Training-Calendar.csv), spread across the first ~9 weeks -
+             never fixed calendar dates, so the calendar doesn't run dry weeks after a demo install.
   Governance All twelve Leadership and Program Governance drafts and both Start here notes,
              rewritten for government:
              program and legal authority, Low/Moderate/High data, public records and retention,
@@ -47,7 +52,8 @@ What the pack changes (compared with the kit's higher-education content)
              draft is left out (empty Content\Higher-Ed-AI-Governance-Framework-DRAFT.md); the
              acceptable-use policy in 03-Policy-and-Risk-Decisions covers it.
   Checklist  CoE-Revision-Content.json: government champion examples and owner-checklist wording.
-             Keep its "version" value equal to the kit's (3.6).
+             Keep its "version" value equal to the master kit's own CoE-Revision-Content.json "version" -
+             check that file rather than hard-coding a number here; it changes with every kit release.
 
 Before showing it to an agency
   - Every governance document is an ILLUSTRATIVE DRAFT, not policy. Say so.

@@ -612,6 +612,11 @@ try {
         "are critical to your success." = "are critical to the $nounHtml's success."
         "Understand the key capabilities of Microsoft 365 Copilot" = "Understand the key capabilities of Microsoft Copilot"
         "new scenarios for Microsoft 365 Copilot capabilities" = "new scenarios for Microsoft Copilot capabilities"
+        # Vendor's own Technical Readiness.aspx link - a redirecting URL, not the final one the kit's own
+        # Copilot-FAQs.md and 06-Stay-Current.md guides already use for the identical destination. Found by
+        # searching the vendor .pnp template contents directly (03_Build\SourceOriginal\CopilotCoESite\
+        # CopilotCoESite.pnp -> Files\*.xml), not just kit source text, after an earlier link sweep missed it.
+        "https://learn.microsoft.com/en-us/deployoffice/privacy/microsoft-365-copilot" = "https://learn.microsoft.com/en-us/microsoft-365/copilot/microsoft-365-copilot-privacy"
     }
     $wordingHits = @{}
     foreach ($node in @($xmlDocument.SelectNodes('//@*|//text()'))) {

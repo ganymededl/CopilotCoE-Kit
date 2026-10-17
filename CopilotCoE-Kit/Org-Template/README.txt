@@ -36,11 +36,10 @@ Deployment-Settings.json   REQUIRED. Tenant, names, support mailbox, and links.
                 Optional LearningSystem is the HTTPS link to your LMS; no LMS integration or completion tracking is created.
                 Optional DataSafetyIncident is an approved HTTPS incident-reporting route;
                 blank = the Service Catalog/support mailbox route, not a tenant security setting.
-  HomeTiles     OPTIONAL. The five home page tiles, in order, each { "title", "page" } and an
-                optional "image" (a SiteAssets path). Leave it out to use the kit's five tiles.
-                Example: { "title": "Which AI tool?", "page": "Guide-Which-AI-Tool.aspx" }.
-                Applied at install (02). Updates preserve existing Home content unless
-                -RepairCapturedPages is explicitly requested; keep custom HomeTiles in this profile.
+  Home          On a fresh install, the kit replaces the captured five-tile layout with the
+                approved 3.7 Home. Old HomeTiles settings are not supported; remove them
+                before installation. Existing customized Home pages are preserved on updates
+                unless -RepairCapturedPages is explicitly requested.
   GovernanceLinks / TrainingLinks   Lists of {label, url} shown on those pages.
   Agents        Insert-only seed proposals for the existing Agent Showcase list: name, description, audience,
                 examplePrompt, owner, url. The url is the agent's Copilot Chat link
@@ -73,10 +72,15 @@ Deployment-Settings.json   REQUIRED. Tenant, names, support mailbox, and links.
                 restoration, and permanent site purge removes them. Do not separately delete the level before
                 soft deletion: that would alter a restored site's permissions. If keeping the site but removing
                 only the catalogs manually, check all grants referencing this level before manually removing it.
-  NavigationOrder     "TaskFirst" (default) groups the site's left navigation by common tasks;
+  NavigationOrder     "TaskFirst" (default) builds a horizontal mega menu without changing the Teams site type;
                       "AToZ" opts into alphabetical order; "AsBuilt" leaves build order.
                       Applied by 02 and by 03 -Scope Guides/All.
-  NavigationPinFirst  Links kept above the A-Z list (default [ "Home" ]). Site contents stays last.
+  NavigationPinFirst  Links kept first (default [ "Home" ]). Site contents stays last.
+  LearningEnvironment REQUIRED: "HigherEducation" (this template) or "Government".
+                Missing or unrecognized values stop installation and content updates before sign-in.
+                Controls Educators and Students tracks and government-specific tool links;
+                all four common audience tracks remain visible.
+  EnableDeveloperTrack  false by default; true adds Developers and developer tool pages.
   TimeZone      Windows time zone ID for the site's regional settings (default "Eastern Standard Time";
                 list: Get-TimeZone -ListAvailable). Training-calendar times are read in this zone.
   ChampionDepartments  Your real units for the Department Champions directory, for example
@@ -125,8 +129,7 @@ opting in; ordinary updates leave these pages alone.
 
 Content\   OPTIONAL. Replace any kit text file by putting your version at the same path
            as in the kit's SeedContent folder. Start from a copy of the kit file, then edit it.
-             Content\Sections\04-Service-Catalog-and-Support.md     (delete a row such as
-                                                    'Request a license', or swap a {{MailTo:...}} link for your form URL)
+             Content\Sections\04-Service-Catalog-and-Support.md     (set actual service scope and support routes)
              Content\Sections\03-Governance-and-Responsible-AI.md   (your governance page)
              Content\Sections\Sections.json                         (ADD a section/channel, or REMOVE one;
                                                                      copy the whole kit file first - Runbook 6.3)
@@ -148,7 +151,9 @@ Content\   OPTIONAL. Replace any kit text file by putting your version at the sa
              Content\Training-Calendar.csv                          (your session dates)
              Content\Learning-Paths.json                             (sequenced role learning; stable IDs)
              Content\CoE-Revision-Content.json                      (champion page intro, governance Start here text)
-             Content\ResourceLinks.json                             (where the Home page Resources cards point)
+             Content\Experience\Guided-Learning.json                (reviewed Microsoft Learn course cards)
+             Content\Experience\Tools.json                          (reviewed tool comparison and destinations)
+             Content\ResourceLinks.json                             (legacy template setup, not shown on 3.7 Home)
              Content\Governance\program|leadership\...              (governance drafts; -Scope Governance -ReplaceFiles)
              Content\Higher-Ed-AI-Governance-Framework-DRAFT.md     (organization-wide AI policy draft;
                                                                      an EMPTY file leaves the proposed policy/link out;
@@ -235,7 +240,7 @@ LEARNING PATHS AND AGENT CATALOG UPGRADE
    Use Manage all entries to review a pending retirement. Hosting a video does not approve it or
    restrict its file permissions. Draft files must remain restricted to the intended reviewers.
 
-REVISION 3.6 - COPILOT PROMPT LIBRARY
+REVISION 3.6 - COPILOT PROMPT LIBRARY (RETAINED IN 3.7)
   A new list, Copilot Prompt Library (Lists/CopilotPromptLibrary), shows ready-made Copilot prompts
   grouped by department, with views By task type, Copilot work (license needed), Review and Manage all
   entries. It appears on the "Prompt library by role" page under "Organization prompt library".
@@ -274,7 +279,7 @@ REVISION 3.5 - ONE KIT FOR HIGHER EDUCATION AND GOVERNMENT
   same path under Content\ (unchanged behavior). The Students and AI owner-checklist item now appears
   only when that guide is published.
 
-  Content packs ship inside the kit (3.6 and later): ContentPacks\Government-StateLocal. Copy the pack
+  Content packs ship inside the kit (3.7 and later): ContentPacks\Government-StateLocal. Copy the pack
   folder out of the kit, fill in Deployment-Settings.json, and install with -OrgPath as usual.
 
 REVISION 3.4 - GOVERNANCE WORD LINKS AND RESOURCE REPAIR
@@ -386,7 +391,7 @@ BEFORE A PURGE (04 -Purge) - BACK UP THIS WHOLE FOLDER
 =====================================================================================
 OWNER LAUNCH CHECKLIST - KEPT OFF THE PUBLIC PAGES
 =====================================================================================
-  Setup reminders (incident route, real support mailbox, license request route, champion
+  Setup reminders (incident route, real support mailbox, tool entitlements, champion
   appointments, calendar, removing the sample line) appear only on the Program Governance
   Start here page, under "Owner launch checklist (CoE owners only)". Public pages carry
   no setup instructions. Work through that list before inviting the wider audience.

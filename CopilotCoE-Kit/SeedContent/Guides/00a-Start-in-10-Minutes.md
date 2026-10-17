@@ -7,16 +7,16 @@ Microsoft Copilot Chat is available to your organization's faculty, staff, and e
 
 1. Go to **copilot.cloud.microsoft**, or open the Microsoft Copilot app.
 2. Sign in with your **work or school account**, not a personal Microsoft account.
-3. Look for the **green shield** near the prompt box. It means enterprise data protection applies to this conversation.
+3. Look for the **enterprise data protection indicator** near the prompt box (the exact icon and color are set by Microsoft and can change, so check what the current Copilot app shows). It confirms enterprise data protection applies to this conversation.
 
-**No green shield?** Stop. Sign out and sign in again with your work or school account. Until you see the shield, use public information only.
+**Don't see the indicator?** Stop. Sign out and sign in again with your work or school account. Until you see it, use public information only.
 
 ## 2. Know what you can paste (1 minute)
 
 Follow your organization's data-classification rules. The [Governance and Responsible AI](CoE-Governance-and-Responsible-AI.aspx) page shows which data can go into which AI tool.
 
 - **Public information**, such as published pages and announcements: fine with any account.
-- **Internal information**, such as planning notes and draft procedures: only with your work or school account and the green shield showing, and only if your organization's rules allow it.
+- **Internal information**, such as planning notes and draft procedures: only with your work or school account and the enterprise data protection indicator showing, and only if your organization's rules allow it.
 - **Confidential information**, such as student records, grades, accommodation details, health, personnel, or financial information: don't enter it unless your organization has approved that use.
 
 Not sure? Take the one-minute [Is this OK to use?](Guide-Is-This-OK.aspx) check.
@@ -56,11 +56,11 @@ Pick your role, copy a prompt, and replace the [brackets].
 ## Where Copilot shows up
 
 - **On the web** at copilot.cloud.microsoft, and in the **Microsoft Copilot app** on desktop and mobile.
-- **Inside some Microsoft 365 apps, such as Outlook.** When you use Copilot inside an app, it can read the file or email you have open, and in Outlook it may use your inbox and calendar. Don't ask Copilot about confidential email or files.
+- **Inside Outlook**, if your organization has enabled it. When you use Copilot Chat inside Outlook, it can read the email you have open and may use your inbox and calendar. Don't ask Copilot about confidential email. (Copilot Chat does not add this in-app experience inside Word, Excel, PowerPoint, or OneNote - that embedded authoring experience is part of the licensed Microsoft Copilot product; see [Who gets what](Guide-Who-Gets-What.aspx). Microsoft's own documentation notes that exact in-app availability varies by tenant configuration and rollout status, so confirm what your organization currently sees before relying on this.)
 
 ## Next steps
 
 - Find more prompts in the [Prompt library](Guide-Prompt-Library.aspx).
-- Join a live session in the Learning Series on the CoE home page.
+- Join a live session from the Training Calendar on the CoE home page.
 - Ask your [department champion](Meet-your-Champions.aspx) for help with your own tasks.
 - Students: read [Students and AI](Guide-Students-and-AI.aspx).

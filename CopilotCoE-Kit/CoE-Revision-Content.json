@@ -1,5 +1,5 @@
 {
-  "version": "3.6",
+  "version": "3.8.5",
   "scope": "Starter content; no real appointments, adopted policies, or contacts are created",
   "champions": {
     "title": "Find your department Copilot champion",
@@ -88,7 +88,7 @@
         },
         {
           "where": "Who gets what guide",
-          "action": "Publish how people request paid Copilot or join a pilot interest list, who is eligible, and when requests are reviewed."
+          "action": "Confirm the informational comparison of Copilot Chat and Microsoft 365 Copilot with the organization's current entitlements and approved support path."
         },
         {
           "where": "Students and AI guide",

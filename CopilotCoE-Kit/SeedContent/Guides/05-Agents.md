@@ -27,6 +27,9 @@ Every shared agent must have a named owner and a backup. Agents without an activ
 
 ## Learn more
 
+- [Where agents are built](Where-Agents-Are-Built.aspx) - choose an approved surface and check prerequisites.
+- [Agent lifecycle and approval](Agent-Lifecycle-and-Approval.aspx) - follow the maker, CoE review, IT approval and publication path.
+- [Agent Showcase](CoE-Agent-Showcase.aspx) - submit a proposed listing for review.
 - [Agents in Microsoft 365](https://adoption.microsoft.com/en-us/agents-in-microsoft-365/)
 - [Agent Registry in the Microsoft 365 admin center](https://learn.microsoft.com/en-us/microsoft-365/admin/manage/agent-registry?view=o365-worldwide)
 - [Copilot Control System](https://learn.microsoft.com/en-us/microsoft-365/copilot/copilot-controls/overview)

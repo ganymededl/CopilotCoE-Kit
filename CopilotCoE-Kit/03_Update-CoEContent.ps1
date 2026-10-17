@@ -29,6 +29,10 @@ Use -Scope All -EnsureResourceTabs to restore missing default resource tabs deli
 Without that switch, updates preserve a Top 10 tab that an organization intentionally removed.
 Use -RepairCapturedPages to deliberately repair the kit's legacy Home, adoption, roles and
 Microsoft Mechanics pages. Without it, captured pages and custom Home content are preserved.
+Pass -MailNickname <alias> if the organization folder's Deployment-Settings.json still remembers an
+earlier alias than the one actually installed (for example after a later 02_Install-CopilotCoE.ps1 run
+used a new -MailNickname without updating the settings file) - otherwise this script computes its
+target SiteUrl from whatever alias is on file, which can silently point at a retired site.
 #>
 [CmdletBinding()]
 param(
@@ -41,12 +45,14 @@ param(
     [string]$ShortName,
     [string]$DisplayName,
     [string]$SampleNotice,
+    [string]$MailNickname,
     [switch]$ReplaceFiles,
     [switch]$ReplaceOrgAssets,
     [switch]$AcceptOrgAssets,
     [switch]$EnsureResourceTabs,
     [switch]$RepairCapturedPages,
-    [switch]$AllowMissingDataSafetyIncidentRoute
+    [switch]$AllowMissingDataSafetyIncidentRoute,
+    [ValidateSet("Customer", "Demo")][string]$ContentMode = "Customer"
 )
 
 Set-StrictMode -Version Latest
@@ -75,7 +81,16 @@ if ($OrgPath) {
 if (-not $SettingsPath) { $SettingsPath = Join-Path $PSScriptRoot "Deployment-Settings.json" }
 if (-not (Test-Path -LiteralPath $SettingsPath -PathType Leaf)) { throw "Settings file not found: $SettingsPath" }
 $s = Get-Content -LiteralPath $SettingsPath -Raw | ConvertFrom-Json
+# -MailNickname lets this script target a DIFFERENT alias than whatever the settings file remembers - the
+# same CLI-overrides-settings-file precedence 02_Install-CopilotCoE.ps1 already has for this exact field.
+# Confirmed missing live: an organization folder reused across several installs under different aliases
+# (02_Install-CopilotCoE.ps1 -MailNickname <newAlias> each time, which never writes that value back into
+# Deployment-Settings.json) left this script computing SiteUrl from the FIRST alias ever used, long after
+# later installs moved on to new ones - producing a generic SharePoint 404 deep inside catalog preflight,
+# not a clear "wrong site" error, because the URL itself was syntactically valid, just for a retired site.
+if ($PSBoundParameters.ContainsKey("MailNickname")) { $s | Add-Member -NotePropertyName MailNickname -NotePropertyValue $MailNickname -Force }
 . (Join-Path $PSScriptRoot "Internal\OrganizationProfile.ps1")
+$null = Get-CoELearningEnvironment -Settings $s
 $profileOverrides = @{}
 foreach ($name in @("OrgName", "OrgNoun", "ShortName", "DisplayName", "SampleNotice")) {
     if ($PSBoundParameters.ContainsKey($name)) { $profileOverrides[$name] = $PSBoundParameters[$name] }
@@ -116,6 +131,7 @@ $completeArgs = @{
     AcceptOrgAssets     = [bool]$AcceptOrgAssets
     EnsureResourceTabs  = [bool]$EnsureResourceTabs
     AllowMissingDataSafetyIncidentRoute = [bool]$AllowMissingDataSafetyIncidentRoute
+    ContentMode         = $ContentMode
 }
 if ($OrgPath) { $completeArgs.OrgPath = $OrgPath }
 if ($RepairCapturedPages) { $completeArgs.RepairCapturedPages = $true }

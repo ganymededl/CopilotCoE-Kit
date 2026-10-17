@@ -8,7 +8,6 @@
 | I need to... | What happens | How to ask |
 |---|---|---|
 | Get help using Copilot | A CoE team member replies within two business days with steps or a short call | [Email the CoE help desk]({{MailTo:Copilot help request}}) |
-| Request a paid Microsoft Copilot license | The request is logged for the license review; confirm Copilot Chat eligibility with your organization | [Request a license]({{MailTo:Copilot license request}}) |
 | Book a department workshop or demo | The CoE schedules a 45-minute session for your team | [Request a workshop]({{MailTo:Copilot workshop request}}) |
 | Propose an agent or new AI tool | The CoE checks the idea, then routes it through your organization's technology request process | {{Link:TechnologyRequest|Propose an agent or new AI tool}} |
 | Share a success story | The CoE reviews the story and video before approval and publication | [Offer a story]({{MailTo:Copilot success story}}) |
