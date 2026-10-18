@@ -490,8 +490,12 @@ Describe "Mega-menu migration is safe to rerun" {
         Assert-MockCalled Remove-PnPNavigationNode -Times 0 -Exactly -Scope It -ParameterFilter { $Identity -eq 9 }
     }
     It "understands every navigation entry in the prepared Microsoft vendor template" {
+        . (Join-Path $PSScriptRoot "New-CoETestFixture.ps1")
+        $fixtureRoot = Join-Path $env:TEMP ("coe-hub-" + [guid]::NewGuid().ToString("N").Substring(0, 8))
+        try {
+        $preparedKit = New-CoEPreparedTestFixture -KitRoot $kitRoot -FixtureRoot $fixtureRoot
         Add-Type -AssemblyName System.IO.Compression.FileSystem
-        $archive = [IO.Compression.ZipFile]::OpenRead((Join-Path $kitRoot "CopilotCoESite.pnp"))
+        $archive = [IO.Compression.ZipFile]::OpenRead((Join-Path $preparedKit "CopilotCoESite.pnp"))
         try {
             $document = $null
             foreach ($entry in @($archive.Entries | Where-Object { $_.FullName -like "Files/*.xml" })) {
@@ -520,6 +524,9 @@ Describe "Mega-menu migration is safe to rerun" {
         Remove-CoELegacyNavigation offline $realLinks @()
         (@($roots | ForEach-Object Title) -join ",") | Should Be "Home"
         Assert-MockCalled Remove-PnPNavigationNode -Times 4 -Exactly -Scope It
+        } finally {
+            if (Test-Path -LiteralPath $fixtureRoot) { Remove-Item -LiteralPath $fixtureRoot -Recurse -Force }
+        }
     }
 }
 

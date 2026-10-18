@@ -49,6 +49,10 @@ public class OfflineCoEResourcePage {
 
 function Get-PnPTeamsChannel { [CmdletBinding()]param($Team, $Connection) throw "Unexpected channel read" }
 function Add-PnPTeamsChannel { [CmdletBinding()]param($Team, $DisplayName, $Description, $ChannelType, $Connection) throw "Unexpected channel create" }
+function Submit-PnPTeamsChannelMessage {
+    [CmdletBinding()]param($Team, $Channel, $Message, $ContentType, $Connection)
+    throw "Unexpected channel message"
+}
 function Get-PnPTeamsTab { [CmdletBinding()]param($Team, $Channel, $Identity, $Connection) throw "Unexpected tab read" }
 function Add-PnPTeamsTab {
     [CmdletBinding()]param($Team, $Channel, $DisplayName, $Type, $ContentUrl, $EntityId, $WebsiteUrl, $Connection)
@@ -125,11 +129,17 @@ function New-ModernResourceTab([string]$Url, [string]$FileId, [string]$Name = "M
     }
 }
 
+$resourceFixture = Join-Path $env:TEMP ("coe-resource-" + [guid]::NewGuid().ToString("N").Substring(0, 8))
+try {
+    . (Join-Path $PSScriptRoot "New-CoETestFixture.ps1")
+    $fixtureKit = New-CoEPreparedTestFixture -KitRoot $kitRoot -FixtureRoot $resourceFixture
+    $preparedTeamTemplate = Join-Path $fixtureKit "TeamTemplate-CoE.xml"
+
 Describe "Prepared resource specifications" {
     BeforeEach {
         $script:parameters = @{ fqdn = "neutral.sharepoint.com"; inclusionPath = "teams"; mailNickname = "CoE"
             displayName = 'Research & Development'; groupid = "11111111-1111-1111-1111-111111111111" }
-        $script:templatePath = Join-Path $kitRoot "TeamTemplate-CoE.xml"
+        $script:templatePath = $preparedTeamTemplate
         $script:siteUrl = "https://neutral.sharepoint.com/teams/CoE"
     }
     It "derives all three channels and eight resource destinations without captured runtime IDs" {
@@ -137,6 +147,9 @@ Describe "Prepared resource specifications" {
         $specs.Count | Should Be 3
         @($specs | ForEach-Object { $_.Tabs }).Count | Should Be 8
         @($specs | Where-Object { $_.PSObject.Properties["Id"] }).Count | Should Be 0
+        @($specs | Where-Object { -not $_.WelcomeHtml -or $_.WelcomeHtml -match '<attachment|Sample starter content|\{parameter:' }).Count | Should Be 0
+        ($specs | Where-Object DisplayName -eq "General").WelcomeHtml | Should Match "Offline Organization"
+        ($specs | Where-Object DisplayName -eq "General").WelcomeHtml | Should Match "Your Copilot Center of Excellence"
         $tabs = @($specs | ForEach-Object { $_.Tabs })
         @($tabs | Where-Object { $_.ContentUrl -match '[{}]' -or $_.WebsiteUrl -match '[{}]' }).Count | Should Be 0
         ($tabs | Where-Object DisplayName -eq "Meet your Champions").TeamsAppId | Should Be "2a527703-1f6f-4559-a332-d8a7d288cd88"
@@ -180,11 +193,75 @@ Describe "Prepared resource specifications" {
             if (Test-Path -LiteralPath $fixture) { Remove-Item -LiteralPath $fixture -Force }
         }
     }
+    It "rejects an absent or unmatched welcome message before publishing" {
+        $fixture = Join-Path $PSScriptRoot (".resource-message-" + [guid]::NewGuid().ToString("N") + ".xml")
+        try {
+            foreach ($change in @("missing", "wrong-attachment")) {
+                $document = [xml](Get-Content -LiteralPath $templatePath -Raw -Encoding UTF8)
+                $message = $document.SelectSingleNode("//*[local-name()='Channel'][@DisplayName='General']/*[local-name()='Messages']/*[local-name()='Message']")
+                if ($change -eq "missing") { [void]$message.ParentNode.RemoveChild($message) }
+                else {
+                    $payload = $message.InnerText | ConvertFrom-Json
+                    $payload.attachments[0].id = "not-the-body-attachment"
+                    $message.InnerText = $payload | ConvertTo-Json -Depth 30 -Compress
+                }
+                $document.Save($fixture)
+                { Get-CoEStandardChannelSpec -Path $fixture -Parameters $parameters -SiteUrl $siteUrl } | Should Throw
+            }
+        } finally {
+            if (Test-Path -LiteralPath $fixture) { Remove-Item -LiteralPath $fixture -Force }
+        }
+    }
+}
+
+Describe "Prepared standard channel welcome posts" {
+    BeforeEach {
+        $script:specs = @(Get-CoEStandardChannelSpec -Path $preparedTeamTemplate `
+            -Parameters @{ fqdn = "neutral.sharepoint.com"; inclusionPath = "teams"; mailNickname = "CoE"
+                displayName = "Offline Organization"; groupid = "11111111-1111-1111-1111-111111111111" } `
+            -SiteUrl "https://neutral.sharepoint.com/teams/CoE")
+        $script:channels = @($script:specs | ForEach-Object {
+            New-ResourceChannel ("runtime-" + $_.DisplayName) $_.DisplayName
+        })
+        Mock Write-Host {}
+        Mock Submit-PnPTeamsChannelMessage {}
+    }
+    It "posts the prepared text equivalent to each verified runtime channel once" {
+        Publish-CoEStandardChannelMessages -Team runtime-team -Channels $channels -Specifications $specs `
+            -SelectedChannelNames @($specs | ForEach-Object DisplayName) -Connection offline
+        Assert-MockCalled Submit-PnPTeamsChannelMessage -Times 3 -Exactly -Scope It -ParameterFilter {
+            $Team -eq "runtime-team" -and $Channel -like "runtime-*" -and $ContentType -eq "Html" -and
+            $Connection -eq "offline" -and $Message -match "<strong>" -and $Message -notmatch "<attachment|Sample starter content"
+        }
+    }
+    It "posts only the explicitly selected missing channel on repair" {
+        Publish-CoEStandardChannelMessages -Team runtime-team -Channels $channels -Specifications $specs `
+            -SelectedChannelNames @("General") -Connection offline
+        Assert-MockCalled Submit-PnPTeamsChannelMessage -Times 1 -Exactly -Scope It -ParameterFilter {
+            $Channel -eq "runtime-General" -and $Message -match "Offline Organization"
+        }
+    }
+    It "fails before any send for duplicate, unknown, or unverified channel identities" {
+        foreach ($names in @(@("General", "General"), @("General", "Unknown"), @("General", "Share Your Prompt"))) {
+            $verified = if ($names.Count -eq 2 -and $names[1] -eq "Share Your Prompt") {
+                @($channels | Where-Object DisplayName -ne "Share Your Prompt")
+            } else { $channels }
+            { Publish-CoEStandardChannelMessages -Team runtime-team -Channels $verified -Specifications $specs `
+                -SelectedChannelNames $names -Connection offline } | Should Throw
+        }
+        Assert-MockCalled Submit-PnPTeamsChannelMessage -Times 0 -Exactly -Scope It
+    }
+    It "does not retry a possibly accepted post when the response is ambiguous" {
+        Mock Submit-PnPTeamsChannelMessage { throw "Timeout after Teams accepted the post" }
+        { Publish-CoEStandardChannelMessages -Team runtime-team -Channels $channels -Specifications $specs `
+            -SelectedChannelNames @("General") -Connection offline } | Should Throw "Inspect that channel before retrying"
+        Assert-MockCalled Submit-PnPTeamsChannelMessage -Times 1 -Exactly -Scope It
+    }
 }
 
 Describe "Durable standard channel provisioning" {
     BeforeEach {
-        $script:specs = @(Get-CoEStandardChannelSpec -Path (Join-Path $kitRoot "TeamTemplate-CoE.xml") `
+        $script:specs = @(Get-CoEStandardChannelSpec -Path $preparedTeamTemplate `
             -Parameters @{ fqdn = "neutral.sharepoint.com"; inclusionPath = "teams"; mailNickname = "CoE" } `
             -SiteUrl "https://neutral.sharepoint.com/teams/CoE")
         $script:channelState = @(New-ResourceChannel general "General")
@@ -303,6 +380,10 @@ Describe "Durable standard channel provisioning" {
         Assert-MockCalled Add-PnPTeamsChannel -Times 1 -Exactly -Scope It
         Assert-MockCalled Start-Sleep -Times 1 -Exactly -Scope It
     }
+}
+
+} finally {
+    if (Test-Path -LiteralPath $resourceFixture) { Remove-Item -LiteralPath $resourceFixture -Recurse -Force }
 }
 
 Describe "Waiting for a freshly created standard channel to appear" {

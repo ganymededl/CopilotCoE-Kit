@@ -342,7 +342,7 @@ try {
         "Copilot-on-Microsoft-Mechanics.aspx"
     )
 
-    $siteDescription = "$DisplayName. $SampleNotice"
+    $siteDescription = "$DisplayName$(if ($SampleNotice) { '. ' + $SampleNotice } else { '' })"
     $xmlDocument = [System.Xml.XmlDocument]::new()
     $xmlDocument.PreserveWhitespace = $true
     $xmlDocument.LoadXml($templateXml)
@@ -427,7 +427,7 @@ try {
     }
     $checklist.SetAttribute(
         "Description",
-        "Sample planning actions. $SampleNotice Review and adapt before production use."
+        "Sample planning actions.$(if ($SampleNotice) { ' ' + $SampleNotice } else { '' }) Review and adapt before production use."
     )
 
     foreach ($row in $checklist.SelectNodes(".//pnp:DataRow", $namespaceManager)) {
@@ -803,7 +803,7 @@ foreach ($message in @($teamDocument.SelectNodes("//pnp:Message", $teamNamespace
         throw "A Teams message must contain a valid body contentType and string content."
     }
     $welcome = "Welcome to the Microsoft 365 Center of Excellence team.  This template was configured for your use as you deploy, configure and use Microsoft 365 Copilot features.  It leverages best practices from the Microsoft 365 Adoption Framework and can be tailored to your own best practices and team culture."
-    $newWelcome = "Welcome to the $DisplayName. Use this Team to learn Copilot, share safe prompts, and ask questions. $SampleNotice"
+    $newWelcome = "Welcome to the $DisplayName. Use this Team to learn Copilot, share safe prompts, and ask questions.$(if ($SampleNotice) { ' ' + $SampleNotice } else { '' })"
     if ($payload.body.contentType -eq "html") { $newWelcome = [Net.WebUtility]::HtmlEncode($newWelcome) }
     $payload.body.content = $payload.body.content.Replace($welcome, $newWelcome)
     $json = $payload | ConvertTo-Json -Depth 100 -Compress

@@ -45,6 +45,7 @@ param(
     [switch]$ReplaceOrgAssets,
     [switch]$AcceptOrgAssets,
     [switch]$AllowMissingDataSafetyIncidentRoute,
+    [string[]]$PublishWelcomeToChannels,
     [ValidateSet("Customer", "Demo")][string]$ContentMode = "Customer"
 )
 
@@ -84,6 +85,9 @@ $TeamVisibility = if ($settings -and $settings.PSObject.Properties["TeamVisibili
     [string]$settings.TeamVisibility
 } else { "Private" }
 if ($TeamVisibility -ne "Private") { throw "TeamVisibility must be Private. Public CoE Teams are not supported." }
+if ($PublishWelcomeToChannels -and -not $ResumeExisting) {
+    throw "-PublishWelcomeToChannels is only for a resumed install after visually confirming which channels lack a post."
+}
 $OrganizationEmailDomains = @()
 if ($settings -and $settings.PSObject.Properties["OrganizationEmailDomains"]) {
     $OrganizationEmailDomains = @($settings.OrganizationEmailDomains | ForEach-Object { [string]$_ })
@@ -113,6 +117,19 @@ foreach ($name in @("OrgName", "OrgNoun", "ShortName", "DisplayName", "SampleNot
 $organizationProfile = Get-CoEOrganizationProfile -Settings $settings -Overrides $profileOverrides
 foreach ($property in $organizationProfile.PSObject.Properties) {
     Set-Variable -Name $property.Name -Value $property.Value
+}
+# ContentMode is the single switch deciding demo vs. customer behavior - see Complete-CopilotCoE.ps1 lines
+# 72-85, which this mirrors for Customer mode specifically. Without this override, every direct use of
+# $SampleNotice below (the Team description and the generated CoE roles and contacts page) and the value
+# handed to Prepare-CopilotCoE.ps1 (which has no ContentMode of its own) used the organization-profile-
+# resolved value unconditionally - confirmed live: a Customer-mode build still showed "Sample starter
+# content for review by <OrgName>; not official policy or a production commitment." (the default filler
+# Get-CoEOrganizationProfile substitutes for a blank SampleNotice) on its Team description and its roles
+# page. Complete-CopilotCoE.ps1 itself is unaffected by this fix; it resolves and overrides SampleNotice
+# again on its own before using it.
+if ($ContentMode -eq "Customer" -and $SampleNotice) {
+    Write-Warning "ContentMode is Customer; ignoring the configured SampleNotice so no demo disclaimer is shown."
+    $SampleNotice = ""
 }
 # Preserve the deliberate "none" choice when another script resolves the same profile.
 $sampleNoticeArgument = if ($SampleNotice -eq "") { "none" } else { $SampleNotice }
@@ -320,7 +337,7 @@ $null = Set-CoESiteSharing -SiteUrl $coeUrl -SharingCapability $CoESiteSharingCa
 Set-PnPTeamsTeam `
     -Identity $MailNickname `
     -Visibility $TeamVisibility `
-    -Description "$DisplayName. $SampleNotice" `
+    -Description "$DisplayName$(if ($SampleNotice) { '. ' + $SampleNotice } else { '' })" `
     -Connection $adminConnection `
     -ErrorAction Stop
 
@@ -657,10 +674,10 @@ foreach ($fieldName in @("Hash", "NewsSource")) {
     }
 }
 
-$noticeHtml = [System.Net.WebUtility]::HtmlEncode($SampleNotice)
+$noticeHtml = if ($SampleNotice) { "<p>$([System.Net.WebUtility]::HtmlEncode($SampleNotice))</p>" } else { "" }
 $projectTeamHtml = @"
 <h2>CoE roles and contacts</h2>
-<p>$noticeHtml</p>
+$noticeHtml
 <h3>Roles to confirm before a production rollout</h3>
 <ul>
 <li>Executive sponsor and decision owner</li>
@@ -766,6 +783,14 @@ if ($SeedDemoContent) {
         -CoESiteSharingCapability $CoESiteSharingCapability -SettingsPath $SettingsPath `
         -OrganizationEmailDomains $OrganizationEmailDomains -OwnerUPN $SharedChannelOwnerUPN `
         -AdditionalAllowedMembers $GovernanceAdditionalAllowedMembers -Connection $adminConnection
+}
+if ($ResumeExisting -and -not $PublishWelcomeToChannels) {
+    Write-Warning "Resume mode does not repeat welcome posts. Inspect the standard channels in Teams; use -PublishWelcomeToChannels with only the names confirmed to be missing if repair is needed."
+} else {
+    $postChannels = if ($ResumeExisting) { $PublishWelcomeToChannels }
+        else { @($standardChannelSpecs | ForEach-Object { $_.DisplayName }) }
+    Publish-CoEStandardChannelMessages -Team $coeGroup.GroupId -Channels $standardChannels `
+        -Specifications $standardChannelSpecs -SelectedChannelNames $postChannels -Connection $adminConnection
 }
 Write-Host "Next: verify the site with .\Test-CoEInstall.ps1 -OrgPath <your organization folder> -SiteUrl $coeUrl"
 Stop-CoERunLog -Log $script:CoERunLog -Succeeded $true

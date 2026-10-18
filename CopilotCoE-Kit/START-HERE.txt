@@ -67,15 +67,34 @@ QUICK START - RUN THE NUMBERED SCRIPTS IN ORDER (01, 02, then 03 when needed; 04
      Review the delegated scopes with your security team. The app uses SharePoint
      AllSites.FullControl; delete the app and revoke consent when it is no longer
      needed, and clear the persisted PnP sign-in after the work is complete.
-  6. SharePoint + Teams administrator runs (once):
-       .\02_Install-CopilotCoE.ps1 -OrgPath C:\CoE-Orgs\Contoso -SeedDemoContent
+  6. SharePoint + Teams administrator runs (once) from a SHA256-verified, freshly extracted
+     release ZIP with a unique alias in the organization settings:
+       .\02_Install-CopilotCoE.ps1 -OrgPath C:\CoE-Orgs\Contoso -ContentMode Customer -SeedDemoContent
+     The signed-in administrator is shown as the author of the three welcome posts. Use
+     an approved CoE-owner/provisioning identity. Review every Assets file before adding
+     -AcceptOrgAssets; without it, the script asks before hosting eligible files.
      Do NOT add -ResumeExisting to a fresh build. Every run saves a transcript to
      <organization folder>\RevisionAudit\<run id>-transcript.txt, including runs that fail.
      If a run stops partway, verify the exact Team and site, fix the cause, and
      use -ResumeExisting as described below. A fresh kit acceptance run instead
      needs a new alias or a separately reviewed removal; never purge on an error alone.
-  6b. Check the result (read-only). The install is not finished until this prints ALL CHECKS PASSED:
-       .\Test-CoEInstall.ps1 -OrgPath C:\CoE-Orgs\Contoso -SiteUrl https://contoso.sharepoint.com/sites/CopilotCoE
+  6b. Check the result (read-only), using the exact site URL printed by install:
+       .\Test-CoEInstall.ps1 -OrgPath C:\CoE-Orgs\Contoso -SiteUrl https://contoso.sharepoint.com/sites/CopilotCoE -ContentMode Customer
+      ALL CHECKS PASSED reports no automated FAIL; a WARN still requires its named
+      manual check. A header-layout or long-title/menu-overflow WARN needs a
+      1366px site screenshot. When
+      ChannelMessage.Read.All is absent, open General, Ask Us Anything and Share Your
+      Prompt in Teams; confirm exactly one correct post per channel and no Customer-
+      mode sample notice. Do not expand tenant-wide message-reading consent merely
+      to silence this warning. Group.ReadWrite.All can post today, but Microsoft
+      Graph supports that scope for message sending only for backward compatibility.
+      Use the same -ContentMode in install, update and test (Demo only for an
+      internal demonstration with its required notice).
+      To validate the full repair/update path on a fresh internal test site:
+       .\03_Update-CoEContent.ps1 -OrgPath C:\CoE-Orgs\Contoso -Scope All -RepairCapturedPages -ContentMode Customer
+       .\Test-CoEInstall.ps1 -OrgPath C:\CoE-Orgs\Contoso -SiteUrl https://contoso.sharepoint.com/sites/CopilotCoE -ContentMode Customer
+      RepairCapturedPages can replace customized content; do not run it on an
+      established customer site without review. Recheck all three Teams posts.
       Before accepting a fresh install, visually check and capture Home (readable linked card titles),
       one Copilot tool page, Guided learning, and the Agents menu at normal laptop width.
       Interactive browser sign-in is the default. After app consent changes, add

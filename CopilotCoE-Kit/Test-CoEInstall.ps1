@@ -8,9 +8,10 @@ Run this after 02_Install-CopilotCoE.ps1 finishes (and after any 03_Update-CoECo
     .\Test-CoEInstall.ps1 -OrgPath C:\CoE-Orgs\Contoso -SiteUrl https://contoso.sharepoint.com/sites/CopilotCoE
 
 Pass -ContentMode Customer (matching whatever mode the install itself used) to additionally assert that no
-demo-only content shipped: zero SAMPLE-prefixed rows in the four seeded lists, and no "DEMO ONLY" text on any
-page. -ContentMode is not persisted anywhere on the site itself, so this script cannot infer it automatically -
-omit it to skip those two checks (as every call site before 3.8.7 did).
+demo-only content shipped: zero SAMPLE-prefixed rows in the four seeded lists, no "DEMO ONLY" text on any
+page, and no default or configured sample/demo notice phrase on any page, the site description, the Team
+description, or the Team welcome post. -ContentMode is not persisted anywhere on the site itself, so this
+script cannot infer it automatically - omit it to skip those checks (as every call site before 3.8.7 did).
 
 An install is only complete when this prints "ALL CHECKS PASSED" and exits with code 0.
 
@@ -24,7 +25,8 @@ Checks
   6  The reader views exist and the "Open the list" links on the catalog pages open (HTTP 200)
   7  The four support routes appear as links, or as a clear "not configured" notice when the route is empty
   8  (-ContentMode Customer only) No SAMPLE-prefixed rows in Training Calendar, Agent Showcase, Department
-     Champions or Success Stories; no "DEMO ONLY" text on any Site Page
+     Champions or Success Stories; no "DEMO ONLY" text and no sample/demo notice phrase on any Site Page
+     (captured pages included), the site description, the Team description, or the Team welcome post
 #>
 [CmdletBinding()]
 param(
@@ -55,8 +57,7 @@ function Add-Result([string]$Check, [string]$Item, [bool]$Ok, [string]$Detail = 
     $results.Add([pscustomobject]@{ Check = $Check; Item = $Item; Result = $(if ($Ok) { "PASS" } else { "FAIL" }); Detail = $Detail })
 }
 function Add-Warning([string]$Check, [string]$Item, [string]$Detail = "") {
-    # Use when a property-level check cannot tell a real pass from a known-bad visual state on its own;
-    # these never fail the run, but they must still be confirmed with a screenshot before accepting the install.
+    # A WARN needs the manual evidence named in its detail, not necessarily a site screenshot.
     $results.Add([pscustomobject]@{ Check = $Check; Item = $Item; Result = "WARN"; Detail = $Detail })
 }
 function Invoke-Section([string]$Check, [scriptblock]$Body) {
@@ -596,16 +597,66 @@ if ($ContentMode -eq "Customer") {
             Add-Result "8 Customer mode" "$listName has no SAMPLE-prefixed rows" $false "list could not be read: $($_.Exception.Message)"
         }
     }
+    # Must-fix from a recapture critique: a Customer-mode install still showed the literal default
+    # SampleNotice filler text ("Sample starter content for review by <OrgName>; not official policy or a
+    # production commitment.") on its Team description, Team welcome post, and CoE roles and contacts page,
+    # because 02_Install-CopilotCoE.ps1 passed the organization-profile-resolved (defaulted) SampleNotice to
+    # Prepare-CopilotCoE.ps1 and used it directly in its own template text regardless of -ContentMode. Checks
+    # both the generic default phrase and whatever notice text is actually configured in Deployment-
+    # Settings.json, since Customer mode must suppress a custom configured notice just as much as the default.
+    $defaultNoticePhrase = "Sample starter content for review by"
+    $configuredNotice = if ($s.PSObject.Properties["SampleNotice"]) { [string]$s.SampleNotice } else { "" }
+    $noticeTerms = @($defaultNoticePhrase) + $(if ($configuredNotice) { @($configuredNotice) } else { @() })
+
     $demoOnlyPages = @()
+    $noticePages = @()
     foreach ($pageName in $pages) {
         try {
             $pg = Get-PnPPage -Identity $pageName -Connection $site -ErrorAction Stop
             $pageText = ($pg.Controls | ForEach-Object { if ($_.PSObject.Properties["Text"]) { [string]$_.Text } }) -join " "
             if ($pageText -match '(?i)\bDEMO\s+ONLY\b') { $demoOnlyPages += $pageName }
+            if (@($noticeTerms | Where-Object { $pageText -match [regex]::Escape($_) }).Count) { $noticePages += $pageName }
         } catch { $demoOnlyPages += "$pageName (could not be read)" }
     }
     Add-Result "8 Customer mode" "no page contains the literal phrase 'DEMO ONLY'" ($demoOnlyPages.Count -eq 0) `
         "found on: $($demoOnlyPages -join ', ')"
+    Add-Result "8 Customer mode" "no page contains a sample/demo notice phrase (captured pages included)" ($noticePages.Count -eq 0) `
+        "found on: $($noticePages -join ', ')"
+
+    $webDescription = [string](Get-PnPWeb -Includes Description -Connection $site).Description
+    $descriptionHits = @($noticeTerms | Where-Object { $webDescription -match [regex]::Escape($_) })
+    Add-Result "8 Customer mode" "Site description has no sample/demo notice phrase" ($descriptionHits.Count -eq 0) `
+        "found: $($descriptionHits -join '; ')"
+
+    try {
+        $team = Get-PnPTeamsTeam -Identity $s.MailNickname -Connection $admin -ErrorAction Stop
+        $teamDescription = [string]$team.description
+        $teamHits = @($noticeTerms | Where-Object { $teamDescription -match [regex]::Escape($_) })
+        Add-Result "8 Customer mode" "Team description has no sample/demo notice phrase" ($teamHits.Count -eq 0) `
+            "found: $($teamHits -join '; ')"
+    } catch {
+        Add-Result "8 Customer mode" "Team description has no sample/demo notice phrase" $false `
+            "could not be read: $($_.Exception.Message)"
+    }
+    try {
+        $primaryChannel = Get-PnPTeamsPrimaryChannel -Team $s.MailNickname -Connection $admin -ErrorAction Stop
+        $welcomeMessages = @(Get-PnPTeamsChannelMessage -Team $s.MailNickname -Channel $primaryChannel.Id -Connection $admin -ErrorAction Stop)
+        $welcomeHits = @()
+        foreach ($welcomeMessage in $welcomeMessages) {
+            $messageText = [string]$welcomeMessage.Body.Content
+            $welcomeHits += @($noticeTerms | Where-Object { $messageText -match [regex]::Escape($_) })
+        }
+        Add-Result "8 Customer mode" "Team welcome post has no sample/demo notice phrase" ($welcomeHits.Count -eq 0) `
+            "found: $(($welcomeHits | Select-Object -Unique) -join '; ')"
+    } catch {
+        # Reading channel messages needs Graph ChannelMessage.Read.All, which this kit's provisioning app does
+        # not request (adding it means re-consenting the app in every tenant that already uses it). Confirmed
+        # live: the call fails with 403 Forbidden naming that exact missing scope. Warn instead of failing the
+        # whole run on a permission gap the installer itself cannot fix; any other error still warns the same
+        # way, since this check was never able to run either way and a silent pass would be worse than a WARN.
+        Add-Warning "8 Customer mode" "Team welcome post has no sample/demo notice phrase" `
+            "could not be read (likely missing Graph ChannelMessage.Read.All on the provisioning app): $($_.Exception.Message)"
+    }
     # Must-fix from a live review: Customer mode never shows the live upcoming-sessions calendar web part
     # (see Remove-CoEUpcomingSessionsWebPart), which previously left Home's Section 2/Column 1 as a bare,
     # unexplained "See the full training calendar" link next to the full Copilot tools grid. Confirms both
@@ -635,8 +686,10 @@ if ($failed.Count) {
     exit 1
 }
 if ($warned.Count) {
-    Write-Host ("{0} check(s) need a manual 1366px screenshot before this install is accepted:" -f $warned.Count) -ForegroundColor Yellow
+    Write-Host ("{0} check(s) need manual review before this install is accepted:" -f $warned.Count) -ForegroundColor Yellow
     $warned | ForEach-Object { Write-Host ("  WARN  {0} - {1}  {2}" -f $_.Check, $_.Item, $_.Detail) -ForegroundColor Yellow }
 }
-Write-Host ("ALL CHECKS PASSED ({0})" -f $results.Count) -ForegroundColor Green
+$summary = "ALL CHECKS PASSED ($($results.Count))"
+if ($warned.Count) { $summary += " - MANUAL REVIEW REQUIRED ($($warned.Count) WARN)" }
+Write-Host $summary -ForegroundColor Green
 exit 0

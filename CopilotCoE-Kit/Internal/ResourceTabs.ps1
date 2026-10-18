@@ -376,9 +376,33 @@ function Get-CoEStandardChannelSpec {
                 TemplateAppId = $appId; ContentUrl = $contentUrl; WebsiteUrl = $websiteUrl
             }
         }
+        $messageNodes = @($channel.SelectNodes("./*[local-name()='Messages']/*[local-name()='Message']"))
+        if ($messageNodes.Count -ne 1) { throw "Expected one welcome message for '$name' in the prepared Team template." }
+        $message = $messageNodes[0].InnerText | ConvertFrom-Json -ErrorAction Stop
+        if (-not $message.subject -or $message.body.contentType -ne "html" -or -not $message.body.content) {
+            throw "Invalid welcome message for '$name' in the prepared Team template."
+        }
+        $attachments = @($message.attachments)
+        if ($attachments.Count -ne 1 -or
+            $attachments[0].contentType -ne "application/vnd.microsoft.teams.messaging-announcementBanner" -or
+            -not $attachments[0].id) {
+            throw "The '$name' welcome message does not have its expected announcement banner."
+        }
+        $banner = $attachments[0].content | ConvertFrom-Json -ErrorAction Stop
+        if (-not $banner.title) { throw "The '$name' welcome message has no banner title." }
+        $body = [string]$message.body.content
+        $attachmentTag = '<attachment\s+id="' + [regex]::Escape([string]$attachments[0].id) + '"\s*>\s*</attachment>'
+        if ($body -notmatch $attachmentTag) { throw "The '$name' welcome message has no matching banner placeholder." }
+        $body = [regex]::Replace($body, $attachmentTag, "", [Text.RegularExpressions.RegexOptions]::IgnoreCase)
+        if ($body -match '(?i)<attachment\b') { throw "The '$name' welcome message contains an unsupported attachment." }
+        $bannerTitle = Expand-CoETeamTemplateValue ([string]$banner.title) $Parameters
+        $subject = Expand-CoETeamTemplateValue ([string]$message.subject) $Parameters
+        $body = Expand-CoETeamTemplateValue $body $Parameters
+        $welcomeHtml = "<strong>$([Net.WebUtility]::HtmlEncode($bannerTitle))</strong><br/>" +
+            "<strong>$([Net.WebUtility]::HtmlEncode($subject))</strong><br/><br/>$body"
         $specifications += [pscustomobject]@{
             DisplayName = $name; Description = Expand-CoETeamTemplateValue $channel.GetAttribute("Description") $Parameters
-            Tabs = $tabs
+            Tabs = $tabs; WelcomeHtml = $welcomeHtml
         }
     }
     if (-not $specifications.Count) { throw "No standard channels in the prepared Team template." }
@@ -450,6 +474,36 @@ function Ensure-CoEStandardChannels {
         $final = Get-CoEVerifiedStandardChannel $channels $channel.DisplayName $channel.Id
         if (-not $final) { throw "The verified standard channel '$($channel.DisplayName)' disappeared." }
         $final
+    }
+}
+
+function Publish-CoEStandardChannelMessages {
+    param([string]$Team, [object[]]$Channels, [object[]]$Specifications,
+        [string[]]$SelectedChannelNames, [object]$Connection)
+    if (-not $Team -or -not $SelectedChannelNames -or -not $SelectedChannelNames.Count) {
+        throw "Specify the Team and the exact channel names to receive welcome posts."
+    }
+    $pending = @()
+    foreach ($name in $SelectedChannelNames) {
+        if (@($pending | Where-Object DisplayName -ceq $name).Count) {
+            throw "Duplicate welcome-post channel '$name'. No messages were sent."
+        }
+        $specs = @($Specifications | Where-Object DisplayName -ceq $name)
+        if ($specs.Count -ne 1 -or -not $specs[0].WelcomeHtml) {
+            throw "No unique prepared welcome message for '$name'. No messages were sent."
+        }
+        $channel = Get-CoEVerifiedStandardChannel $Channels $name
+        if (-not $channel) { throw "No verified standard channel '$name'. No messages were sent." }
+        $pending += [pscustomobject]@{ DisplayName = $name; Channel = $channel.Id; Html = $specs[0].WelcomeHtml }
+    }
+    foreach ($post in $pending) {
+        try {
+            Submit-PnPTeamsChannelMessage -Team $Team -Channel $post.Channel -Message $post.Html `
+                -ContentType Html -Connection $Connection -ErrorAction Stop | Out-Null
+        } catch {
+            throw "Could not confirm the welcome post in '$($post.DisplayName)'. Inspect that channel before retrying; the request may have succeeded. $($_.Exception.Message)"
+        }
+        Write-Host "Submitted the prepared welcome post to '$($post.DisplayName)'. Verify it in Teams."
     }
 }
 

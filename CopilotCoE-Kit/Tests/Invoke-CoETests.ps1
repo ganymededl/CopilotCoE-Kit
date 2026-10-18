@@ -8,6 +8,7 @@ fakes for the same SharePoint commands and leak into each other when they share 
 
 These suites replace SharePoint with simulated responses, so a pass proves the kit's own logic only. A build is
 accepted after one clean 02_Install and a passing Test-CoEInstall.ps1 on the live site, not after this gate alone.
+Release extractions explicitly skip authoring-only packaging checks, whose packager and image manifest are not shipped.
 
     .\Tests\Invoke-CoETests.ps1                              # every suite
     .\Tests\Invoke-CoETests.ps1 -Suite AdoptionCatalogs      # one suite
@@ -24,24 +25,28 @@ if (-not (Test-Path -LiteralPath $windowsPowerShell)) { throw "Windows PowerShel
 
 $rows = foreach ($file in $files) {
     $clock = [Diagnostics.Stopwatch]::StartNew()
-    $command = "Import-Module Pester -RequiredVersion 3.4.0; `$r = Invoke-Pester -Path '$($file.FullName)' -PassThru -Quiet; " +
-        "'RESULT|{0}|{1}|{2}' -f `$r.PassedCount, `$r.FailedCount, `$r.TotalCount"
+    $command = "Import-Module Pester -RequiredVersion 3.4.0 -ErrorAction Stop; `$r = Invoke-Pester -Path '$($file.FullName)' -PassThru -Quiet; " +
+        "`$r.TestResult | Where-Object { `$_.FailureMessage } | ForEach-Object { 'FAIL: ' + `$_.Name + ': ' + `$_.FailureMessage }; " +
+        "'RESULT|{0}|{1}|{2}|{3}|{4}' -f `$r.PassedCount, `$r.FailedCount, `$r.TotalCount, `$r.SkippedCount, `$r.InconclusiveCount"
     $output = @(& $windowsPowerShell -NoProfile -NonInteractive -Command $command 2>&1 | ForEach-Object { "$_" })
+    $suiteExitCode = $LASTEXITCODE
     $result = @($output | Where-Object { $_ -like "RESULT|*" }) | Select-Object -Last 1
     $name = $file.Name -replace '\.Tests\.ps1$', ''
-    if ($result) {
+    if ($result -and $suiteExitCode -eq 0) {
         $parts = $result.Split("|")
-        [pscustomobject]@{ Suite = $name; Passed = [int]$parts[1]; Failed = [int]$parts[2]; Total = [int]$parts[3]
-            Seconds = [math]::Round($clock.Elapsed.TotalSeconds); Note = "" }
+        [pscustomobject]@{ Suite = $name; Passed = [int]$parts[1]; Failed = [int]$parts[2] + [int]$parts[5]; Total = [int]$parts[3]
+            Skipped = [int]$parts[4]; Seconds = [math]::Round($clock.Elapsed.TotalSeconds)
+            Note = (@($output | Where-Object { $_ -notlike "RESULT|*" }) -join "`n") }
     } else {
-        [pscustomobject]@{ Suite = $name; Passed = 0; Failed = 1; Total = 0; Seconds = [math]::Round($clock.Elapsed.TotalSeconds)
+        [pscustomobject]@{ Suite = $name; Passed = 0; Failed = 1; Total = 0; Skipped = 0; Seconds = [math]::Round($clock.Elapsed.TotalSeconds)
             Note = "suite did not finish: " + ((@($output | Select-Object -Last 3)) -join " ") }
     }
 }
 
-$rows | Format-Table Suite, Passed, Failed, Total, Seconds, Note -AutoSize -Wrap
+$rows | Format-Table Suite, Passed, Failed, Skipped, Total, Seconds, Note -AutoSize -Wrap
 $passed = ($rows | Measure-Object Passed -Sum).Sum
 $failed = ($rows | Measure-Object Failed -Sum).Sum
-Write-Host ("{0} passed, {1} failed across {2} suite(s)" -f $passed, $failed, $rows.Count)
+$skipped = ($rows | Measure-Object Skipped -Sum).Sum
+Write-Host ("{0} passed, {1} failed, {2} skipped across {3} suite(s)" -f $passed, $failed, $skipped, $rows.Count)
 if ($failed -gt 0) { exit 1 }
 Write-Host "ALL OFFLINE SUITES PASSED"
