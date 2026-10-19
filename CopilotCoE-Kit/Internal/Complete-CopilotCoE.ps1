@@ -40,6 +40,7 @@ Import-Module PnP.PowerShell -RequiredVersion 3.2.0
 . (Join-Path $PSScriptRoot "OrganizationProfile.ps1")
 . (Join-Path $PSScriptRoot "HubExperience.ps1")
 . (Join-Path $PSScriptRoot "GovernanceLinks.ps1")
+. (Join-Path $PSScriptRoot "OperatorAdvisories.ps1")
 $runId = "$(Get-Date -Format 'yyyyMMdd-HHmmss')-$([guid]::NewGuid().ToString('N'))"
 
 # Organization profile: names, links, and support address from the org's Deployment-Settings.json.
@@ -85,23 +86,6 @@ if ($ContentMode -eq "Customer") {
 }
 if (-not $PSBoundParameters.ContainsKey("SupportEmail")) { $SupportEmail = [string](Get-OrgValue "SupportEmail" "") }
 if ($SupportEmail -notmatch '^[^@\s<>]+@[^@\s<>]+\.[^@\s<>]+$') { throw "Configure SupportEmail before publishing content." }
-# Customer mode preflight: a lab/demo tenant's own admin mailbox (or any mailbox on the tenant's own
-# onmicrosoft.com domain, real customers never use that as their support address) must never reach a real
-# customer install. Confirmed live: a demo org's own settings file had SupportEmail set to its lab tenant's
-# admin@<tenant>.onmicrosoft.com mailbox, clearly labeled as a demo-only mailbox everywhere else it appears -
-# correct for Demo mode, but nothing previously stopped the exact same settings file (or a careless copy of
-# it) from being used for a Customer-mode install too.
-if ($ContentMode -eq "Customer") {
-    $supportEmailDomain = ($SupportEmail -split "@")[-1]
-    $supportEmailLocalPart = ($SupportEmail -split "@")[0]
-    if ($supportEmailDomain -match '\.onmicrosoft\.com$' -and
-        ($supportEmailLocalPart -ieq "admin" -or $supportEmailDomain -ieq $Tenant)) {
-        throw "ContentMode Customer rejects SupportEmail '$SupportEmail' - it looks like a lab/demo tenant " +
-            "mailbox (an admin@*.onmicrosoft.com address, or a mailbox on this tenant's own onmicrosoft.com " +
-            "domain '$Tenant'), not a real customer support address. Configure a real SupportEmail before a " +
-            "customer install."
-    }
-}
 $teamVisibility = [string](Get-OrgValue "TeamVisibility" "Private")
 $coeSiteSharingCapability = Get-CoEParentSharingCapability -Settings $orgSettings
 if ($teamVisibility -ne "Private") {
@@ -120,10 +104,12 @@ $learningEnvironment = Get-CoELearningEnvironment -Settings $orgSettings
 $developerSetting = Get-OrgValue "EnableDeveloperTrack" $false
 if ($developerSetting -isnot [bool]) { throw "EnableDeveloperTrack must be true or false." }
 $developerEnabled = [bool]$developerSetting
-if (-not $AllowMissingDataSafetyIncidentRoute -and
-    @($supportRoutes | Where-Object { $_.Key -eq "DataSafetyIncident" -and -not $_.Configured }).Count) {
-    throw "Links.DataSafetyIncident must be configured before publishing reader-facing content. For validation-only builds, rerun with -AllowMissingDataSafetyIncidentRoute."
-}
+$advisorySettingsPath = if ($SettingsPath) { $SettingsPath } else { Join-Path $kitRoot "Deployment-Settings.json" }
+$advisoryContext = New-CoEAdvisoryContext -SettingsPath $advisorySettingsPath -Tenant $Tenant `
+    -SiteFQDN ([uri]$SiteUrl).Host -TeamAlias $TeamAlias
+Invoke-CoEConfigurationAdvisories -Context $advisoryContext -Settings $orgSettings `
+    -SupportEmail $SupportEmail -DisplayName $DisplayName -SampleNotice $SampleNotice -ContentMode $ContentMode `
+    -AllowMissingDataSafetyIncidentRoute:$AllowMissingDataSafetyIncidentRoute
 foreach ($route in $supportRoutes | Where-Object { -not $_.Configured }) {
     Write-Warning "Links.$($route.Key) is not configured. Pages will show a setup warning, not a working organizational endpoint."
 }
@@ -440,7 +426,7 @@ $governanceSecurity = @(Initialize-CoEGovernanceSecurity -TeamId $group.GroupId 
     -CoESiteSharingCapability $coeSiteSharingCapability `
     -SiteUrl $SiteUrl -OwnerUPN ([string](Get-OrgValue "SharedChannelOwnerUPN" "")) `
     -AdditionalAllowedMembers $governanceAdditionalAllowedMembers `
-    -OrganizationEmailDomains $organizationEmailDomains -Connection $Connection)
+    -OrganizationEmailDomains $organizationEmailDomains -AdvisoryContext $advisoryContext -Connection $Connection)
 $ask = @($channels | Where-Object DisplayName -like "Ask Us Anything*")
 if ($ask.Count -ne 1) { throw "Expected one Ask Us Anything channel." }
 $askChannelUrl = "https://teams.microsoft.com/l/channel/$([uri]::EscapeDataString($ask[0].Id))/Ask%20Us%20Anything?groupId=$($group.GroupId)"
@@ -2290,6 +2276,8 @@ if ($navOrder -in @("TaskFirst", "AToZ")) {
             Write-Warning "Extended header layout is not available on this site; falling back to Standard. $_"
             Set-PnPWebHeader -HeaderLayout Standard -Connection $site -ErrorAction Stop
             $appliedHeaderLayout = "Standard"
+            Confirm-CoEAdvisory -Context $advisoryContext -Id HeaderLayout -Facts @("Standard") `
+                -Message "Extended header layout is unavailable; Standard is applied. PROCEED still requires a 1366px screenshot to confirm navigation is usable."
         }
         $navWeb = Get-PnPWeb -Includes HorizontalQuickLaunch,MegaMenuEnabled -Connection $site -ErrorAction Stop
         $navHeader = Get-PnPWebHeader -Connection $site -ErrorAction Stop

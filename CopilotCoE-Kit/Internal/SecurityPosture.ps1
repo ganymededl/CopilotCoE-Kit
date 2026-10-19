@@ -316,7 +316,8 @@ function Initialize-CoEGovernanceSecurity(
     [string[]]$OrganizationEmailDomains,
     [ValidateSet("Disabled", "ExistingExternalUserSharingOnly", "ExternalUserSharingOnly")]
     [string]$CoESiteSharingCapability = "Disabled",
-    [object]$Connection
+    [object]$Connection,
+    [object]$AdvisoryContext
 ) {
     $allowed = @($OwnerUPN) + @($AdditionalAllowedMembers)
     $allowed = @($allowed | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
@@ -349,6 +350,12 @@ function Initialize-CoEGovernanceSecurity(
         throw "The parent Team has members without a returned identity: $details. Review them before publishing."
     }
 
+    if ($AdvisoryContext -and $teamRoster.External.Count) {
+        $externalEmails = @($teamRoster.External | ForEach-Object { Get-CoEChannelMemberEmail $_ } | Sort-Object -Unique)
+        Confirm-CoEAdvisory -Context $AdvisoryContext -Id ParentTeamExternalMembers `
+            -Facts (@($TeamId) + $externalEmails + @($OrganizationEmailDomains | Sort-Object -Unique)) `
+            -Message "The parent Team contains guest/out-of-domain identities: $($externalEmails -join ', '). PROCEED accepts only this roster advisory; governance membership, tenant identity and sharing checks remain mandatory."
+    }
     $null = Set-CoESiteSharing -SiteUrl $SiteUrl -SharingCapability $CoESiteSharingCapability -Connection $Connection
 
     $results = @()

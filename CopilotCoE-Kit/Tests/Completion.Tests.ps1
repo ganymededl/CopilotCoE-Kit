@@ -51,8 +51,6 @@ $calendarSeedBlock = Get-CompletionBlock 'foreach ($event in $eventSeeds)'
 $calendarCleanupBlock = Get-CompletionBlock 'foreach ($item in $existingEvents)'
 $contentModeBlock = Get-CompletionBlock 'if ($ContentMode -eq "Demo") {'
 $sampleNoticeModeBlock = Get-CompletionBlock 'if ($ContentMode -eq "Customer") {'
-$supportEmailGuardBlock = Get-CompletionBlock 'if ($ContentMode -eq "Customer") {
-    $supportEmailDomain'
 $guideDuplicateNoticeBlock = Get-CompletionBlock 'if ($configuredSampleNotice -and ('
 $guideDemoOnlyMarkerBlock = Get-CompletionBlock 'if ($ContentMode -eq "Customer" -and $converted.Html -match'
 $calendarViewBlock = Get-CompletionBlock 'if (@($calendarViews | Where-Object Title -eq "Upcoming approved sessions")'
@@ -470,7 +468,7 @@ Describe "Home section and linked cards" {
         }
 
         $checker = Get-Content (Join-Path $kitRoot "Test-CoEInstall.ps1") -Raw
-        $checkerMarkerMatch = [regex]::Match($checker, 'notmatch \[regex\]::Escape\("([^"]+)"\)\s*-and\s*\n\s*\(-not \$s\.SampleNotice')
+        $checkerMarkerMatch = [regex]::Match($checker, 'notmatch \[regex\]::Escape\("([^"]+)"\)\s*-and\s*\n\s*\(-not \$expectedSampleNotice')
         $checkerMarkerMatch.Success | Should Be $true
         $checkerMarkerMatch.Groups[1].Value | Should Be $placeholderMarker
     }
@@ -924,13 +922,9 @@ Describe "Learning and agent catalog page integration" {
                 $resolver | Should Not Match 'Get-OrgValue "Agents"'
                 $source | Should Not Match 'AgentStatus = "Published"'
             }
-            It "requires a configured data/safety incident route unless validation override is explicit" {
-                $script:orgSettings = [pscustomobject]@{ Links = [pscustomobject]@{ DataSafetyIncident = "" }; SupportEmail = "coe@example.org" }
-                $script:SiteUrl = "https://example.sharepoint.com/sites/CoE"
-                $script:AllowMissingDataSafetyIncidentRoute = $false
-                { & ([scriptblock]::Create('$orgLinks = Get-OrgValue "Links" ([pscustomobject]@{}); $supportRoutes = @(Get-CoESupportRoutes $orgLinks $SiteUrl); if (-not $AllowMissingDataSafetyIncidentRoute -and @($supportRoutes | Where-Object { $_.Key -eq "DataSafetyIncident" -and -not $_.Configured }).Count) { throw "Links.DataSafetyIncident must be configured before publishing reader-facing content. For validation-only builds, rerun with -AllowMissingDataSafetyIncidentRoute." }')) } | Should Throw
-                $script:AllowMissingDataSafetyIncidentRoute = $true
-                { & ([scriptblock]::Create('$orgLinks = Get-OrgValue "Links" ([pscustomobject]@{}); $supportRoutes = @(Get-CoESupportRoutes $orgLinks $SiteUrl); if (-not $AllowMissingDataSafetyIncidentRoute -and @($supportRoutes | Where-Object { $_.Key -eq "DataSafetyIncident" -and -not $_.Configured }).Count) { throw "Links.DataSafetyIncident must be configured before publishing reader-facing content. For validation-only builds, rerun with -AllowMissingDataSafetyIncidentRoute." }')) } | Should Not Throw
+            It "routes configuration choices through the shared advisory preflight before staging content" {
+                $source | Should Match 'Invoke-CoEConfigurationAdvisories -Context \$advisoryContext'
+                $source.IndexOf('Invoke-CoEConfigurationAdvisories') | Should BeLessThan $source.IndexOf('$stageRoot =')
             }
             It "ships six three-step paths pointing at existing base guides" {
                 $data = Get-Content -LiteralPath (Join-Path $kitRoot "SeedContent\Learning-Paths.json") -Raw | ConvertFrom-Json
@@ -1391,37 +1385,6 @@ Describe "ContentMode decides the demo disclaimer, failing safe toward Customer"
         $SampleNotice = "DEMO SITE - synthetic data only."
         . $sampleNoticeModeBlock
         $SampleNotice | Should Be "DEMO SITE - synthetic data only."
-    }
-}
-
-Describe "Customer mode rejects a lab/demo mailbox as SupportEmail" {
-    # Regression test for a confirmed real-world risk: a demo org's settings file can legitimately have
-    # SupportEmail set to admin@<labtenant>.onmicrosoft.com (correct and clearly labeled for Demo mode).
-    # Nothing previously stopped the same settings file, or a careless copy of it, from being used for a real
-    # Customer-mode install, shipping a lab mailbox nobody monitors as the customer's own support address.
-    It "throws for an admin@ mailbox on any onmicrosoft.com domain" {
-        $ContentMode = "Customer"
-        $SupportEmail = "admin@contoso.onmicrosoft.com"
-        $Tenant = "contoso.onmicrosoft.com"
-        { . $supportEmailGuardBlock } | Should Throw "looks like a lab/demo tenant"
-    }
-    It "throws for any mailbox on the tenant's own onmicrosoft.com domain, not just admin@" {
-        $ContentMode = "Customer"
-        $SupportEmail = "copilot-coe@contoso.onmicrosoft.com"
-        $Tenant = "contoso.onmicrosoft.com"
-        { . $supportEmailGuardBlock } | Should Throw "looks like a lab/demo tenant"
-    }
-    It "does not throw for a real customer domain mailbox" {
-        $ContentMode = "Customer"
-        $SupportEmail = "copilot-coe@contoso.example"
-        $Tenant = "contoso.onmicrosoft.com"
-        { . $supportEmailGuardBlock } | Should Not Throw
-    }
-    It "does not apply in Demo mode, where a lab mailbox is expected and already labeled as such" {
-        $ContentMode = "Demo"
-        $SupportEmail = "admin@contoso.onmicrosoft.com"
-        $Tenant = "contoso.onmicrosoft.com"
-        { . $supportEmailGuardBlock } | Should Not Throw
     }
 }
 

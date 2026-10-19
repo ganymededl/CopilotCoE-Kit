@@ -49,7 +49,13 @@ if (-not (Test-Path -LiteralPath $SettingsPath -PathType Leaf)) { throw "Setting
 $s = Get-Content -LiteralPath $SettingsPath -Raw | ConvertFrom-Json
 . (Join-Path $PSScriptRoot "Internal\OrganizationProfile.ps1")
 . (Join-Path $PSScriptRoot "Internal\HubExperience.ps1")
+. (Join-Path $PSScriptRoot "Internal\OperatorAdvisories.ps1")
 $environment = Get-CoELearningEnvironment -Settings $s
+$configuredNotice = (Get-CoEOrganizationProfile -Settings $s).SampleNotice
+if ($ContentMode -eq "Demo" -and -not $configuredNotice) {
+    throw "ContentMode Demo requires a non-empty SampleNotice; 'none' disables the notice."
+}
+$expectedSampleNotice = if ($ContentMode -eq "Customer") { "" } else { $configuredNotice }
 $SiteUrl = $SiteUrl.TrimEnd("/")
 
 $results = [System.Collections.Generic.List[object]]::new()
@@ -177,8 +183,8 @@ Invoke-Section "2 Home" {
         ($exploreLabels -contains "Help") "found labels: $($exploreLabels -join ', ')"
     Add-Result "2 Home" "welcome text replaces the vendor placeholder with the organization's sample notice" `
         ($canvas -notmatch [regex]::Escape("Champions help colleagues get the most from Copilot and Microsoft 365") -and
-            (-not $s.SampleNotice -or $canvas -match [regex]::Escape($s.SampleNotice))) `
-        "SampleNotice: '$($s.SampleNotice)'"
+            (-not $expectedSampleNotice -or $canvas -match [regex]::Escape($expectedSampleNotice))) `
+        "Expected notice for this content mode: '$expectedSampleNotice'"
     $resolvedOrgNoun = (Get-CoEOrganizationProfile -Settings $s).OrgNoun
     Add-Result "2 Home" "welcome sentence reads 'your <noun>'s hub', not '<noun>'s hub'" `
         ($canvas -match [regex]::Escape("This site is your $resolvedOrgNoun")) "OrgNoun: '$resolvedOrgNoun'"
@@ -355,7 +361,7 @@ Invoke-Section "4 Content" {
     # Learning-Series, and the four vendor-captured pages (Adoption-Best-Practices, Meet-your-ProjectTeam,
     # Technical Readiness, Copilot-on-Microsoft-Mechanics) never showed the organization's configured sample
     # notice at all, unlike every other kit-managed page - confirmed live on a validation site.
-    if ($s.SampleNotice) {
+    if ($expectedSampleNotice) {
         $noticeCheckedPages = @("Compare-Copilot-Tools.aspx", "Guided-Learning.aspx", "Learning-Series.aspx",
             "Adoption-Best-Practices.aspx", "Meet-your-ProjectTeam.aspx", "Technical Readiness.aspx",
             "Copilot-on-Microsoft-Mechanics.aspx") +
@@ -365,7 +371,7 @@ Invoke-Section "4 Content" {
             $item = Get-PnPFile -Url "SitePages/$name" -AsListItem -Connection $site -ErrorAction Stop
             $canvas = [Net.WebUtility]::HtmlDecode([string]$item["CanvasContent1"])
             Add-Result "4 Content" "$name shows the configured sample notice" `
-                ($canvas -match [regex]::Escape($s.SampleNotice)) ""
+                ($canvas -match [regex]::Escape($expectedSampleNotice)) ""
         }
     }
     . (Join-Path $PSScriptRoot "Internal\AdoptionCatalogs.ps1")
@@ -582,6 +588,21 @@ Invoke-Section "7 Support routes" {
 }
 
 if ($ContentMode -eq "Customer") {
+    Invoke-Section "8 Customer mode" {
+        $advisoryContext = New-CoEAdvisoryContext -SettingsPath $SettingsPath -Tenant $s.Tenant `
+            -SiteFQDN ([uri]$SiteUrl).Host -TeamAlias $s.MailNickname
+        $mailboxReview = Get-CoELabSupportMailboxReview -Context $advisoryContext -SupportEmail $s.SupportEmail
+        if ($mailboxReview.RequiresReview) {
+            Add-Warning "8 Customer mode" "support mailbox needs organizational review" `
+                ("SupportEmail: '$($s.SupportEmail)'; lab-looking mailbox: $($mailboxReview.LabLooking); " +
+                 "saved target-scoped LabSupportMailbox PROCEED: $($mailboxReview.SavedProceed). " +
+                 "A lab exception is not production acceptance or proof this mailbox is monitored. " +
+                 "Confirm the support owner and monitoring; replace lab routes before production and review obsolete saved approvals.")
+        } else {
+            Add-Result "8 Customer mode" "support mailbox has no detected lab exception" $true `
+                "No lab mailbox pattern or saved target-scoped PROCEED; delivery and monitoring are not verified by this check."
+        }
+    }
     # These checks would have caught a confirmed live bug automatically: a fresh Customer-mode install still
     # seeded 5 kit/org SAMPLE success stories because the Success Stories catalog had no ContentMode
     # awareness at all. Only runs when the caller explicitly states which mode the install used - ContentMode
@@ -605,7 +626,6 @@ if ($ContentMode -eq "Customer") {
     # both the generic default phrase and whatever notice text is actually configured in Deployment-
     # Settings.json, since Customer mode must suppress a custom configured notice just as much as the default.
     $defaultNoticePhrase = "Sample starter content for review by"
-    $configuredNotice = if ($s.PSObject.Properties["SampleNotice"]) { [string]$s.SampleNotice } else { "" }
     $noticeTerms = @($defaultNoticePhrase) + $(if ($configuredNotice) { @($configuredNotice) } else { @() })
 
     $demoOnlyPages = @()

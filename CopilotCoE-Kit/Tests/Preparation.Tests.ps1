@@ -278,7 +278,14 @@ Describe "Offline preparation and packaging integration" {
         $fixtureBuild = Join-Path $fixture "03_Build"
         $fixtureKit = Join-Path $fixtureBuild "CopilotCoE-Kit"
         [void][IO.Directory]::CreateDirectory($fixtureBuild)
-        Copy-Item -LiteralPath $kitRoot -Destination $fixtureKit -Recurse -Force -ErrorAction Stop
+        [void][IO.Directory]::CreateDirectory($fixtureKit)
+        $runtimeNames = @("RevisionAudit", "Backups", "CoE-Revision-Report.json", "CoE-Removal-Manifest.json",
+            "CoE-Purge-Receipt.json", "CoE-Advisory-Decisions.json", "Customer-Walkthrough-State.json")
+        foreach ($entry in Get-ChildItem -LiteralPath $kitRoot -Force) {
+            if ($entry.Name -notin $runtimeNames -and $entry.Name -notlike ".prepare-*") {
+                Copy-Item -LiteralPath $entry.FullName -Destination $fixtureKit -Recurse -Force -ErrorAction Stop
+            }
+        }
         $fixtureSources = Join-Path $fixtureBuild "SourceOriginal\CopilotCoESite"
         [void][IO.Directory]::CreateDirectory((Split-Path -Parent $fixtureSources))
         Copy-Item -LiteralPath $sourceRoot -Destination $fixtureSources -Recurse -Force -ErrorAction Stop
@@ -292,6 +299,12 @@ Describe "Offline preparation and packaging integration" {
                 -Destination (Join-Path $fixtureBuild "ApprovedQuickstartImages.json") -Force -ErrorAction Stop
         }
         $delivery = Join-Path $fixture "Delivery"
+
+        It "stages source assets without deployment audit or identity records" {
+            foreach ($name in $runtimeNames) {
+                Test-Path -LiteralPath (Join-Path $fixtureKit $name) | Should Be $false
+            }
+        }
 
         It "generates schema-valid templates and valid message JSON for XML/JSON/HTML metacharacters" {
             $command = "& '$($fixturePrepare.Replace("'", "''"))' -ShortName 'R&D `"CoE`" ]]>' -DisplayName 'Research & Development `"CoE`" ]]>' -OrgName 'Research & Development' -OrgNoun 'R&D' -SampleNotice 'Review `"quotes`", < & policy.'"
@@ -407,19 +420,20 @@ Describe "Offline preparation and packaging integration" {
                 ($output -join "`n") | Should Not Match "Connecting to|Publishing content update"
             }
         }
-        It "rejects a missing data/safety incident route before installer sign-in or resource creation" {
+        It "requires an interactive advisory choice for missing routes before installer sign-in or resource creation" {
             $invalidSettings = Join-Path $fixture "missing-incident-route.json"
             @{
                 Tenant = "offline-fixture.onmicrosoft.com"; AdminFQDN = "offline-fixture-admin.sharepoint.com"
                 SiteFQDN = "offline-fixture.sharepoint.com"; PnPClientID = [guid]::NewGuid().ToString()
                 SharedChannelOwnerUPN = "owner@example.test"; SupportEmail = "support@example.test"
                 MailNickname = "CopilotCoE"; DisplayName = "Offline CoE"; OrgName = "Offline University"; OrgNoun = ""
+                OrganizationEmailDomains = @("example.test")
                 EnvironmentLabel = "Test"; LearningEnvironment = "HigherEducation"; Links = @{ DataSafetyIncident = "" }
             } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $invalidSettings -Encoding UTF8
-            $output = & $pwsh -NoProfile -File (Join-Path $fixtureKit "02_Install-CopilotCoE.ps1") `
+            $output = & $pwsh -NoProfile -NonInteractive -File (Join-Path $fixtureKit "02_Install-CopilotCoE.ps1") `
                 -SettingsPath $invalidSettings 2>&1
             ($LASTEXITCODE -ne 0) | Should Be $true
-            ($output -join "`n") | Should Match "Links.DataSafetyIncident must be configured"
+            ($output -join "`n") | Should Match 'ADVISORY \[UnconfiguredSupportRoutes\].*DataSafetyIncident'
             (($output -join "`n") -match "Connecting to|New-PnP|Apply-PnP") | Should Be $false
         }
         It "ships every script that the numbered scripts and internal helpers load" -Skip:(-not $hasPackager) {

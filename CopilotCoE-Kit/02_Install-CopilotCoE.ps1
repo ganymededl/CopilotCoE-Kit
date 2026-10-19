@@ -145,22 +145,6 @@ if ($MailNickname -notmatch "^[A-Za-z0-9_-]{1,64}$") { throw "MailNickname may u
 if ($DisplayName.Length -gt 256) { throw "DisplayName must be 256 characters or fewer." }
 if ($SharedChannelOwnerUPN -notmatch "^[^@\s]+@[^@\s]+\.[^@\s]+$") { throw "SharedChannelOwnerUPN must be a sign-in address." }
 if ($SupportEmail -notmatch "^[^@\s<>]+@[^@\s<>]+\.[^@\s<>]+$") { throw "SupportEmail must be an email address (the CoE help desk mailbox)." }
-if (-not $AllowMissingDataSafetyIncidentRoute) {
-    $dataSafetyIncidentRoute = ""
-    if ($settings -and $settings.PSObject.Properties["Links"] -and $settings.Links -and
-        $settings.Links.PSObject.Properties["DataSafetyIncident"]) {
-        if ($settings.Links.DataSafetyIncident -isnot [string]) { throw "Links.DataSafetyIncident must be an absolute HTTPS URL." }
-        $dataSafetyIncidentRoute = $settings.Links.DataSafetyIncident.Trim()
-    }
-    $incidentUri = $null
-    if ([string]::IsNullOrWhiteSpace($dataSafetyIncidentRoute) -or
-        $dataSafetyIncidentRoute -match "[<>]|\{\{|\}\}" -or
-        -not [uri]::TryCreate($dataSafetyIncidentRoute, [UriKind]::Absolute, [ref]$incidentUri) -or
-        $incidentUri.Scheme -ne "https" -or -not $incidentUri.Host -or $incidentUri.UserInfo) {
-        throw "Links.DataSafetyIncident must be configured as an absolute HTTPS URL before install creates tenant resources. For validation-only builds, rerun with -AllowMissingDataSafetyIncidentRoute."
-    }
-}
-
 # Accept pasted URLs: strip any https:// prefix, path, and trailing slash so only the host name remains.
 $AdminFQDN = ($AdminFQDN.Trim() -replace "^https?://", "" -replace "/.*$", "").ToLowerInvariant()
 $SiteFQDN = ($SiteFQDN.Trim() -replace "^https?://", "" -replace "/.*$", "").ToLowerInvariant()
@@ -175,6 +159,9 @@ if ($SiteFQDN -notmatch "^[A-Za-z0-9-]+\.sharepoint\.com$") {
 Import-Module PnP.PowerShell -RequiredVersion 3.2.0 -ErrorAction Stop
 . (Join-Path $PSScriptRoot "Internal\SecurityPosture.ps1")
 . (Join-Path $PSScriptRoot "Internal\ResourceTabs.ps1")
+. (Join-Path $PSScriptRoot "Internal\AdoptionCatalogs.ps1")
+. (Join-Path $PSScriptRoot "Internal\HubExperience.ps1")
+. (Join-Path $PSScriptRoot "Internal\OperatorAdvisories.ps1")
 $CoESiteSharingCapability = Get-CoEParentSharingCapability -Settings $settings
 $OrganizationEmailDomains = @(Get-CoEOrganizationDomains -Domains $OrganizationEmailDomains)
 if ($ForceAuthentication -and $AuthenticationMode -ne "Interactive") {
@@ -192,6 +179,12 @@ if ([string]::IsNullOrWhiteSpace($PnPClientID)) {
 if ($PnPClientID -notmatch "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$") {
     throw "PnPClientID must be the app's Application (client) ID GUID."
 }
+
+$advisoryContext = New-CoEAdvisoryContext -SettingsPath $SettingsPath -Tenant $Tenant `
+    -SiteFQDN $SiteFQDN -TeamAlias $MailNickname
+Invoke-CoEConfigurationAdvisories -Context $advisoryContext -Settings $settings `
+    -SupportEmail $SupportEmail -DisplayName $DisplayName -SampleNotice $SampleNotice -ContentMode $ContentMode `
+    -AllowMissingDataSafetyIncidentRoute:$AllowMissingDataSafetyIncidentRoute
 
 $prepareScript = Join-Path $PSScriptRoot "Internal\Prepare-CopilotCoE.ps1"
 if ($settings -and $settings.PSObject.Properties["HomeTiles"] -and @($settings.HomeTiles).Count) {
@@ -378,6 +371,8 @@ try {
         -HeaderLayout Standard `
         -Connection $siteConnection `
         -ErrorAction Stop
+    Confirm-CoEAdvisory -Context $advisoryContext -Id HeaderLayout -Facts @("Standard") `
+        -Message "Extended header layout is unavailable; Standard is applied. PROCEED still requires a 1366px screenshot to confirm navigation is usable."
 }
 
 if ($ResumeExisting) {
@@ -750,6 +745,7 @@ $governanceSecurity = @(Initialize-CoEGovernanceSecurity -TeamId $coeGroup.Group
     -SiteUrl $coeUrl -OwnerUPN $SharedChannelOwnerUPN -AdditionalAllowedMembers $GovernanceAdditionalAllowedMembers `
     -CoESiteSharingCapability $CoESiteSharingCapability `
     -OrganizationEmailDomains $OrganizationEmailDomains `
+    -AdvisoryContext $advisoryContext `
     -Connection $adminConnection)
 
 $summaryChannels = @(

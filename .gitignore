@@ -13,6 +13,12 @@ CopilotCoE-Kit/SiteAssetManifest.json
 # These contain real tenant URLs, admin UPNs, and site content from whichever
 # organization last ran the kit. Always local-only.
 CopilotCoE-Kit/RevisionAudit/
+**/CoE-Advisory-Decisions.json
+**/CoE-Revision-Report.json
+**/CoE-Removal-Manifest.json
+**/CoE-Purge-Receipt.json
+**/Customer-Walkthrough-State.json
+**/Backups/
 
 # Transient staging folder created mid-build by Prepare-CopilotCoE.ps1, removed on
 # success but can be left behind if a run is interrupted.

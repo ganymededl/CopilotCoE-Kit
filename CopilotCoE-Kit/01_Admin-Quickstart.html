@@ -195,7 +195,7 @@
   "DataSafetyIncident": "https://your-organization.service-now.com/security-report"
 }</code></pre>
             <p>That is an illustrative address, not a working destination. Use an existing approved security-reporting form or instructions page&mdash;you don&rsquo;t necessarily need to create anything new.</p>
-            <p>If you do not configure this setting, the installer stops before it creates anything in the tenant.</p>
+            <p>If this setting is empty, the installer asks <strong>STOP / PROCEED before creating tenant resources</strong>; STOP is the default. An explicit PROCEED is for a reviewed lab or pilot and leaves a visible &ldquo;route not configured&rdquo; notice. It does not supply an incident-reporting service. A nonempty invalid URL remains a hard stop. Configure an approved working route before production.</p>
           </li>
         </ul>
       </div>
@@ -215,6 +215,7 @@
         <tr><td>Higher education</td><td><code>Org-Template</code></td><td>230 higher-education prompts, included by default</td></tr>
         <tr><td>State/local government, commercial or GCC Moderate &mdash; not GCC High or DoD</td><td><code>ContentPacks\Government-StateLocal</code></td><td>230 general government prompts; higher-education prompts are excluded</td></tr>
       </table>
+      <p><strong>Content pack is not cloud acceptance.</strong> <code>LearningEnvironment: Government</code> selects government content; it does not select or prove GCC Moderate behavior. Confirm the actual target cloud separately. A Government-content run in a commercial lab is commercial evidence, not GCC Moderate acceptance. GCC High and DoD are unsupported.</p>
       <div class="warning">
         <p><strong>Choose one frozen release ZIP before you begin.</strong> Use the master ZIP or an identical customer copy named in its release receipt; verify that ZIP&rsquo;s SHA256 against the receipt. An older versioned folder is history, not an automatically updated copy. The authoring source and an extracted working folder are not release ZIPs. Renaming an old ZIP does not upgrade it.</p>
       </div>
@@ -309,6 +310,12 @@ Install-Module PnP.PowerShell -RequiredVersion 3.2.0 -Scope CurrentUser
       <p>If <code>$orgPath\Assets</code> has files, the installer lists them and asks which categories to host. Add <code>-AcceptOrgAssets</code> only after reviewing <em>every</em> eligible file and approving all of them; it is not a safe generic default. Do not grant visitors or loosen sharing merely to complete an install.</p>
       <p>The welcome posts are attributed to the account running this command. Use an approved CoE-owner or dedicated provisioning administrator identity, not an individual&rsquo;s personal admin identity, when that attribution matters.</p>
       <p><code>-ContentMode Customer</code> is the production setting: no generated demo disclaimer or seeded sample calendar events. Organization asset files whose names contain DEMO or SAMPLE as a whole word are filtered out instead of offered for hosting; prompt CSV rows are not covered by that filter. Use <code>-ContentMode Demo</code> only for an internal sales/content-demo site, never for a customer-facing install. <code>-SeedDemoContent</code> is required either way &mdash; omitting it skips all page, catalog, and calendar content regardless of <code>-ContentMode</code>, leaving only the Team and an empty SharePoint site.</p>
+      <p><code>"SampleNotice": "none"</code> means no notice, not the literal word &ldquo;none&rdquo; on a page. Customer mode suppresses configured sample notices regardless of that setting. Demo mode requires a nonempty resolved notice; a blank setting uses the default sample notice, while <code>none</code> is invalid for Demo mode.</p>
+      <div class="warning" id="operator-advisories">
+        <h3>STOP / PROCEED is a lab decision, not production acceptance</h3>
+        <p>The installer and updater ask about lab-looking support mailboxes, missing support routes, a default Demo notice, long titles, parent-Team guest/out-of-domain members and fallback headers. Decisions are saved beside settings in <code>CoE-Advisory-Decisions.json</code>, tied to the tenant, site host, Team alias and exact advisory facts. An unchanged decision is reused with a visible message; a saved STOP remains a stop until the configuration or decision is deliberately changed.</p>
+        <p>The checker remains read-only: it never prompts for or saves a decision. In Customer mode, a lab-looking support mailbox <em>or</em> a saved target-scoped <code>LabSupportMailbox</code> PROCEED produces a <strong>WARN</strong>, even after the mailbox setting changes. Confirm its owner and monitoring, replace lab addresses before production, and review obsolete saved approvals. A saved PROCEED does not waive this manual-review gate or any identity, governance, tenant or sharing check.</p>
+      </div>
       <p class="meta"><strong>Which version is installed?</strong> Use the extracted ZIP&rsquo;s root <code>VERSION.txt</code> for the kit release version. The <code>version</code> values inside the base and Government <code>CoE-Revision-Content.json</code> files identify their content revisions and are also written to the deployment report; they can differ from the packaged release version. Do not identify the release from those JSON values or relabel them just to make the numbers match.</p>
       <p><strong>Using an organization-provided launcher?</strong> A short <code>pwsh -NoProfile -File &quot;Start-CoE-Install.ps1&quot;</code> command runs that launcher, which can pass the full argument list internally. Confirm that it calls <code>02_Install-CopilotCoE.ps1</code> with the intended <code>-OrgPath</code>, <code>-ContentMode</code>, and <code>-SeedDemoContent</code>; use <code>-AcceptOrgAssets</code> only if the assets were reviewed and approved. The launcher is not a different installer; no launcher is required for the direct command above.</p>
       <p>A first install usually takes about 25&ndash;35 minutes. Creating the 230 base prompts accounts for roughly 5&ndash;10 minutes of that.</p>
@@ -332,11 +339,24 @@ Install-Module PnP.PowerShell -RequiredVersion 3.2.0 -Scope CurrentUser
         </ol>
         <p>If you are validating a changed version of the kit, use a new site alias or perform a separately reviewed removal and fresh install. Using <code>-ResumeExisting</code> does not prove that a new kit version works.</p>
       </div>
+      <div class="warning danger" id="purge-and-rebuild">
+        <h3>If you choose to purge and rebuild</h3>
+        <p>Purging permanently removes the Team, its conversations, the primary site and the reviewed related channel sites. Back up the whole organization folder and export any live content you need first. Keep the original deployment identity records until cleanup is complete. Use the official remover, not a site-only manual delete that can leave the group or channel sites behind.</p>
+        <pre><code># Preview the exact permanent-removal plan first.
+.\04_Remove-CopilotCoE.ps1 -OrgPath $orgPath -Purge -WhatIf
+
+# Only after approving that plan; type the requested alias and exact URLs.
+.\04_Remove-CopilotCoE.ps1 -OrgPath $orgPath -Purge</code></pre>
+        <p>Do not rebuild until the result says <code>AliasReusable : True</code>. If cleanup is incomplete, retain the identity records and follow the named error or wait before rerunning the remover. Then verify the intended ZIP&rsquo;s hash, extract to a <em>new empty</em> folder, and run step 03 without <code>-ResumeExisting</code>, followed separately by step 04. Preserve the earlier extraction and logs for troubleshooting.</p>
+        <p><strong>No reset is required by the standard numbered scripts, either before purge or after a completed purge.</strong> They do not read <code>Customer-Walkthrough-State.json</code>. The remover&rsquo;s <code>CoE-Purge-Receipt.json</code> records cleanup evidence; it is not a prerequisite for a direct <code>02_Install-CopilotCoE.ps1</code> run.</p>
+        <p><strong>Organization-specific launchers are separate.</strong> A launcher supplied outside this kit may keep an <code>InstallAttempted</code> flag and provide <code>-ResetAfterPurge</code>. That reset belongs only to that launcher and occurs <em>after</em> verified cleanup, never before purge. Follow its own recovery contract, or use the standard numbered scripts directly. For an older or manual purge with no receipt, have an administrator review live and recycled resources; do not fabricate a receipt, replace identity records or manually toggle state to force a retry.</p>
+      </div>
     </section>
 
     <section class="step">
       <h2><span class="badge">04</span>Check the result</h2>
       <p>The install is not accepted until automated checks and every required manual review pass. This script reads the site; it does not change anything. Use the actual site address printed at the end of step 03, not the example host below.</p>
+      <p><strong>Step 03 does not automatically run this checker.</strong> Run the following block separately after installation, and again after every content update, using the checker from the same extracted release.</p>
       <pre><code>$siteUrl = 'https://contoso.sharepoint.com/sites/CopilotCoE'
 
 Set-Location $kitRoot
@@ -346,7 +366,7 @@ Set-Location $kitRoot
       <div class="warning">
         <p>Automated checks succeeded when its final line starts with:</p>
         <pre><code>ALL CHECKS PASSED</code></pre>
-        <p>The script appends a count, such as <code>ALL CHECKS PASSED (277)</code>; the count varies. <strong>This is not the whole acceptance gate if any check says <code>WARN</code>.</strong> The result then adds <code>MANUAL REVIEW REQUIRED</code>. Read each warning and capture its specific evidence: a 1366px <em>site</em> screenshot for a header-layout or long-title/menu-overflow warning, or an actual Teams channel-post inspection when message reading is denied. Do not grant <code>ChannelMessage.Read.All</code> solely to suppress that warning.</p>
+        <p>The script appends a count, such as <code>ALL CHECKS PASSED (277)</code>; the count varies with mode and applicable checks. Demo-only notice-presence checks do not run in Customer mode, which instead checks for notice leaks. Do not require a previous run&rsquo;s exact count. <strong>This is not the whole acceptance gate if any check says <code>WARN</code>.</strong> The result then adds <code>MANUAL REVIEW REQUIRED</code>. Read each warning and capture its specific evidence: a 1366px <em>site</em> screenshot for a header-layout or long-title/menu-overflow warning, an actual Teams channel-post inspection when message reading is denied, or the support owner&rsquo;s confirmation and a reviewed production route for a lab-mailbox warning. Link checks compare configured destinations; they do not prove an endpoint works or is monitored. Do not grant <code>ChannelMessage.Read.All</code> solely to suppress that warning.</p>
         <p>If any line says <code>FAIL</code>, it names the problem. Send that output, along with the run log, to whoever is troubleshooting the install.</p>
       </div>
       <p>For an internal end-to-end validation of the full repair path, after the first check and the manual welcome-post review, run the following on the <em>same</em> new site, then repeat this test and step 05. <code>-RepairCapturedPages</code> can replace customized captured-page content, so use it on a fresh validation site or only after a reviewed repair decision:</p>

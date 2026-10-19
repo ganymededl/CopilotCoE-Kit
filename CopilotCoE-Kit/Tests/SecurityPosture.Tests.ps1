@@ -2,6 +2,7 @@
 Set-StrictMode -Version Latest
 $kitRoot = Split-Path -Parent $PSScriptRoot
 . (Join-Path $kitRoot "Internal\SecurityPosture.ps1")
+. (Join-Path $kitRoot "Internal\OperatorAdvisories.ps1")
 
 # Local stand-ins make the tests fail rather than contact a tenant if a mock is missing.
 function Get-PnPTenantSite {
@@ -280,6 +281,21 @@ Describe "CoE guest preview policy" {
     It "still rejects parent members with no returned identity" {
         Mock Get-PnPTeamsChannelUser { [pscustomobject]@{ DisplayName = "Unknown" } }
         { Initialize-CoEGovernanceSecurity @script:common -Channels $script:channels } | Should Throw
+    }
+    It "stops a declined parent-Team advisory before changing sharing" {
+        Mock Confirm-CoEAdvisory { throw "Operator selected STOP" }
+        { Initialize-CoEGovernanceSecurity @script:common -Channels $script:channels -AdvisoryContext "offline-context" } |
+            Should Throw "Operator selected STOP"
+        Assert-MockCalled Set-PnPTenantSite -Times 0 -Exactly -Scope It
+    }
+    It "does not let an accepted roster advisory bypass cross-tenant governance checks" {
+        Mock Confirm-CoEAdvisory {}
+        Mock Invoke-PnPGraphMethod {
+            @{ value = @(@{ userId = $script:ownerId; tenantId = "55555555-5555-5555-5555-555555555555"; Email = $script:owner }) }
+        } -ParameterFilter { $Url -like "*/allMembers" }
+        { Initialize-CoEGovernanceSecurity @script:common -Channels $script:channels -AdvisoryContext "offline-context" } |
+            Should Throw "not verified in the host tenant"
+        Assert-MockCalled Confirm-CoEAdvisory -Times 1 -Exactly -Scope It -ParameterFilter { $Id -eq "ParentTeamExternalMembers" }
     }
     It "keeps Disabled on repeated runs even when guests remain Team members" {
         $null = Initialize-CoEGovernanceSecurity @script:common -Channels $script:channels -CoESiteSharingCapability Disabled

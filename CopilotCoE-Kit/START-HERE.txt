@@ -28,6 +28,43 @@ READ FIRST
     Start here research summary for that organization.
   Org-Template\README.txt   (organization folder reference: every setting and override)
 
+OPERATOR ADVISORIES (3.8.17)
+  Install and update ask STOP / PROCEED for a lab-looking support mailbox in
+  Customer mode, empty support routes, a default Demo notice, a title longer
+  than 30 characters, parent-Team guest/out-of-domain members and a non-Extended
+  fallback header. STOP is the default. PROCEED accepts only the named advisory;
+  it does not verify an endpoint, approve content or waive manual acceptance.
+  Known configuration advisories run BEFORE a fresh install creates resources.
+  Decisions are saved beside Deployment-Settings.json in
+  CoE-Advisory-Decisions.json, bound to tenant, site host, Team alias and the
+  exact advisory facts. An unchanged decision is reused on install/update;
+  changed facts or a different target require another choice. A saved STOP
+  remains a stop: correct the setting or remove its decision entry to choose
+  again. Keep this file with private organization material, not in the kit.
+  Customer mode still suppresses sample notices and sample rows. Empty routes
+  remain visibly marked "route not configured". Screenshots and other manual
+  checks remain required even after PROCEED. Test-CoEInstall remains read-only
+  and does not prompt for, save or treat a decision as proof a check passed.
+  In Customer mode a lab-looking support mailbox OR a saved target-scoped
+  LabSupportMailbox PROCEED always produces a WARN, including when the address
+  has since changed. Review its owner/monitoring, replace lab routes before
+  production and review obsolete saved approvals. Endpoint tests compare the
+  configured address; they do not prove delivery, monitoring or availability.
+  Invalid input, Member identity, tenant/channel/site identity, governance
+  allowlists, sharing restrictions and destructive confirmations stay hard stops.
+
+NOTICE SETTINGS AND CHECKER COUNTS
+  SampleNotice "none" resolves to no notice; it is never literal page text.
+  Customer mode suppresses sample notices and checks for default/custom notice
+  leaks. Demo mode requires a nonempty resolved notice; blank uses the default,
+  but "none" is invalid for Demo. Check counts vary with mode and applicable
+  assertions. Do not require an earlier run's count or run Demo-only notice-
+  presence assertions in Customer mode.
+  Script 02 DOES NOT automatically run Test-CoEInstall.ps1. Run the checker
+  separately after install and again after every update, using the same release.
+  The Government content pack selects content, not the tenant cloud. A commercial
+  lab run with Government content is not GCC Moderate acceptance evidence.
+
 QUICK START - RUN THE NUMBERED SCRIPTS IN ORDER (01, 02, then 03 when needed; 04 only to undo)
   1. Right-click the ZIP > Properties > Unblock (if shown), then Extract All.
      Keep the folder structure.
@@ -233,7 +270,8 @@ UPGRADING A SITE BUILT BY KIT 3.8 OR EARLIER
   expected until one of the two upgrade paths above is used - it is not evidence the kit itself is broken.
 
 IF THE BUILD STOPS PARTWAY
-  Fix the cause named in the red message, then re-run with the same settings:
+  Read and retain RevisionAudit transcripts; do not automatically retry or purge.
+  Confirm the existing Team/site identity and fix the cause before resuming:
        .\02_Install-CopilotCoE.ps1 -OrgPath <folder> -SeedDemoContent -ResumeExisting
   Resume reuses the Team and site. It finishes the site template only when no
   CoE pages exist yet. With -SeedDemoContent, a resume keeps existing managed pages;
@@ -269,12 +307,30 @@ START OVER - PURGE AND REBUILD (runbook section 10.1)
   added by hand in SharePoint or Teams; the purge deletes it.
   Survives the purge, no backup needed: the sign-in app and consent, Copilot agents,
   and user accounts. A local PnP sign-in cache is separate; clear it when no longer needed.
-    1. Move-Item <kit>\Orgs\<org> C:\CoE-Orgs\<org>   (keep the org folder outside the kit)
+    1. Keep the backed-up organization folder outside the kit.
+       .\04_Remove-CopilotCoE.ps1 -OrgPath C:\CoE-Orgs\<org> -Purge -WhatIf
+       Review the permanent-removal plan before proceeding.
     2. .\04_Remove-CopilotCoE.ps1 -OrgPath C:\CoE-Orgs\<org> -Purge
        (check AliasReusable : True; if not, run it again a few minutes later)
-    3. Delete the kit folder, unblock the ZIP, and extract it again.
-    4. .\02_Install-CopilotCoE.ps1 -OrgPath C:\CoE-Orgs\<org> -SeedDemoContent
+    3. Preserve the old extraction and logs. Verify the intended ZIP's SHA256,
+       unblock it and extract into a NEW EMPTY folder.
+    4. .\02_Install-CopilotCoE.ps1 -OrgPath C:\CoE-Orgs\<org> -ContentMode Customer -SeedDemoContent
        (skip 01: the app still exists; do not add -ResumeExisting)
+    5. Run Test-CoEInstall.ps1 separately with the actual site URL and same mode.
+
+  NO RESET REQUIRED FOR THE STANDARD NUMBERED SCRIPTS
+  Scripts 02-04 do not read Customer-Walkthrough-State.json. They need no local
+  reset before purge or after a completed purge. Script 04's CoE-Purge-Receipt.json
+  records identity-verified cleanup; a receipt is not required to run script 02.
+  Manually deleting only a site may leave its group or channel sites behind.
+
+  ORGANIZATION-SPECIFIC LAUNCHERS (NOT PART OF THIS KIT)
+  A separate launcher can keep InstallAttempted state and offer -ResetAfterPurge.
+  That reset is only for its own state AFTER verified cleanup, never before purge.
+  Follow the launcher's documented contract or use the standard scripts directly.
+  For an older/manual purge without a receipt, review live and recycled resources
+  with an administrator. Never fabricate receipts, replace deployment identity
+  records or toggle the attempt flag to force a retry.
 
 CHANGE THE CONTENT LATER (script 03, as often as needed)
   For one organization: copy any kit text file from SeedContent into

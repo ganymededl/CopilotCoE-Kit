@@ -127,6 +127,176 @@ $checkerErrors = $null
 $checkerAst = [System.Management.Automation.Language.Parser]::ParseFile(
     $checkerPath, [ref]$checkerTokens, [ref]$checkerErrors)
 if ($checkerErrors.Count) { throw ($checkerErrors | Out-String) }
+$noticeAssignments = @($checkerAst.FindAll({ param($node)
+    $node -is [Management.Automation.Language.AssignmentStatementAst] -and
+    $node.Left -is [Management.Automation.Language.VariableExpressionAst] -and
+    $node.Left.VariablePath.UserPath -in @("configuredNotice", "expectedSampleNotice", "defaultNoticePhrase", "noticeTerms")
+}, $true))
+if ($noticeAssignments.Count -ne 4) { throw "Expected the checker's four notice policy assignments." }
+$noticePolicyBlock = [scriptblock]::Create(($noticeAssignments | ForEach-Object { $_.Extent.Text }) -join "`n")
+$homeNoticeCheck = $checkerAst.Find({ param($node)
+    $node -is [Management.Automation.Language.CommandAst] -and
+    $node.Extent.Text.StartsWith('Add-Result "2 Home" "welcome text replaces the vendor placeholder')
+}, $true)
+if (-not $homeNoticeCheck) { throw "Missing Home notice validation." }
+$homeNoticeBlock = [scriptblock]::Create($homeNoticeCheck.Extent.Text)
+$demoNoticeGuard = $checkerAst.Find({ param($node)
+    $node -is [Management.Automation.Language.IfStatementAst] -and
+    $node.Extent.Text.StartsWith('if ($ContentMode -eq "Demo" -and -not $configuredNotice)')
+}, $true)
+if (-not $demoNoticeGuard) { throw "Missing Demo-mode notice validation." }
+$demoNoticeGuardBlock = [scriptblock]::Create($demoNoticeGuard.Extent.Text)
+. (Join-Path $kitRoot "Internal\OrganizationProfile.ps1")
+function Add-Result([string]$Check, [string]$Item, [bool]$Ok, [string]$Detail = "") {
+    $script:lastNoticeResult = $Ok
+}
+
+Describe "Checker follows resolved notice and content mode" {
+    BeforeEach {
+        $script:s = [pscustomobject]@{ OrgName = "Contoso"; DisplayName = "Contoso CoE"; SampleNotice = "none" }
+        $script:ContentMode = "Customer"
+        $script:canvas = "<h2>Welcome to the Contoso Copilot Center of Excellence</h2><p>None have been approved yet.</p>"
+        $script:lastNoticeResult = $null
+    }
+    It "does not require or ban the none sentinel as literal reader text" {
+        . $noticePolicyBlock
+        $configuredNotice | Should Be ""
+        $expectedSampleNotice | Should Be ""
+        ($noticeTerms -contains "none") | Should Be $false
+        @($noticeTerms | Where-Object { $canvas -match [regex]::Escape($_) }).Count | Should Be 0
+        . $homeNoticeBlock
+        $lastNoticeResult | Should Be $true
+    }
+    It "resolves whitespace and case variants of the none sentinel" {
+        foreach ($value in @(" NONE ", "None")) {
+            $s.SampleNotice = $value
+            . $noticePolicyBlock
+            $configuredNotice | Should Be ""
+            $expectedSampleNotice | Should Be ""
+        }
+    }
+    It "suppresses a configured notice in Customer mode but still detects a leak" {
+        $s.SampleNotice = "DEMO SITE - synthetic data only."
+        . $noticePolicyBlock
+        $expectedSampleNotice | Should Be ""
+        ($noticeTerms -contains $s.SampleNotice) | Should Be $true
+        $canvas = "<p>DEMO SITE - synthetic data only.</p>"
+        @($noticeTerms | Where-Object { $canvas -match [regex]::Escape($_) }).Count | Should Be 1
+    }
+    It "does not confuse a custom notice containing the word none with the sentinel" {
+        $s.SampleNotice = "None of this is official policy."
+        . $noticePolicyBlock
+        $configuredNotice | Should Be $s.SampleNotice
+        ($noticeTerms -contains $s.SampleNotice) | Should Be $true
+    }
+    It "keeps the default disclaimer forbidden when a Customer profile leaves SampleNotice blank" {
+        $s.SampleNotice = ""
+        . $noticePolicyBlock
+        $expectedSampleNotice | Should Be ""
+        $configuredNotice | Should Match "^Sample starter content for review by Contoso"
+        $canvas = "<p>Sample starter content for review by Contoso; not official policy.</p>"
+        @($noticeTerms | Where-Object { $canvas -match [regex]::Escape($_) }).Count | Should BeGreaterThan 0
+    }
+    It "requires a configured Demo notice on Home instead of silently skipping it" {
+        $ContentMode = "Demo"
+        $s.SampleNotice = "DEMO SITE - synthetic data only."
+        . $noticePolicyBlock
+        . $homeNoticeBlock
+        $lastNoticeResult | Should Be $false
+        $canvas += "<p>DEMO SITE - synthetic data only.</p>"
+        . $homeNoticeBlock
+        $lastNoticeResult | Should Be $true
+    }
+    It "still rejects the original vendor placeholder with notices suppressed" {
+        . $noticePolicyBlock
+        $canvas = "<p>Champions help colleagues get the most from Copilot and Microsoft 365</p>"
+        . $homeNoticeBlock
+        $lastNoticeResult | Should Be $false
+    }
+    It "preserves configured notice checks when ContentMode is omitted" {
+        $ContentMode = ""
+        $s.SampleNotice = "Reviewed sample notice."
+        . $noticePolicyBlock
+        $expectedSampleNotice | Should Be $s.SampleNotice
+    }
+    It "uses the same effective notice for the additional page checks" {
+        $checker = Get-Content -LiteralPath $checkerPath -Raw
+        $checker | Should Match 'if \(\$expectedSampleNotice\) \{'
+        $checker | Should Not Match '\$s\.SampleNotice'
+    }
+    It "covers none blank and custom notices in both modes without weakening Demo requirements" {
+        foreach ($mode in @("Customer", "Demo")) {
+            foreach ($value in @("none", "", "Reviewed internal sample notice.")) {
+                $ContentMode = $mode
+                $s.SampleNotice = $value
+                . $noticePolicyBlock
+                if ($mode -eq "Demo" -and $value -eq "none") {
+                    Get-CoETestExceptionMessage { . $demoNoticeGuardBlock } | Should Match "non-empty SampleNotice"
+                } else {
+                    . $demoNoticeGuardBlock
+                    if ($mode -eq "Customer") {
+                        $expectedSampleNotice | Should Be ""
+                    } else {
+                        $expectedSampleNotice | Should Not BeNullOrEmpty
+                        $canvas = "<p>$expectedSampleNotice</p>"
+                        . $homeNoticeBlock
+                        $lastNoticeResult | Should Be $true
+                    }
+                }
+                ($noticeTerms -contains "none") | Should Be $false
+            }
+        }
+    }
+}
+
+$mailboxSection = $checkerAst.Find({ param($node)
+    $node -is [Management.Automation.Language.CommandAst] -and
+    $node.Extent.Text.StartsWith('Invoke-Section "8 Customer mode" {')
+}, $true)
+if (-not $mailboxSection) { throw "Missing Customer-mode mailbox review." }
+$mailboxSectionBlock = [scriptblock]::Create($mailboxSection.Extent.Text)
+. (Join-Path $kitRoot "Internal\OperatorAdvisories.ps1")
+function Invoke-Section([string]$Check, [scriptblock]$Body) { & $Body }
+function Add-Warning([string]$Check, [string]$Item, [string]$Detail = "") {
+    $script:mailboxWarning = $Detail
+}
+
+Describe "Checker preserves the mailbox manual-review gate" {
+    BeforeEach {
+        $script:s = [pscustomobject]@{ Tenant = "contoso.onmicrosoft.com"; MailNickname = "CoE"; SupportEmail = "support@example.org" }
+        $script:SiteUrl = "https://contoso.sharepoint.com/sites/CoE"
+        $script:SettingsPath = "unused-offline-path"
+        $script:mailboxWarning = ""
+        Mock New-CoEAdvisoryContext { "offline-context" }
+        Mock Get-CoELabSupportMailboxReview { [pscustomobject]@{ RequiresReview = $false; LabLooking = $false; SavedProceed = $false } }
+    }
+    It "emits WARN when the mailbox is lab-looking even without a saved approval" {
+        Mock Get-CoELabSupportMailboxReview { [pscustomobject]@{ RequiresReview = $true; LabLooking = $true; SavedProceed = $false } }
+        . $mailboxSectionBlock
+        $mailboxWarning | Should Match 'lab-looking mailbox: True'
+        $mailboxWarning | Should Match 'not production acceptance'
+    }
+    It "emits WARN when a saved approval exists even after the address changes" {
+        Mock Get-CoELabSupportMailboxReview { [pscustomobject]@{ RequiresReview = $true; LabLooking = $false; SavedProceed = $true } }
+        . $mailboxSectionBlock
+        $mailboxWarning | Should Match 'LabSupportMailbox PROCEED: True'
+    }
+    It "does not warn or claim mailbox delivery was tested for an ordinary address" {
+        . $mailboxSectionBlock
+        $mailboxWarning | Should Be ""
+    }
+    It "runs this review only inside Customer mode" {
+        $parent = $mailboxSection.Parent
+        $found = $false
+        while ($parent) {
+            if ($parent -is [Management.Automation.Language.IfStatementAst] -and
+                $parent.Clauses[0].Item1.Extent.Text -eq '$ContentMode -eq "Customer"') { $found = $true; break }
+            $parent = $parent.Parent
+        }
+        $found | Should Be $true
+    }
+}
+
 $manualReviewAsts = @($checkerAst.FindAll({ param($node)
     $node -is [System.Management.Automation.Language.IfStatementAst] -and
     $node.Extent.Text.StartsWith('if ($warned.Count) {')
@@ -161,6 +331,26 @@ Describe "Checker warning summary" {
             $text | Should Match '1366px'
             $text | Should Match 'ChannelMessage.Read.All'
             $text | Should Not Match 'screenshot only for a header-layout'
+        }
+    }
+    It "documents direct-script recovery separately from launcher reset" {
+        foreach ($name in @("01_Admin-Quickstart.html", "START-HERE.txt")) {
+            $text = Get-Content -LiteralPath (Join-Path $kitRoot $name) -Raw
+            $text | Should Match '(?i)no reset (is )?required'
+            $text | Should Match 'Customer-Walkthrough-State.json'
+            $text | Should Match 'ResetAfterPurge'
+            $text | Should Match 'AliasReusable'
+            $text | Should Match '\-Purge \-WhatIf'
+            $text | Should Match '(?i)not.*(prerequisite|required).*02_Install|receipt is not required'
+        }
+    }
+    It "documents separate checking and the mailbox review gate without inferring GCC acceptance" {
+        foreach ($name in @("01_Admin-Quickstart.html", "START-HERE.txt")) {
+            $text = Get-Content -LiteralPath (Join-Path $kitRoot $name) -Raw
+            $text | Should Match '(?i)does not automatically run'
+            $text | Should Match 'LabSupportMailbox'
+            $text | Should Match '(?i)monitoring'
+            $text | Should Match '(?i)not GCC Moderate acceptance'
         }
     }
 }

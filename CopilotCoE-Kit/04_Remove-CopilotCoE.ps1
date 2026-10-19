@@ -26,6 +26,9 @@ You must type the Team alias to confirm; -Purge also requires confirming the num
 shown in the plan. -Purge cannot be undone and uses only URLs tied to the saved CoE identity.
 The sign-in app from 01_Register-CoEProvisioningApp.ps1 is kept so you can rebuild;
 delete it in Entra admin center when you no longer need it (steps are printed at the end).
+Only a completed, verified -Purge writes CoE-Purge-Receipt.json beside external
+organization settings. Settings inside the release use LocalAppData\CopilotCoE\PurgeReceipts
+instead, never the release kit. -WhatIf and incomplete/soft deletes write no receipt.
 #>
 [CmdletBinding(SupportsShouldProcess)]
 param(
@@ -88,8 +91,20 @@ function Get-DeletedAliasSites([object]$Connection, [string]$Alias, [string[]]$R
     @(Get-PnPTenantDeletedSite -Limit 100000 -Connection $Connection |
         Where-Object { ([string]$_.Url).TrimEnd("/") -in $known })
 }
-function Get-DeletedGroup([object]$Connection, [string]$Alias) {
-    Get-PnPDeletedMicrosoft365Group -Identity $Alias -Connection $Connection -ErrorAction Stop
+function Get-DeletedGroup([object]$Connection, [string]$Alias, [string]$GroupId) {
+    # Enumerate rather than treating an identity lookup's not-found/auth errors as absence.
+    $matches = @(foreach ($candidate in @(Get-PnPDeletedMicrosoft365Group -Connection $Connection -ErrorAction Stop)) {
+        $candidateId = [guid]::Empty
+        if (-not $candidate.PSObject.Properties["MailNickname"] -or -not $candidate.PSObject.Properties["Id"] -or
+            [string]::IsNullOrWhiteSpace([string]$candidate.MailNickname) -or
+            -not [guid]::TryParse([string]$candidate.Id, [ref]$candidateId) -or $candidateId -eq [guid]::Empty) {
+            throw "Deleted-group enumeration returned incomplete identity information. Absence is unproven."
+        }
+        if ($candidate.MailNickname -ieq $Alias -or [string]$candidate.Id -in $script:coeGroupIds -or
+            ($GroupId -and [string]$candidate.Id -ieq $GroupId)) { $candidate }
+    })
+    if ($matches.Count -gt 1) { throw "Multiple deleted groups match the alias or saved immutable ID. Review manually." }
+    $matches
 }
 function Test-CoESite([object]$Connection, [string]$Url, [object]$TenantSite) {
     $siteConnection = Connect-PnPOnline -Url $Url -Connection $Connection -ReturnConnection -ErrorAction Stop
@@ -98,6 +113,65 @@ function Test-CoESite([object]$Connection, [string]$Url, [object]$TenantSite) {
     $markerList = @(Get-PnPList -Connection $siteConnection -ErrorAction Stop |
         Where-Object Title -in @("Copilot Adoption Checklist", "Department Champions"))
     return ($markers.Count -gt 0 -or $markerList.Count -gt 0)
+}
+
+function Write-CoEPurgeReceipt {
+    [CmdletBinding(SupportsShouldProcess)]
+    param(
+        [string]$ReceiptPath, $Settings, [string]$Alias, [string]$GroupId,
+        [string]$SiteUrl, [string[]]$SiteUrls, [bool]$AliasReusable, [switch]$Purge,
+        [string]$ReleaseRoot
+    )
+    if (-not $Purge -or -not $AliasReusable) { return }
+    $fullPath = [IO.Path]::GetFullPath($ReceiptPath)
+    $release = [IO.Path]::GetFullPath($ReleaseRoot).TrimEnd("\")
+    if ($fullPath -ieq $release -or $fullPath.StartsWith($release + "\", [StringComparison]::OrdinalIgnoreCase)) {
+        throw "Purge receipts must be stored outside the release kit."
+    }
+    $id = [guid]::Empty
+    if (-not [guid]::TryParse($GroupId, [ref]$id) -or $id -eq [guid]::Empty) {
+        throw "No immutable CoE group ID is available for a purge receipt."
+    }
+    if ($Alias -ine [string]$Settings.MailNickname) {
+        throw "The removed alias differs from settings MailNickname. No reset receipt can be issued for this profile."
+    }
+    $urls = @($SiteUrls | ForEach-Object { $_.TrimEnd("/") } | Sort-Object -Unique)
+    if (-not $SiteUrl -or $SiteUrl.TrimEnd("/") -notin $urls -or $urls.Count -eq 0) {
+        throw "The exact primary site and all reviewed site URLs are required for a purge receipt."
+    }
+    foreach ($url in $urls) {
+        if (-not [uri]::IsWellFormedUriString($url, [UriKind]::Absolute)) { throw "Invalid receipt site URL: $url" }
+        $uri = [uri]$url
+        if ($uri.Scheme -ne "https" -or $uri.Host -ine ([string]$Settings.SiteFQDN).Trim() -or
+            $uri.UserInfo -or $uri.Query -or $uri.Fragment -or -not $uri.IsDefaultPort) {
+            throw "Receipt site URL is outside the exact configured tenant: $url"
+        }
+    }
+    $receipt = [ordered]@{
+        SchemaVersion = 1
+        Producer = "04_Remove-CopilotCoE.ps1"
+        ReceiptId = [guid]::NewGuid().ToString()
+        AliasReusable = $true
+        Tenant = ([string]$Settings.Tenant).Trim()
+        AdminFQDN = ([string]$Settings.AdminFQDN).Trim() -replace "^https?://", "" -replace "/.*$", ""
+        SiteFQDN = ([string]$Settings.SiteFQDN).Trim() -replace "^https?://", "" -replace "/.*$", ""
+        MailNickname = $Alias
+        GroupId = $id.ToString()
+        SiteUrl = $SiteUrl.TrimEnd("/")
+        SiteUrls = $urls
+        PurgeCompletedAtUtc = [DateTime]::UtcNow.ToString("o")
+    }
+    if ($PSCmdlet.ShouldProcess($fullPath, "Write the completed identity-bound purge receipt")) {
+        $null = New-Item -ItemType Directory -Path (Split-Path -Parent $fullPath) -Force -ErrorAction Stop
+        $pending = "$fullPath.$([guid]::NewGuid()).pending"
+        try {
+            $receipt | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $pending -Encoding utf8 -ErrorAction Stop
+            Move-Item -LiteralPath $pending -Destination $fullPath -Force -ErrorAction Stop
+        } finally {
+            if (Test-Path -LiteralPath $pending) { Remove-Item -LiteralPath $pending -ErrorAction Stop }
+        }
+        return $fullPath
+    }
 }
 
 $groups = @(Get-PnPMicrosoft365Group -Filter "mailNickname eq '$MailNickname'" -IncludeSiteUrl -Connection $admin)
@@ -211,6 +285,8 @@ if ($Purge) {
 }
 $reviewedPurgeSiteUrls = @($script:authorizedDeletedSiteUrls |
     ForEach-Object { ([string]$_).TrimEnd("/") } | Sort-Object -Unique)
+$receiptGroupId = if ($group) { [string]$group.GroupId } else { $savedTeamId }
+$receiptSiteUrl = if ($group) { $siteUrl } else { $reportSite }
 if ($Purge -and $reviewedPurgeSiteUrls.Count -eq 0) {
     throw "No exact, identity-verified site URLs are available for purge. Nothing was removed."
 }
@@ -358,21 +434,47 @@ if ($Purge) {
 }
 
 $remainingActive = @(Get-AliasSites -Connection $admin -Alias $MailNickname) + @(Get-ChannelSites -Connection $admin -Alias $MailNickname)
+if ($Purge) {
+    foreach ($url in $reviewedPurgeSiteUrls) {
+        $literal = $url.Replace("'", "''")
+        $remainingActive += @(Get-PnPTenantSite -Filter "Url -eq '$literal'" -Connection $admin -ErrorAction Stop)
+    }
+    foreach ($template in @("TEAMCHANNEL#1", "TEAMCHANNEL#0")) {
+        $remainingActive += @(Get-PnPTenantSite -Template $template -Connection $admin -ErrorAction Stop |
+            Where-Object { [string]$_.RelatedGroupId -ieq $receiptGroupId })
+    }
+}
 $remainingDeleted = @(Get-DeletedAliasSites -Connection $admin -Alias $MailNickname `
     -ReviewedSiteUrls $reviewedPurgeSiteUrls)
-$remainingDeletedGroup = if ($Purge) { Get-DeletedGroup -Connection $admin -Alias $MailNickname } else { $null }
+$remainingDeletedGroup = if ($Purge) { Get-DeletedGroup -Connection $admin -Alias $MailNickname -GroupId $receiptGroupId } else { $null }
 $matchingDeletedSites = @(if ($Purge) {
-    Get-PnPTenantDeletedSite -Limit 100000 -Connection $admin |
-        Where-Object { ([uri]$_.Url).Segments[-1].TrimEnd("/") -eq $MailNickname }
+    $allDeletedSites = @(Get-PnPTenantDeletedSite -Limit 100000 -Connection $admin -ErrorAction Stop)
+    if ($allDeletedSites.Count -ge 100000) { throw "Deleted-site enumeration reached its limit. Purge completion is unproven; no receipt was written." }
+    $allDeletedSites | Where-Object { ([uri]$_.Url).Segments[-1].TrimEnd("/") -eq $MailNickname }
 })
 $unknownDeletedSites = @($matchingDeletedSites |
     Where-Object { ([string]$_.Url).TrimEnd("/") -notin $script:authorizedDeletedSiteUrls })
 if ($unknownDeletedSites.Count -gt 0) {
     Write-Warning "Unverified recycled site(s) use this exact alias and were not purged: $(($unknownDeletedSites | ForEach-Object Url) -join '; '). Review manually."
 }
-$aliasReusable = $Purge -and $remainingActive.Count -eq 0 -and $remainingDeleted.Count -eq 0 -and
+$remainingActiveGroups = @(if ($Purge) {
+    Get-PnPMicrosoft365Group -Filter "mailNickname eq '$MailNickname'" -Connection $admin -ErrorAction Stop
+    Get-PnPMicrosoft365Group -Filter "id eq '$receiptGroupId'" -Connection $admin -ErrorAction Stop
+})
+$aliasReusable = $Purge -and $remainingActiveGroups.Count -eq 0 -and $remainingActive.Count -eq 0 -and $remainingDeleted.Count -eq 0 -and
     $unknownDeletedSites.Count -eq 0 -and -not $remainingDeletedGroup
-if ($aliasReusable) {
+$purgeReceiptPath = $null
+if ($aliasReusable -and -not $WhatIfPreference) {
+    $releaseRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+    $receiptDirectory = $settingsDirectory
+    if ($settingsDirectory -ieq $releaseRoot -or
+        $settingsDirectory.StartsWith($releaseRoot + "\", [StringComparison]::OrdinalIgnoreCase)) {
+        $receiptDirectory = Join-Path ([Environment]::GetFolderPath("LocalApplicationData")) "CopilotCoE\PurgeReceipts\$([guid]::NewGuid())"
+    }
+    $purgeReceiptPath = Write-CoEPurgeReceipt -ReceiptPath (Join-Path $receiptDirectory "CoE-Purge-Receipt.json") `
+        -Settings $s -Alias $MailNickname -GroupId $receiptGroupId -SiteUrl $receiptSiteUrl `
+        -SiteUrls $reviewedPurgeSiteUrls -AliasReusable $aliasReusable -Purge:$Purge -ReleaseRoot $releaseRoot
+    if ($purgeReceiptPath) { Write-Host "Completed purge receipt (keep private): $purgeReceiptPath" }
     if (Test-Path -LiteralPath $removalManifestPath) { Remove-Item -LiteralPath $removalManifestPath -Force }
     if (Test-Path -LiteralPath $reportPath) { Remove-Item -LiteralPath $reportPath -Force }
 }
@@ -396,4 +498,5 @@ if (-not $Purge) {
     Purged           = $purged -join "; "
     InRecycleBin     = if ($Purge) { @($remainingDeleted | ForEach-Object Url) -join "; " } else { "Restorable for 30 days (group and sites)" }
     AliasReusable    = $aliasReusable
+    PurgeReceiptPath = $purgeReceiptPath
 }
