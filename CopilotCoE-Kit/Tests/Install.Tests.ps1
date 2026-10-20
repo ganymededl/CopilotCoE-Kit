@@ -333,6 +333,7 @@ Describe "Checker warning summary" {
             $text | Should Not Match 'screenshot only for a header-layout'
         }
     }
+
     It "documents direct-script recovery separately from launcher reset" {
         foreach ($name in @("01_Admin-Quickstart.html", "START-HERE.txt")) {
             $text = Get-Content -LiteralPath (Join-Path $kitRoot $name) -Raw
@@ -343,6 +344,13 @@ Describe "Checker warning summary" {
             $text | Should Match '\-Purge \-WhatIf'
             $text | Should Match '(?i)not.*(prerequisite|required).*02_Install|receipt is not required'
         }
+    }
+
+    It "reports a found route notice on PASS instead of printing the failure sentence" {
+        $checker = Get-Content -LiteralPath $checkerPath -Raw
+        $checker | Should Match '\$detail = if \(\$notice\) \{ "not-configured notice found" \}'
+        $checker | Should Match 'elseif \(\$AllowUnconfiguredRoutes\) \{ "notice absent; accepted only because -AllowUnconfiguredRoutes was supplied" \}'
+        $checker | Should Not Match 'Add-Result "7 Routes"[^\r\n]*\$notice[^\r\n]*"route is empty and the page does not say so"'
     }
     It "documents separate checking and the mailbox review gate without inferring GCC acceptance" {
         foreach ($name in @("01_Admin-Quickstart.html", "START-HERE.txt")) {

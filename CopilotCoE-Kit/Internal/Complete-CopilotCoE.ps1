@@ -23,6 +23,8 @@ param(
     [switch]$RepairCapturedPages,
     [switch]$AllowMissingDataSafetyIncidentRoute,
     [ValidateSet("Customer", "Demo")][string]$ContentMode = "Customer",
+    [ValidateSet("Interactive", "DeviceLogin")][string]$AuthenticationMode = "DeviceLogin",
+    [switch]$ForceAuthentication,
     [object]$Connection
 )
 
@@ -41,6 +43,7 @@ Import-Module PnP.PowerShell -RequiredVersion 3.2.0
 . (Join-Path $PSScriptRoot "HubExperience.ps1")
 . (Join-Path $PSScriptRoot "GovernanceLinks.ps1")
 . (Join-Path $PSScriptRoot "OperatorAdvisories.ps1")
+. (Join-Path $PSScriptRoot "TargetResolution.ps1")
 $runId = "$(Get-Date -Format 'yyyyMMdd-HHmmss')-$([guid]::NewGuid().ToString('N'))"
 
 # Organization profile: names, links, and support address from the org's Deployment-Settings.json.
@@ -118,12 +121,15 @@ $timeZoneId = [string](Get-OrgValue "TimeZone" "Eastern Standard Time")
 try { $siteTimeZone = [TimeZoneInfo]::FindSystemTimeZoneById($timeZoneId) }
 catch { throw "TimeZone '$timeZoneId' is not a Windows time zone ID. Use a value from Get-TimeZone -ListAvailable, for example 'Eastern Standard Time'." }
 function Set-SiteTimeZone([object]$SiteConnection) {
-    $normalize = { param($text) ($text -replace '&', 'and' -replace '[^A-Za-z0-9]', '').ToLowerInvariant() }
     $regional = (Get-PnPWeb -Connection $SiteConnection).RegionalSettings
     Get-PnPProperty -ClientObject $regional -Property TimeZones, TimeZone -Connection $SiteConnection | Out-Null
-    $wanted = & $normalize $siteTimeZone.DisplayName
-    $match = @($regional.TimeZones | Where-Object { (& $normalize $_.Description) -eq $wanted }) | Select-Object -First 1
-    if (-not $match) { throw "No SharePoint time zone matches '$($siteTimeZone.DisplayName)'. Set the site time zone in Site settings > Regional settings." }
+    $match = Find-CoESharePointTimeZone -TimeZone $siteTimeZone -Candidates @($regional.TimeZones) `
+        -EnglishName (Get-CoEEnglishTimeZoneName $siteTimeZone.Id)
+    if (-not $match) {
+        Write-Warning ("No SharePoint time zone matches '$($siteTimeZone.DisplayName)' ($timeZoneId); SharePoint lists zone names in the site's language. " +
+            "The site time zone was NOT changed. Set it to the zone for '$timeZoneId' in Site settings > Regional settings before relying on the training calendar.")
+        return
+    }
     if ($regional.TimeZone.Id -ne $match.Id) {
         $regional.TimeZone = $match
         $regional.Update()
@@ -402,9 +408,10 @@ foreach ($kind in @("program", "leadership")) {
 }
 
 if (-not $Connection) {
-    Write-Host "Reuse cached PnP sign-in if available. If prompted, complete one device sign-in for the target tenant."
-    $Connection = Connect-PnPOnline -Url $AdminUrl -DeviceLogin -ClientId $ClientId `
-        -Tenant $Tenant -PersistLogin -ReturnConnection
+    Write-Host (Get-CoESignInHint $AuthenticationMode)
+    $signInArguments = Get-CoESignInArguments -Url $AdminUrl -ClientId ([string]$ClientId) -Tenant $Tenant `
+        -AuthenticationMode $AuthenticationMode -ForceAuthentication:$ForceAuthentication
+    $Connection = Connect-PnPOnline @signInArguments
 }
 $site = Connect-PnPOnline -Url $SiteUrl -Connection $Connection -ReturnConnection
 if (-not $GovernanceOnly) {
@@ -529,7 +536,7 @@ function Remove-CoEUpcomingSessionsWebPart($SiteConnection, [string]$PageName, $
     }
     Set-PnPPage -Identity $PageName -Publish -Connection $SiteConnection -ErrorAction Stop | Out-Null
 }
-
+
 # Adds a short "Upcoming sessions / No sessions scheduled yet" heading in Customer mode's Section 2/Column 1 -
 # the column the live List web part would otherwise occupy (see Remove-CoEUpcomingSessionsWebPart). Without
 # this, that column held only the bare "See the full training calendar" link next to the full Copilot tools
@@ -889,7 +896,7 @@ function Write-ManagedPage {
     if ($existing.Count -gt 1) { throw "Duplicate page identity: $Name" }
     if ($existing.Count -eq 1) {
         if (-not $ReplaceManagedPages) {
-            Write-Host "Preserved existing page $Name. Use -ReplaceManagedPages only after reviewing it."
+            Write-Host "Preserved existing page $Name. Review it; 03_Update-CoEContent.ps1 replaces managed pages and saves a before-copy in RevisionAudit."
             return $existing[0]
         }
         $page = Get-PnPPage -Identity "$Name.aspx" -Connection $SiteConnection
@@ -1037,12 +1044,12 @@ function Repair-CoEHubPages($SiteConnection, [object[]]$Links, [string]$Environm
     $toolItems = @(Get-CoEToolQuickLinksItems $toolsCatalog.tools $Links $developerEnabled)
     $newHomeCanvas = Convert-CoEQuickLinksCanvas $homeCanvas $SiteUrl "Resources" "Copilot tools" $toolItems
     if ($newHomeCanvas -ne $homeCanvas) {
-        Set-PnPListItem -List "Site Pages" -Identity $before.Id -Values @{ CanvasContent1 = $newHomeCanvas } -Connection $SiteConnection | Out-Null
+        Set-PnPListItem -List "SitePages" -Identity $before.Id -Values @{ CanvasContent1 = $newHomeCanvas } -Connection $SiteConnection | Out-Null
         $homeFile = Get-PnPFile -Url "SitePages/TrainingHome.aspx" -AsFileObject -Connection $SiteConnection
         $homeFile.Publish("Relabel the vendor Resources Quick Links as Copilot tools")
         Invoke-PnPQuery -Connection $SiteConnection
     }
-    $saved = Get-PnPListItem -List "Site Pages" -Id $before.Id -Connection $SiteConnection -ErrorAction Stop
+    $saved = Get-PnPListItem -List "SitePages" -Id $before.Id -Connection $SiteConnection -ErrorAction Stop
     $savedCanvas = [string]$saved["CanvasContent1"]
     if ($savedCanvas -notmatch 'c4bd7b2f-7b6e-4599-8485-16504575f590') { throw "Home lost its Hero web part." }
     if ($savedCanvas -notmatch [regex]::Escape("Copilot tools")) { throw "Home did not retain the Copilot tools Quick Links." }
@@ -1251,6 +1258,33 @@ function Read-DocxText([byte[]]$Bytes) {
     }
     return ($lines -join "`n")
 }
+function Add-CoEFileWithRetry {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$Folder,
+        [Parameter(Mandatory)][object]$Connection,
+        [int]$MaxAttempts = 6,
+        [int]$DelaySeconds = 10
+    )
+    if ($MaxAttempts -lt 1) { throw "MaxAttempts must be at least 1." }
+    for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
+        try {
+            # A newly created shared-channel site can return its filesFolder before the next child folder is
+            # consistently addressable by Add-PnPFile. Re-resolve on every attempt so a transient 404 cannot
+            # strand a fresh build after its parent Team and site already exist.
+            Resolve-PnPFolder -SiteRelativePath $Folder -Connection $Connection -ErrorAction Stop | Out-Null
+            Add-PnPFile -Path $Path -Folder $Folder -Connection $Connection -ErrorAction Stop | Out-Null
+            return
+        } catch {
+            $message = $_.Exception.Message
+            $transient = $message -match '404|NotFound|Not Found|429|TooManyRequests|Timeout|canceled|cancelled|502|503|504|temporarily|ServiceUnavailable|GatewayTimeout'
+            if (-not $transient -or $attempt -eq $MaxAttempts) { throw }
+            Write-Warning "SharePoint folder '$Folder' is not ready for upload (attempt $attempt of $MaxAttempts): $message"
+            Start-Sleep -Seconds $DelaySeconds
+        }
+    }
+}
 # Publishes a staged text draft as a Word document. Replaces a changed document only with -ReplaceManagedFiles,
 # and removes the older plain-text copy of the same draft (for example Sample-guidance.txt) when it is replaced.
 function Write-ManagedDocx {
@@ -1263,7 +1297,7 @@ function Write-ManagedDocx {
         $before = Read-DocxText ((Get-PnPFile -Url "$Folder/$FileName" -AsMemoryStream -Connection $SiteConnection).ToArray())
         if ($before -eq $desiredText) { $write = $false }
         elseif (-not $ReplaceManagedFiles) {
-            throw "Managed file $Folder/$FileName differs from the draft. Review it and use -ReplaceManagedFiles to authorize replacement."
+            throw "Managed file $Folder/$FileName differs from the draft. Review it, then rerun with 03_Update-CoEContent.ps1 -ReplaceFiles (02_Install-CopilotCoE.ps1 uses -ReplaceManagedFiles) to authorize replacement."
         }
         else { $before | Set-Content (Join-Path $auditFolder "$runId-$AuditKey-$FileName-before.txt") -Encoding utf8 }
     }
@@ -1273,7 +1307,7 @@ function Write-ManagedDocx {
         $docxPath = Join-Path $temp $FileName
         try {
             New-SimpleDocx -Text (Get-Content -LiteralPath $LocalPath -Raw) -Path $docxPath -Title $Title
-            Add-PnPFile -Path $docxPath -Folder $Folder -Connection $SiteConnection | Out-Null
+            Add-CoEFileWithRetry -Path $docxPath -Folder $Folder -Connection $SiteConnection
         } finally { Remove-Item -LiteralPath $temp -Recurse -Force -ErrorAction SilentlyContinue }
         $saved = Read-DocxText ((Get-PnPFile -Url "$Folder/$FileName" -AsMemoryStream -Connection $SiteConnection).ToArray())
         if ($saved -ne $desiredText) { throw "Managed governance document does not match the reviewed draft: $Folder/$FileName" }
@@ -1282,7 +1316,7 @@ function Write-ManagedDocx {
         $old = @(Get-PnPFolderItem -FolderSiteRelativeUrl $Folder -ItemType File -Connection $SiteConnection | Where-Object Name -eq $legacy)
         if ($old.Count -eq 0) { continue }
         if (-not $ReplaceManagedFiles) {
-            Write-Warning "Kept the older copy $Folder/$legacy next to $FileName. Run again with -ReplaceFiles to remove it."
+            Write-Warning "Kept the older copy $Folder/$legacy next to $FileName. Run 03_Update-CoEContent.ps1 -ReplaceFiles to remove it."
             continue
         }
         Get-PnPFile -Url "$Folder/$legacy" -AsString -Connection $SiteConnection |
@@ -1415,7 +1449,7 @@ function Write-ManagedSeedFile {
             return
         }
         if (-not $ReplaceManagedFiles) {
-            throw "Managed file $Folder/$name differs from the draft. Review it and use -ReplaceManagedFiles to authorize replacement."
+            throw "Managed file $Folder/$name differs from the draft. Review it, then rerun with 03_Update-CoEContent.ps1 -ReplaceFiles (02_Install-CopilotCoE.ps1 uses -ReplaceManagedFiles) to authorize replacement."
         }
         $before | Set-Content (Join-Path $auditFolder "$runId-$AuditKey-$name-before.txt") -Encoding utf8
     }
@@ -1455,13 +1489,13 @@ foreach ($control in @($readiness.Controls)) {
 $savedReadiness = Get-PnPFile -Url "SitePages/Technical Readiness.aspx" -AsListItem -Connection $site
 $canvas = [string]$savedReadiness["CanvasContent1"]
 if ($canvas.Contains($oldForum)) {
-    Set-PnPListItem -List "Site Pages" -Identity $savedReadiness.Id `
+    Set-PnPListItem -List "SitePages" -Identity $savedReadiness.Id `
         -Values @{ CanvasContent1 = $canvas.Replace($oldForum, $copy.repairs.forum) } -Connection $site | Out-Null
 }
 $readinessFile = Get-PnPFile -Url "SitePages/Technical Readiness.aspx" -AsFileObject -Connection $site
 $readinessFile.Publish("Remove Early Access Program and update the Copilot community link")
 Invoke-PnPQuery -Connection $site
-$publishedReadiness = Get-PnPListItem -List "Site Pages" -Id $savedReadiness.Id -Connection $site
+$publishedReadiness = Get-PnPListItem -List "SitePages" -Id $savedReadiness.Id -Connection $site
 if ([string]$publishedReadiness["CanvasContent1"] -match "Early Access Program|m365-early-access-program" -or
     ([string]$publishedReadiness["CanvasContent1"]).Contains($oldForum)) {
     throw "The published Technical Readiness page still contains an obsolete resource."
@@ -1884,7 +1918,7 @@ if ($navOrder -ne "TaskFirst") {
 if ($omittedGuideUrls.Count -gt 0) {
     Write-Warning "Omitted guides were removed from managed navigation. Existing guide pages are preserved; review and retire them manually if authorized."
     if (-not (Test-ManagedPageWritten $site "Copilot-Guides")) {
-        Write-Warning "The existing guide hub was preserved and may still link to omitted guides. Review it before using -ReplaceManagedPages."
+        Write-Warning "The existing guide hub was preserved and may still link to omitted guides. Review it; 03_Update-CoEContent.ps1 replaces managed pages."
     }
 }
 $generalChannel = @($channels | Where-Object DisplayName -eq "General")
@@ -2218,7 +2252,7 @@ if ($RepairCapturedPages) {
         }
         Add-CoECalendarLinkTextPart $site "TrainingHome" $calendarUrl -Order 5 -Section 2 -Column 1
     } else {
-        Write-Warning "Home was preserved and still needs the 3.7 layout. Use -RepairCapturedPages before accepting this site."
+        Write-Warning "Home was preserved and still needs the 3.7 layout. Run 03_Update-CoEContent.ps1 -Scope All -RepairCapturedPages before accepting this site."
     }
 }
 

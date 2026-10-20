@@ -28,7 +28,85 @@ READ FIRST
     Start here research summary for that organization.
   Org-Template\README.txt   (organization folder reference: every setting and override)
 
-OPERATOR ADVISORIES (3.8.17)
+COMMAND MAP - ONE COMMAND PER JOB
+  Run from 03_Build\CopilotCoE-Kit. $org is your organization folder, kept outside the kit.
+  Once per tenant: create the sign-in app
+      .\01_Register-CoEProvisioningApp.ps1 -OrgPath $org
+  Build a NEW CoE (once per alias)
+      .\02_Install-CopilotCoE.ps1 -OrgPath $org -ContentMode Customer -SeedDemoContent
+  Check it, after EVERY install and EVERY update (02 and 03 do not run the checker for you)
+      .\Test-CoEInstall.ps1 -OrgPath $org -SiteUrl <exact address 02 printed> -ContentMode Customer
+  02 stopped partway: finish the same build
+      .\02_Install-CopilotCoE.ps1 -OrgPath $org -ContentMode Customer -SeedDemoContent -ResumeExisting
+  You changed settings, Content or Assets
+      .\03_Update-CoEContent.ps1 -OrgPath $org -Scope All -ContentMode Customer
+      (add -ReplaceFiles when governance drafts changed; see WHAT TO RUN AFTER YOU CHANGE SOMETHING)
+  Start over with the same alias
+      .\04_Remove-CopilotCoE.ps1 -OrgPath $org -Purge -WhatIf
+      .\04_Remove-CopilotCoE.ps1 -OrgPath $org -Purge
+      When it reports AliasReusable : True, run 02 again. The numbered scripts have no reset step.
+
+BEFORE YOU INSTALL IN A CUSTOMER TENANT
+  The lab runs behind this kit did not exercise these conditions. Check each one first.
+  1. Group naming policy. A Microsoft Entra naming policy that adds a prefix or suffix applies to group
+     NAMES AND ALIASES (Entra admin center > Groups > Naming policy). Only Global Administrator and User
+     Administrator are exempt - SharePoint and Teams administrators are not. 02 finds the Team it creates by
+     the exact MailNickname. If the alias is rewritten it cannot find the Team and site it just created, and
+     running it again creates another. 02 reads the policy and asks STOP / PROCEED before it creates anything
+     when the policy applies to the signed-in account. Run as an exempt administrator, or have the policy
+     changed for the install.
+  2. Owner and operator. Two arrangements were tested in a lab: ONE account that runs 02 and is also
+     SharedChannelOwnerUPN, and a Global Administrator who runs 02 for a DIFFERENT owner (every governance
+     document was written). 02 never adds the operator to the two governance shared channels, so an operator
+     without Global Administrator rights is untested and may be refused when it writes the governance
+     documents, which stops the run partway. When the accounts differ, 02 asks STOP / PROCEED before it
+     creates anything. Run as the owner or a Global Administrator unless you have tested another operator.
+  3. Sign-in. 02 and Test-CoEInstall use browser sign-in by default; 01, 03 and 04 use a device code by
+     default. If Conditional Access blocks device-code flow (Microsoft's "Block device code flow" managed
+     policy), use -Interactive on 01 and -AuthenticationMode Interactive on 03 and 04. A cached sign-in is
+     reused until it expires, so a block can first appear on a later update. -ForceAuthentication requests a
+     fresh interactive sign-in and applies only to Interactive.
+  4. SharePoint address. 03 reads the site address from CoE-Revision-Report.json, so a tenant that creates
+     team sites under /teams/ works after a completed install. If a report exists but identifies another
+     host or alias, 03 stops rather than guessing. With no report, pass -SiteUrl with the exact address 02
+     printed (https://<host>/<managed path>/<MailNickname>) when the site is not under /sites/.
+  5. Structured overrides. Before any tenant sign-in, 02 and 03 validate organization-owned structured
+     content such as Content\Training-Calendar.csv. An obsolete StartDate/EndDate calendar stops locally
+     with migration guidance instead of creating a Team/site and failing during content completion.
+  6. Language. The installer identifies the Site Pages library by URL and its content type by ID rather than
+     English display names. The site time zone is matched by name; if neither the machine-language nor English
+     name matches what SharePoint returns, the time zone is left unchanged with a warning. Set it in Site
+     settings > Regional settings before relying on event times.
+  7. -SeedDemoContent (alias -PublishContent) publishes the CoE pages, catalogs, calendar and governance
+     content. It adds no demo data: -ContentMode Customer keeps sample rows and demo notices out. Without it
+     you get only an empty Team and SharePoint site.
+  8. Reset. Only separate launcher wrappers keep an install-attempt flag. The numbered scripts do not,
+     so there is nothing to reset before or after a completed purge.
+
+WHAT TO RUN AFTER YOU CHANGE SOMETHING
+  Guide, section, FAQ or feedback text; Links; GovernanceLinks; prompt CSVs; section Assets
+      03_Update-CoEContent.ps1 -Scope Guides   (or -Scope All)
+  Governance drafts under Content\Governance
+      03_Update-CoEContent.ps1 -Scope Governance -ReplaceFiles
+  ChampionDepartments, Training-Calendar.csv, the Top 10 deck
+      03_Update-CoEContent.ps1 -Scope All
+  Restore a removed required resource tab
+      03_Update-CoEContent.ps1 -Scope All -EnsureResourceTabs
+  Rebuild Home to the current layout (custom Home edits are replaced; a before-copy is saved)
+      03_Update-CoEContent.ps1 -Scope All -RepairCapturedPages
+  Not sure what changed
+      03_Update-CoEContent.ps1 -Scope All   (add -ReplaceFiles only if governance drafts changed)
+  Tenant, MailNickname or SharedChannelOwnerUPN
+      Not an update. These are fixed at install; 03 would target the wrong site or fail its governance checks.
+  -Scope Guides and -Scope Governance need CoE-Revision-Report.json from a completed install in the
+  organization folder. If it is missing (new computer, failed install) use -Scope All, which does not.
+  03 ALWAYS replaces the pages it manages, so edits made directly to kit-managed SharePoint pages are
+  overwritten by the next run; make lasting changes in the organization folder. A before-copy of each
+  replaced page is saved in RevisionAudit. A -Scope All run without -ReplaceFiles stops at the first
+  governance draft that differs from the organization's draft, after earlier content was already
+  published; rerun with -ReplaceFiles after reviewing it.
+
+OPERATOR ADVISORIES (3.8.17 and later)
   Install and update ask STOP / PROCEED for a lab-looking support mailbox in
   Customer mode, empty support routes, a default Demo notice, a title longer
   than 30 characters, parent-Team guest/out-of-domain members and a non-Extended
@@ -134,10 +212,12 @@ QUICK START - RUN THE NUMBERED SCRIPTS IN ORDER (01, 02, then 03 when needed; 04
       established customer site without review. Recheck all three Teams posts.
       Before accepting a fresh install, visually check and capture Home (readable linked card titles),
       one Copilot tool page, Guided learning, and the Agents menu at normal laptop width.
-      Interactive browser sign-in is the default. After app consent changes, add
-      -ForceAuthentication to obtain a fresh sign-in; no cache-file rename is needed.
-      -AuthenticationMode DeviceLogin remains available where interactive sign-in
-      is unsuitable; -ForceAuthentication applies only to Interactive.
+      02 and Test-CoEInstall sign in through a browser by default. After app consent changes, add
+      -ForceAuthentication to 02 to obtain a fresh sign-in; no cache-file rename is needed.
+      02 also accepts -AuthenticationMode DeviceLogin where interactive sign-in is unsuitable.
+      01, 03 and 04 default to a device code and reuse a cached sign-in while it is valid; 03 and 04
+      accept -AuthenticationMode Interactive (and -ForceAuthentication with it) for tenants that
+      block device-code flow. -ForceAuthentication applies only to Interactive.
   7. Read the final ADMIN HANDOFF: customer external sharing is OFF (Disabled).
      Keep the customer organization settings Disabled. Verify the site and Teams
      as described in runbook section 5.
@@ -225,11 +305,11 @@ HOME AND NAVIGATION
   zero or few real sessions - so Customer mode shows a "No sessions scheduled yet" heading
   next to the "See the full training calendar" link instead, until the organization adds
   real events.
-  NavigationOrder TaskFirst builds the horizontal mega menu with a Standard site header
-  so the section labels have their own row on the existing Teams site:
-  Home, Get started, Copilot tools, Training, Agents, Governance, Community, Help.
-  Headers do not navigate; each destination is one or two clicks away. Training contains
-  Technical readiness, Microsoft Mechanics, Learning series and the Training calendar.
+  NavigationOrder TaskFirst builds the horizontal mega menu with an Extended site header (Standard if
+  Extended is unavailable) so the section labels have their own row on the existing Teams site:
+  Start, Tools, Training, Agents, Governance, Help. The site logo and each page's Home breadcrumb lead
+  back to Home. Headers do not navigate; each destination is one or two clicks away. Training contains
+  Technical readiness, Microsoft Mechanics, Training calendar, Learning series and Guided learning.
   Home and every managed section page link back to Home. AToZ and AsBuilt remain opt-ins.
   To deliberately rebuild a customized Home on an existing site after review:
     .\03_Update-CoEContent.ps1 -OrgPath <folder> -Scope All -RepairCapturedPages
@@ -246,28 +326,23 @@ HOME AND NAVIGATION
   Previously created orphan pages are preserved for administrator review; fresh builds
   omit the empty News-and-Updates page. No test agent is automatically approved or featured.
 
-UPGRADING A SITE BUILT BY KIT 3.8 OR EARLIER
-  A plain rerun of 03_Update-CoEContent.ps1 does NOT bring an already-built site's content pages up to
-  date with every kit fix - most content page HTML (breadcrumbs, section labels, guide text, including the
-  3.8.2 breadcrumb and "Learning paths" naming fixes) is written once by Write-ManagedPage and then
-  preserved on every later run unless you pass -ReplaceManagedPages; an ordinary rerun intentionally leaves
-  an already-existing page alone so it never overwrites a customer's own edits. Home's welcome-text block
-  (Repair-CoEHubPages / Set-CoEHomeWelcomeText) follows the SAME rule, not an exception to it: it only runs
-  when -RepairCapturedPages is passed (a fresh, non-resumed install always passes it; 03_Update-CoEContent.ps1
-  only passes it through when you explicitly ask for it). A plain rerun never touches it, same as every
-  other content page - it does not refresh itself automatically, and no earlier claim that it did was ever
-  implemented that way.
-  For a site built on an earlier kit version, to actually pick up content-page fixes (breadcrumbs, guide
-  wording, section labels, Home's welcome text) do ONE of:
-    .\03_Update-CoEContent.ps1 -OrgPath <folder> -Scope All -ReplaceManagedPages -RepairCapturedPages
-        (rewrites every managed page from the current kit content, including Home; review the page's own
-        prior version first - a backup of its previous field values is written to RevisionAudit before it
-        is overwritten)
+UPGRADING A SITE BUILT BY AN EARLIER KIT
+  03_Update-CoEContent.ps1 ALWAYS replaces the content pages it manages (breadcrumbs, section labels, guide
+  text, the "Learning paths" naming and so on) with the current kit content plus your organization's
+  overrides, and saves a before-copy of each replaced page in RevisionAudit. It has no -ReplaceManagedPages
+  switch; that name belongs to an internal helper and is not something to pass.
+  What a plain 03 run does NOT rebuild is Home (hero, Copilot tools, calendar, welcome block) and the
+  title, breadcrumb and sample notice of the four captured pages (Copilot CoE adoption guide, CoE roles and
+  contacts, Technical readiness, Microsoft Mechanics). Those change only when you pass -RepairCapturedPages
+  (a fresh, non-resumed install always does). To bring a site built on an earlier kit up to date, do ONE of:
+    .\03_Update-CoEContent.ps1 -OrgPath <folder> -Scope All -RepairCapturedPages
+        (rewrites every managed page and rebuilds Home from the current kit; custom Home edits are replaced,
+        and a before-copy of Home is written to RevisionAudit first)
     or a fresh install into a new site, if you do not need to preserve the existing site's history.
-  Test-CoEInstall.ps1 checks the CURRENT kit's expected content (current breadcrumb labels, "Learning
-  paths" naming, and so on); a site that has not been through -ReplaceManagedPages/-RepairCapturedPages or a
-  fresh install since the fix it is checking for will still show those specific checks as FAIL, and that is
-  expected until one of the two upgrade paths above is used - it is not evidence the kit itself is broken.
+  Test-CoEInstall.ps1 checks the CURRENT kit's expected content (current breadcrumb labels, "Learning paths"
+  naming, and so on); a site that has not been through that 03 run or a fresh install since the fix it checks
+  for will still show those specific checks as FAIL. That is expected until one of the two paths above is
+  used - it is not evidence the kit itself is broken.
 
 IF THE BUILD STOPS PARTWAY
   Read and retain RevisionAudit transcripts; do not automatically retry or purge.
@@ -355,14 +430,16 @@ SCRIPTS (run only the numbered ones)
   02_Install-CopilotCoE.ps1        Builds the CoE for the organization folder
   03_Update-CoEContent.ps1            Republishes edited content and new organization files
   04_Remove-CopilotCoE.ps1         Undo: removes the Team, site, and channel sites
-  Internal\                           Helpers called by 02 and 03. Do not run.
+  Internal\                           Helpers called by 02, 03 and 04. Do not run.
   Common switches: -OrgPath <folder>; -AcceptOrgAssets (answer Yes to every
-  "Host these files?" question, for unattended runs).
+  "Host these files?" question, for unattended runs); -AuthenticationMode and
+  -ForceAuthentication (sign-in; see BEFORE YOU INSTALL IN A CUSTOMER TENANT).
+  03 also accepts -SiteUrl for a site that is not under /sites/ when no deployment report exists.
 
 SAFETY
   Scripts 01-03 never delete groups or sites; content completion/update can recycle
   managed files, pages, and sample list items. Organization assets are never replaced
-  unless you pass -ReplaceOrgAssets; managed governance files require -ReplaceManagedFiles.
+  unless you pass -ReplaceOrgAssets; managed governance files require -ReplaceFiles on 03 (02 uses -ReplaceManagedFiles).
   Only 04 removes the Team/sites after confirmation. The installer stops if the alias or
   site already exists; use -ResumeExisting only for your own partial build.
   Organization files are uploaded only after you answer Yes (or -AcceptOrgAssets);
@@ -411,6 +488,11 @@ STARTER CONTENT (replace before go-live)
 
 KNOWN LIMITS
   Earlier versions were exercised in lab tenants; this is not a customer-tenant
-  security certification. Teams can be slow
+  security certification. The validated configuration is: a commercial lab tenant, a Global
+  Administrator operator (also the owner, or a different owner), a fresh alias under /sites/, an English
+  site, a Windows time zone SharePoint lists in English, and cached sign-ins. Everything in BEFORE YOU
+  INSTALL IN A CUSTOMER TENANT lies outside that envelope; 02 now checks the naming policy and the
+  owner/operator difference up front, but test any other arrangement on a throwaway alias first.
+  Teams can be slow
   to recognize a new Team owner or to add tabs; the installer retries, and -ResumeExisting
   continues a stopped build. Test with a normal non-governance user before announcing the Team.

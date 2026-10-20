@@ -22,8 +22,10 @@ Remove (soft delete; restorable for 30 days from the admin centers):
 Remove and purge from the recycle bins so the same alias can be rebuilt at once:
     .\04_Remove-CopilotCoE.ps1 -Purge
 
-You must type the Team alias to confirm; -Purge also requires confirming the number of exact site URLs
-shown in the plan. -Purge cannot be undone and uses only URLs tied to the saved CoE identity.
+You must type the Team alias to confirm; -Purge also requires typing each exact site URL shown in the plan.
+-Purge cannot be undone and uses only URLs tied to the saved CoE identity.
+Sign-in uses a device code by default and reuses a cached sign-in while it is valid. If Conditional Access blocks
+device-code flow, use -AuthenticationMode Interactive (add -ForceAuthentication for a fresh interactive sign-in).
 The sign-in app from 01_Register-CoEProvisioningApp.ps1 is kept so you can rebuild;
 delete it in Entra admin center when you no longer need it (steps are printed at the end).
 Only a completed, verified -Purge writes CoE-Purge-Receipt.json beside external
@@ -36,12 +38,19 @@ param(
     [string]$SettingsPath,
     [string]$MailNickname,
     [switch]$Purge,
-    [int]$WaitMinutes = 15
+    [int]$WaitMinutes = 15,
+    [ValidateSet("Interactive", "DeviceLogin")]
+    [string]$AuthenticationMode = "DeviceLogin",
+    [switch]$ForceAuthentication
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 Import-Module PnP.PowerShell -RequiredVersion 3.2.0 -ErrorAction Stop
+. (Join-Path $PSScriptRoot "Internal\TargetResolution.ps1")
+if ($ForceAuthentication -and $AuthenticationMode -ne "Interactive") {
+    throw "-ForceAuthentication requires -AuthenticationMode Interactive."
+}
 if ($OrgPath) {
     if (-not (Test-Path -LiteralPath $OrgPath -PathType Container)) { throw "Organization folder not found: $OrgPath" }
     if (-not $SettingsPath) { $SettingsPath = Join-Path (Resolve-Path -LiteralPath $OrgPath).Path "Deployment-Settings.json" }
@@ -66,9 +75,10 @@ function Test-ConfiguredTenantSiteUrl([string]$Url) {
         ([uri]$Url).Scheme -eq "https" -and ([uri]$Url).Host.ToLowerInvariant() -eq $siteFqdn
 }
 
-Write-Host "Connecting to the SharePoint admin endpoint. Complete device sign-in if prompted."
-$admin = Connect-PnPOnline -Url "https://$adminFqdn/" -DeviceLogin -ClientId $s.PnPClientID `
-    -Tenant $s.Tenant -PersistLogin -ReturnConnection -ErrorAction Stop
+Write-Host "Connecting to the SharePoint admin endpoint. $(Get-CoESignInHint $AuthenticationMode)"
+$signInArguments = Get-CoESignInArguments -Url "https://$adminFqdn/" -ClientId ([string]$s.PnPClientID) `
+    -Tenant ([string]$s.Tenant) -AuthenticationMode $AuthenticationMode -ForceAuthentication:$ForceAuthentication
+$admin = Connect-PnPOnline @signInArguments
 
 function Get-AliasSites([object]$Connection, [string]$Alias) {
     @(Get-PnPTenantSite -Filter "Url -like '*/$Alias'" -Connection $Connection |

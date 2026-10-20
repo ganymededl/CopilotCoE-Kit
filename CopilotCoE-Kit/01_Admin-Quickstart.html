@@ -206,6 +206,21 @@
       </aside>
     </header>
 
+    <section class="step" id="command-map">
+      <h2>Command map: one command per job</h2>
+      <p>Run every command from the kit root (<code>$kitRoot</code>, the <code>CopilotCoE-Kit</code> folder). The sections below give the full copy-ready block for each row.</p>
+      <table>
+        <tr><th>Situation</th><th>Command</th></tr>
+        <tr><td>Once per tenant: create the sign-in app</td><td><code>.\01_Register-CoEProvisioningApp.ps1 -OrgPath $orgPath</code></td></tr>
+        <tr><td>Build a new CoE (once per alias)</td><td><code>.\02_Install-CopilotCoE.ps1 -OrgPath $orgPath -ContentMode Customer -SeedDemoContent</code></td></tr>
+        <tr><td>Check it after every install and every update</td><td><code>.\Test-CoEInstall.ps1 -OrgPath $orgPath -SiteUrl &lt;address 02 printed&gt; -ContentMode Customer</code></td></tr>
+        <tr><td>02 stopped partway: finish the same build</td><td>The same 02 command plus <code>-ResumeExisting</code></td></tr>
+        <tr><td>You changed settings, Content or Assets</td><td><code>.\03_Update-CoEContent.ps1 -OrgPath $orgPath -Scope All -ContentMode Customer</code> (add <code>-ReplaceFiles</code> only when governance drafts changed; see <a href="#what-to-run">what to run after a change</a>)</td></tr>
+        <tr><td>Start over with the same alias</td><td><code>.\04_Remove-CopilotCoE.ps1 -OrgPath $orgPath -Purge -WhatIf</code>, then the same command without <code>-WhatIf</code>. When it reports <code>AliasReusable : True</code>, run 02 again.</td></tr>
+      </table>
+      <p class="meta"><code>-SeedDemoContent</code> (alias <code>-PublishContent</code>) does not add demo data. It publishes the CoE pages, catalogs, calendar and governance content; without it 02 builds only an empty Team and site. <code>-ContentMode Customer</code> is what keeps demo content out. Before a first install in a customer tenant, read <a href="#customer-tenant-preflight">the pre-install checks in step 03</a>.</p>
+    </section>
+
     <section class="step">
       <h2><span class="badge">01</span>Extract the kit and create the organization folder</h2>
       <p>First, choose where the customer&rsquo;s organization folder will live. This folder controls the site&rsquo;s wording, governance drafts, learning paths, and the starting prompts in the Copilot Prompt Library.</p>
@@ -288,6 +303,15 @@ Install-Module PnP.PowerShell -RequiredVersion 3.2.0 -Scope CurrentUser
       <div class="warning">
         <p>Before moving on, check that the Entra app permissions are granted, including the delegated <code>User.Read.All</code> permission.</p>
         <p>If consent changed after someone previously signed in, add <code>-ForceAuthentication</code> to the install command in the next step.</p>
+        <p><strong>Sign-in methods differ by script.</strong> 02 and the checker sign in through a browser. 01, 03 and 04 default to a device code and reuse a cached sign-in until it expires. A block can first appear on a later update, after that cached sign-in expires.</p>
+        <p>If Conditional Access blocks device-code flow (Microsoft&rsquo;s &ldquo;Block device code flow&rdquo; managed policy), sign in through the browser instead:</p>
+        <ul>
+          <li><code>.\01_Register-CoEProvisioningApp.ps1 -OrgPath $orgPath -Interactive</code></li>
+          <li><code>.\03_Update-CoEContent.ps1 -OrgPath $orgPath -Scope All -AuthenticationMode Interactive</code></li>
+          <li><code>.\04_Remove-CopilotCoE.ps1 -OrgPath $orgPath -Purge -AuthenticationMode Interactive</code></li>
+        </ul>
+        <p>Add <code>-ForceAuthentication</code> to a 03 or 04 command to request a fresh browser sign-in; it applies only with <code>-AuthenticationMode Interactive</code>.</p>
+
         <p>Posting the three welcome messages currently works with the app&rsquo;s existing delegated <code>Group.ReadWrite.All</code>, which Microsoft Graph supports only for backward compatibility. The recommended future posting scope is <code>ChannelMessage.Send</code>; changing consent is a separate reviewed app change. The kit does not request tenant-wide <code>ChannelMessage.Read.All</code> just to silence a test warning: without it, step 05&rsquo;s visual post check is mandatory.</p>
       </div>
     </section>
@@ -301,6 +325,19 @@ Install-Module PnP.PowerShell -RequiredVersion 3.2.0 -Scope CurrentUser
         <p><code>-ForceAuthentication</code> requests a fresh interactive sign-in; it is <strong>optional, not a GCC requirement</strong>. Also use it after app permissions or consent change. It does not select the tenant: confirm <code>Tenant</code>, <code>AdminFQDN</code>, <code>SiteFQDN</code>, and <code>PnPClientID</code> in the target organization&rsquo;s <code>Deployment-Settings.json</code> first.</p>
         <p><strong>Do not combine <code>-ForceAuthentication</code> with <code>-AuthenticationMode DeviceLogin</code>.</strong> This kit supports commercial and GCC Moderate tenants, not GCC High or DoD.</p>
       </div>
+      <div class="warning danger" id="customer-tenant-preflight">
+        <h3>Before a first install in a customer tenant</h3>
+        <p>The lab installs behind this kit did not exercise the conditions below. Check each one first.</p>
+        <ol>
+          <li><strong>Group naming policy.</strong> An Entra naming policy that adds a prefix or suffix applies to group names <em>and aliases</em> (Entra admin center &gt; Groups &gt; Naming policy). Only Global Administrator and User Administrator are exempt; SharePoint and Teams administrators are not. 02 finds the Team it creates by its exact alias, so a rewritten alias makes it fail to find the Team and site it just created, and running it again creates a second Team. Before creating anything, 02 reads the policy and asks <strong>STOP / PROCEED</strong> when it applies to the signed-in account. Run as an exempt administrator, or have the policy adjusted for the install. If the policy cannot be read, 02 warns and continues; confirm it yourself.</li>
+          <li><strong>Owner and operator.</strong> Two arrangements were tested in a lab: one account that runs 02 and is also <code>SharedChannelOwnerUPN</code>, and a Global Administrator who runs 02 for a different owner (every governance document was written). 02 never adds the operator to the two governance shared channels, so an operator without Global Administrator rights is untested and may be refused when it writes the governance documents, which stops the run partway. When the accounts differ, 02 asks <strong>STOP / PROCEED</strong> before creating anything. Run as the owner or a Global Administrator unless you have tested another operator.</li>
+          <li><strong>Sign-in.</strong> See the sign-in note in step 02 for device-code policies and the 03/04 switches.</li>
+          <li><strong>SharePoint address.</strong> 03 reads the site address from <code>CoE-Revision-Report.json</code>, so tenants that create team sites under <code>/teams/</code> work after a completed install. If a report exists but identifies another host or alias, 03 stops rather than guessing. With no report, pass <code>-SiteUrl</code> with the exact address 02 printed when the site is not under <code>/sites/</code>.</li>
+          <li><strong>Structured overrides.</strong> Before any tenant sign-in, 02 and 03 validate organization-owned structured content such as <code>Content\Training-Calendar.csv</code>. An obsolete <code>StartDate</code>/<code>EndDate</code> calendar stops locally with migration guidance instead of creating a Team/site and failing during content completion.</li>
+          <li><strong>Language.</strong> The installer identifies the Site Pages library by URL and its content type by ID rather than English display names. The site time zone is matched by name; if neither the machine-language nor English name matches what SharePoint returns, the time zone is left unchanged with a warning. Set it in Site settings &gt; Regional settings before relying on event times.</li>
+          <li><strong>Validated envelope.</strong> Commercial lab tenant, a Global Administrator operator (also the owner, or a different owner), a fresh alias under <code>/sites/</code>, an English site and cached sign-ins. Test any other arrangement on a throwaway alias first.</li>
+        </ol>
+      </div>
       <pre><code>Set-Location $kitRoot
 
 .\02_Install-CopilotCoE.ps1 `
@@ -313,7 +350,7 @@ Install-Module PnP.PowerShell -RequiredVersion 3.2.0 -Scope CurrentUser
       <p><code>"SampleNotice": "none"</code> means no notice, not the literal word &ldquo;none&rdquo; on a page. Customer mode suppresses configured sample notices regardless of that setting. Demo mode requires a nonempty resolved notice; a blank setting uses the default sample notice, while <code>none</code> is invalid for Demo mode.</p>
       <div class="warning" id="operator-advisories">
         <h3>STOP / PROCEED is a lab decision, not production acceptance</h3>
-        <p>The installer and updater ask about lab-looking support mailboxes, missing support routes, a default Demo notice, long titles, parent-Team guest/out-of-domain members and fallback headers. Decisions are saved beside settings in <code>CoE-Advisory-Decisions.json</code>, tied to the tenant, site host, Team alias and exact advisory facts. An unchanged decision is reused with a visible message; a saved STOP remains a stop until the configuration or decision is deliberately changed.</p>
+        <p>The installer and updater ask about lab-looking support mailboxes, missing support routes, a default Demo notice, long titles, parent-Team guest/out-of-domain members and fallback headers. The installer also asks, before creating anything, about a group naming policy that applies to the signed-in account and about an owner who differs from the account running the install. Decisions are saved beside settings in <code>CoE-Advisory-Decisions.json</code>, tied to the tenant, site host, Team alias and exact advisory facts. An unchanged decision is reused with a visible message; a saved STOP remains a stop until the configuration or decision is deliberately changed.</p>
         <p>The checker remains read-only: it never prompts for or saves a decision. In Customer mode, a lab-looking support mailbox <em>or</em> a saved target-scoped <code>LabSupportMailbox</code> PROCEED produces a <strong>WARN</strong>, even after the mailbox setting changes. Confirm its owner and monitoring, replace lab addresses before production, and review obsolete saved approvals. A saved PROCEED does not waive this manual-review gate or any identity, governance, tenant or sharing check.</p>
       </div>
       <p class="meta"><strong>Which version is installed?</strong> Use the extracted ZIP&rsquo;s root <code>VERSION.txt</code> for the kit release version. The <code>version</code> values inside the base and Government <code>CoE-Revision-Content.json</code> files identify their content revisions and are also written to the deployment report; they can differ from the packaged release version. Do not identify the release from those JSON values or relabel them just to make the numbers match.</p>
@@ -407,6 +444,19 @@ Set-Location $kitRoot
     <section class="step" id="admin-customization">
       <h2><span class="badge">06</span>Customizing content after install</h2>
       <p>There are several kinds of content, and they behave differently when the update script runs again. This matters because an edit made in the wrong place can either disappear during the next update or never apply at all.</p>
+      <div class="warning" id="what-to-run">
+        <h3>What to run after you change something</h3>
+        <table>
+          <tr><th>You changed</th><th>Run</th></tr>
+          <tr><td>Guide, section, FAQ or feedback text; Links; GovernanceLinks; prompt CSVs; section Assets</td><td><code>.\03_Update-CoEContent.ps1 -OrgPath $orgPath -Scope Guides -ContentMode $contentMode</code> (or <code>-Scope All</code>)</td></tr>
+          <tr><td>Governance drafts under <code>Content\Governance</code></td><td><code>-Scope Governance -ReplaceFiles</code> after reconciling every differing draft</td></tr>
+          <tr><td>Champion departments, the training calendar CSV, the Top 10 deck</td><td><code>-Scope All</code></td></tr>
+          <tr><td>A removed required resource tab</td><td><code>-Scope All -EnsureResourceTabs</code></td></tr>
+          <tr><td>Home or the four captured pages</td><td><code>-Scope All -RepairCapturedPages</code> after review (see D)</td></tr>
+          <tr><td>Tenant, <code>MailNickname</code> or <code>SharedChannelOwnerUPN</code></td><td>Not an update. These are fixed at install; 03 would target the wrong site or fail its governance security check.</td></tr>
+        </table>
+        <p><code>-Scope Guides</code> and <code>-Scope Governance</code> need <code>CoE-Revision-Report.json</code> from a completed install in the organization folder. If it is missing (new computer, failed install), use <code>-Scope All</code>, which does not. In an All run, governance drafts are processed last: without <code>-ReplaceFiles</code> the run stops at the first differing draft after the earlier content is already published. Run <code>Test-CoEInstall.ps1</code> after every update.</p>
+      </div>
       <div class="warning danger" id="choose-edit-location">
         <h3>Before using SharePoint&rsquo;s Edit button: identify what owns the content</h3>
         <p><strong>Generated page wording belongs in the organization folder. Live catalog entries belong in SharePoint lists.</strong> Editing the wrong surface can lose a change or leave the published page unchanged. The red rectangles in the screenshots identify an element; they are not instructions to edit it in SharePoint.</p>
@@ -423,7 +473,7 @@ Set-Location $kitRoot
       <p>Before using the commands below, select the mode that matches the deployment. Do not change mode merely to change wording:</p>
       <pre><code>Set-Location $kitRoot
 $contentMode = 'Customer'  # Use 'Demo' for an existing demo deployment.</code></pre>
-      <p>Confirm <code>$orgPath</code>, <code>$kitRoot</code>, and the existing site alias first. The updater reads <code>MailNickname</code> from the organization settings; if it is stale, pass <code>-MailNickname</code> with the <em>existing</em> alias. Do not invent a new alias to update or rename a site.</p>
+      <p>Confirm <code>$orgPath</code>, <code>$kitRoot</code>, and the existing site alias first. The updater reads <code>MailNickname</code> from the organization settings; if it is stale, pass <code>-MailNickname</code> with the <em>existing</em> alias. If the deployment report still identifies an earlier deployment, also pass <code>-SiteUrl</code> with the exact existing site address. Do not invent a new alias to update or rename a site.</p>
 
       <h3>A. Single settings &mdash; AI policy URL, document list, org name, notice text</h3>
       <p>These include:</p>

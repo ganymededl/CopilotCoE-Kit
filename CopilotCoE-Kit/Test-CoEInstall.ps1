@@ -582,7 +582,11 @@ Invoke-Section "7 Support routes" {
             $ok = $match.Success -and ($target.TrimEnd("/") -ieq $expected.TrimEnd("/"))
             Add-Result "7 Routes" "$key links to the configured address" $ok $(if (-not $match.Success) { "no link labelled '$($routes[$key])'" } elseif (-not $ok) { "links to '$target', expected '$expected'" } else { $target })
         } else {
-            Add-Result "7 Routes" "$key is clearly marked not configured" ($notice -or $AllowUnconfiguredRoutes) "route is empty and the page does not say so"
+            $ok = ($notice -or $AllowUnconfiguredRoutes)
+            $detail = if ($notice) { "not-configured notice found" }
+                elseif ($AllowUnconfiguredRoutes) { "notice absent; accepted only because -AllowUnconfiguredRoutes was supplied" }
+                else { "route is empty and the page does not say so" }
+            Add-Result "7 Routes" "$key is clearly marked not configured" $ok $detail
         }
     }
 }

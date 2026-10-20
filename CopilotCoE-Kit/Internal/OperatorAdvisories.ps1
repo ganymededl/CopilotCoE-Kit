@@ -101,7 +101,8 @@ function Confirm-CoEAdvisory {
     param(
         [Parameter(Mandatory)][object]$Context,
         [Parameter(Mandatory)][ValidateSet("LabSupportMailbox", "UnconfiguredSupportRoutes",
-            "DefaultSampleNotice", "LongDisplayName", "ParentTeamExternalMembers", "HeaderLayout")]
+            "DefaultSampleNotice", "LongDisplayName", "ParentTeamExternalMembers", "HeaderLayout",
+            "GroupNamingPolicy", "OwnerDiffersFromOperator")]
         [string]$Id,
         [Parameter(Mandatory)][string]$Message,
         [Parameter(Mandatory)][string[]]$Facts,

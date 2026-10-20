@@ -11,6 +11,11 @@ Reads Deployment-Settings.json (tenant, hosts, owner, names). Any parameter
 supplied on the command line overrides the settings file. If PnPClientID is
 still empty, the script stops before signing in and nothing is created.
 Afterwards, use 03_Update-CoEContent.ps1 to publish edited starter content.
+-SeedDemoContent (alias -PublishContent) is the switch that publishes the CoE pages, catalogs, calendar and
+governance content. Despite its name it adds no demo data by itself: -ContentMode Customer keeps sample rows and
+demo notices out. Without it, this script builds only the Team and an empty SharePoint site.
+Before any tenant sign-in, the installer validates structured organization overrides such as
+Content\Training-Calendar.csv and stops locally if an obsolete fixed-date schema is found.
 If a run stops partway, fix the cause and re-run with -ResumeExisting; it reuses
 the Team and site and preserves existing managed pages. To remove the
 CoE completely, use 04_Remove-CopilotCoE.ps1 (preview with -WhatIf first).
@@ -40,6 +45,7 @@ param(
     [string]$AuthenticationMode = "Interactive",
     [switch]$ForceAuthentication,
     [switch]$ResumeExisting,
+    [Alias("PublishContent")]
     [switch]$SeedDemoContent,
     [switch]$ReplaceManagedFiles,
     [switch]$ReplaceOrgAssets,
@@ -109,6 +115,7 @@ foreach ($name in @("AdminFQDN", "SiteFQDN", "PnPClientID", "Tenant", "MailNickn
     Set-Variable -Name $name -Value $value
 }
 . (Join-Path $PSScriptRoot "Internal\OrganizationProfile.ps1")
+. (Join-Path $PSScriptRoot "Internal\ContentPreflight.ps1")
 $null = Get-CoELearningEnvironment -Settings $settings
 $profileOverrides = @{}
 foreach ($name in @("OrgName", "OrgNoun", "ShortName", "DisplayName", "SampleNotice")) {
@@ -155,6 +162,7 @@ if ($AdminFQDN -notmatch "^[A-Za-z0-9-]+-admin\.sharepoint\.com$") {
 if ($SiteFQDN -notmatch "^[A-Za-z0-9-]+\.sharepoint\.com$") {
     throw "SiteFQDN must be the SharePoint tenant host, for example tenant.sharepoint.com."
 }
+Assert-CoEStructuredOrganizationContent -OrgPath $OrgPath
 
 Import-Module PnP.PowerShell -RequiredVersion 3.2.0 -ErrorAction Stop
 . (Join-Path $PSScriptRoot "Internal\SecurityPosture.ps1")
@@ -162,6 +170,7 @@ Import-Module PnP.PowerShell -RequiredVersion 3.2.0 -ErrorAction Stop
 . (Join-Path $PSScriptRoot "Internal\AdoptionCatalogs.ps1")
 . (Join-Path $PSScriptRoot "Internal\HubExperience.ps1")
 . (Join-Path $PSScriptRoot "Internal\OperatorAdvisories.ps1")
+. (Join-Path $PSScriptRoot "Internal\TenantPreflight.ps1")
 $CoESiteSharingCapability = Get-CoEParentSharingCapability -Settings $settings
 $OrganizationEmailDomains = @(Get-CoEOrganizationDomains -Domains $OrganizationEmailDomains)
 if ($ForceAuthentication -and $AuthenticationMode -ne "Interactive") {
@@ -240,6 +249,10 @@ foreach ($address in $GovernanceAdditionalAllowedMembers) {
         -Method Get -Connection $adminConnection -ErrorAction Stop
     Assert-CoEMemberIdentity -Identity $identity -Address $address
 }
+# Read-only checks of conditions a lab rarely exercises: a group naming policy that rewrites aliases, and an
+# operator who is not the governance owner. Each asks for an explicit STOP / PROCEED before anything is created.
+Invoke-CoETenantPreflight -Connection $adminConnection -AdvisoryContext $advisoryContext -Alias $MailNickname `
+    -OwnerUserId ([string]$ownerIdentity.id) -OwnerUserPrincipalName $SharedChannelOwnerUPN
 
 $matchingGroups = @(Get-PnPMicrosoft365Group `
     -Filter "mailNickname eq '$MailNickname'" `
@@ -304,13 +317,20 @@ else {
         -Connection $adminConnection `
         -ErrorAction Stop
 
-    $coeGroup = Get-PnPMicrosoft365Group `
-        -Identity $MailNickname `
-        -IncludeSiteUrl `
-        -Connection $adminConnection `
-        -ErrorAction Stop
+    $coeGroup = $null
+    $lookupError = ""
+    try {
+        $coeGroup = Get-PnPMicrosoft365Group `
+            -Identity $MailNickname `
+            -IncludeSiteUrl `
+            -Connection $adminConnection `
+            -ErrorAction Stop
+    } catch {
+        $lookupError = $_.Exception.Message
+    }
     if (-not $coeGroup -or -not $coeGroup.GroupId) {
-        throw "The provisioning template completed without returning the expected Microsoft 365 group."
+        throw (Get-CoEAliasNotFoundMessage -Connection $adminConnection -Alias $MailNickname `
+            -DisplayName $DisplayName -LookupError $lookupError)
     }
 }
 
@@ -648,8 +668,11 @@ foreach ($sharedChannel in @(
     }
 }
 
+# The Site Page content type and the SitePages library are addressed by ID and URL, not by their English display
+# names, which SharePoint localizes on a non-English site.
+$sitePageContentTypeId = "0x0101009D1CB255DA76424F860D91F20E6C4118"
 $sitePageContentType = Get-PnPContentType `
-    -Identity "Site Page" `
+    -Identity $sitePageContentTypeId `
     -Includes FieldLinks `
     -Connection $siteConnection `
     -ErrorAction Stop
@@ -662,7 +685,7 @@ foreach ($fieldName in @("Hash", "NewsSource")) {
     if ($fieldName -notin $linkedFieldNames) {
         Add-PnPFieldToContentType `
             -Field $fieldName `
-            -ContentType "Site Page" `
+            -ContentType $sitePageContentTypeId `
             -UpdateChildren $true `
             -Connection $siteConnection `
             -ErrorAction Stop
@@ -691,7 +714,7 @@ if (-not $projectTeamPage) {
     $projectTeamPage = Add-PnPPage `
         -Name "Meet-your-ProjectTeam" `
         -Title "CoE roles and contacts" `
-        -ContentType "Site Page" `
+        -ContentType $sitePageContentTypeId `
         -Connection $siteConnection `
         -ErrorAction Stop
 

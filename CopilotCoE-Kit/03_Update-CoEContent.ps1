@@ -33,6 +33,15 @@ Pass -MailNickname <alias> if the organization folder's Deployment-Settings.json
 earlier alias than the one actually installed (for example after a later 02_Install-CopilotCoE.ps1 run
 used a new -MailNickname without updating the settings file) - otherwise this script computes its
 target SiteUrl from whatever alias is on file, which can silently point at a retired site.
+The target site is read from <OrgPath>\CoE-Revision-Report.json when present. If that report does not identify the
+configured tenant host and alias, the update stops rather than guessing. When no report exists, the fallback is
+https://<SiteFQDN>/sites/<MailNickname>. A tenant that creates team sites under another managed path (for example
+/teams/) must pass -SiteUrl with the exact address printed by 02_Install-CopilotCoE.ps1 when no report exists.
+Sign-in uses a device code by default and reuses a cached sign-in while it is valid. If Conditional Access blocks
+device-code flow, use -AuthenticationMode Interactive (add -ForceAuthentication for a fresh interactive sign-in).
+03 always replaces pages it manages (a before-copy is saved in RevisionAudit); it has no -ReplaceManagedPages switch.
+Governance drafts that differ from the organization's draft stop the run unless -ReplaceFiles is supplied.
+Structured organization overrides such as Content\Training-Calendar.csv are validated before any tenant connection.
 #>
 [CmdletBinding()]
 param(
@@ -46,6 +55,10 @@ param(
     [string]$DisplayName,
     [string]$SampleNotice,
     [string]$MailNickname,
+    [string]$SiteUrl,
+    [ValidateSet("Interactive", "DeviceLogin")]
+    [string]$AuthenticationMode = "DeviceLogin",
+    [switch]$ForceAuthentication,
     [switch]$ReplaceFiles,
     [switch]$ReplaceOrgAssets,
     [switch]$AcceptOrgAssets,
@@ -73,6 +86,9 @@ if ($EnsureResourceTabs -and $Scope -ne "All") {
 if ($RepairCapturedPages -and $Scope -eq "Governance") {
     throw "-RepairCapturedPages requires -Scope Guides or -Scope All."
 }
+if ($ForceAuthentication -and $AuthenticationMode -ne "Interactive") {
+    throw "-ForceAuthentication requires -AuthenticationMode Interactive."
+}
 if ($OrgPath) {
     if (-not (Test-Path -LiteralPath $OrgPath -PathType Container)) { throw "Organization folder not found: $OrgPath" }
     $OrgPath = (Resolve-Path -LiteralPath $OrgPath).Path
@@ -90,6 +106,8 @@ $s = Get-Content -LiteralPath $SettingsPath -Raw | ConvertFrom-Json
 # not a clear "wrong site" error, because the URL itself was syntactically valid, just for a retired site.
 if ($PSBoundParameters.ContainsKey("MailNickname")) { $s | Add-Member -NotePropertyName MailNickname -NotePropertyValue $MailNickname -Force }
 . (Join-Path $PSScriptRoot "Internal\OrganizationProfile.ps1")
+. (Join-Path $PSScriptRoot "Internal\TargetResolution.ps1")
+. (Join-Path $PSScriptRoot "Internal\ContentPreflight.ps1")
 $null = Get-CoELearningEnvironment -Settings $s
 $profileOverrides = @{}
 foreach ($name in @("OrgName", "OrgNoun", "ShortName", "DisplayName", "SampleNotice")) {
@@ -111,13 +129,21 @@ if ($s.SiteFQDN -notmatch "^[A-Za-z0-9-]+\.sharepoint\.com$") { throw "SiteFQDN 
 if ($s.PnPClientID -notmatch "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$") { throw "PnPClientID must be the app's Application (client) ID GUID." }
 if ($s.MailNickname -notmatch "^[A-Za-z0-9_-]{1,64}$") { throw "MailNickname may use letters, numbers, hyphen, and underscore only." }
 if ($s.SupportEmail -notmatch "^[^@\s<>]+@[^@\s<>]+\.[^@\s<>]+$") { throw "SupportEmail must be an email address." }
+Assert-CoEStructuredOrganizationContent -OrgPath $OrgPath
+
+$reportForTarget = if ($OrgPath) { Join-Path $OrgPath "CoE-Revision-Report.json" } else { Join-Path $PSScriptRoot "CoE-Revision-Report.json" }
+$targetSite = Resolve-CoESiteUrl -SiteFqdn $s.SiteFQDN -Alias $s.MailNickname `
+    -ExplicitSiteUrl $SiteUrl -ReportPath $reportForTarget
+Write-Host "Target site: $($targetSite.Url) (from $($targetSite.Source))"
 
 $completeArgs = @{
     AdminUrl            = "https://$($s.AdminFQDN)"
-    SiteUrl             = "https://$($s.SiteFQDN)/sites/$($s.MailNickname)"
+    SiteUrl             = $targetSite.Url
     ClientId            = $s.PnPClientID
     Tenant              = $s.Tenant
     TeamAlias           = $s.MailNickname
+    AuthenticationMode  = $AuthenticationMode
+    ForceAuthentication = [bool]$ForceAuthentication
     ReplaceManagedPages = $true
     ReplaceManagedFiles = [bool]$ReplaceFiles
     ReplaceOrgAssets    = [bool]$ReplaceOrgAssets

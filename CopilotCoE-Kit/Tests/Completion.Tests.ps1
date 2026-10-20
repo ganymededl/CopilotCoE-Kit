@@ -21,7 +21,7 @@ foreach ($name in @("Write-ManagedPage", "Test-ManagedPageWritten",
     "Add-CoENoSessionsPlaceholder", "Remove-CoENoSessionsPlaceholder", "Confirm-OrgAssets",
     "ConvertTo-CoEStableBreadcrumbText", "Set-CoESectionStripPart", "Disable-CoEPageComments",
     "Convert-MarkdownInline", "Convert-GuideMarkdown", "Get-DocxParagraphs", "ConvertTo-CoEDocxRuns",
-    "New-SimpleDocx", "Read-DocxText")) {
+    "New-SimpleDocx", "Read-DocxText", "Add-CoEFileWithRetry")) {
     $definition = $completionAst.Find({ param($node)
         $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $name
     }, $true)
@@ -88,6 +88,45 @@ function New-TestTab($Id, $Url, $Entity = "", $Name = "Top 10 to try") {
     [pscustomobject]@{ Id = $Id; DisplayName = $Name
         TeamsApp = [pscustomobject]@{ Id = "com.microsoft.teamspace.tab.file.staticviewer.powerpoint" }
         Configuration = [pscustomobject]@{ ContentUrl = $Url; EntityId = $Entity } }
+}
+
+Describe "Shared-channel file upload retry" {
+    BeforeEach {
+        $script:addAttempts = 0
+        Mock Resolve-PnPFolder {}
+        Mock Start-Sleep {}
+        Mock Write-Warning {}
+    }
+    It "re-resolves the folder and retries a transient NotFound response" {
+        Mock Add-PnPFile {
+            $script:addAttempts++
+            if ($script:addAttempts -eq 1) { throw 'The status code is "NotFound".' }
+        }
+        Add-CoEFileWithRetry -Path "draft.docx" -Folder "Shared Documents/02-Strategy" `
+            -Connection "shared-site" -DelaySeconds 0
+        Assert-MockCalled Resolve-PnPFolder -Times 2 -Exactly -Scope It
+        Assert-MockCalled Add-PnPFile -Times 2 -Exactly -Scope It
+        Assert-MockCalled Start-Sleep -Times 1 -Exactly -Scope It
+    }
+    It "never retries a hard access failure" {
+        Mock Add-PnPFile { throw "Access denied" }
+        {
+            Add-CoEFileWithRetry -Path "draft.docx" -Folder "Shared Documents/02-Strategy" `
+                -Connection "shared-site" -DelaySeconds 0
+        } | Should Throw "Access denied"
+        Assert-MockCalled Add-PnPFile -Times 1 -Exactly -Scope It
+        Assert-MockCalled Start-Sleep -Times 0 -Exactly -Scope It
+    }
+    It "stops after the bounded number of transient attempts" {
+        Mock Add-PnPFile { throw "404 Not Found" }
+        {
+            Add-CoEFileWithRetry -Path "draft.docx" -Folder "Shared Documents/02-Strategy" `
+                -Connection "shared-site" -MaxAttempts 3 -DelaySeconds 0
+        } | Should Throw "404 Not Found"
+        Assert-MockCalled Add-PnPFile -Times 3 -Exactly -Scope It
+        Assert-MockCalled Resolve-PnPFolder -Times 3 -Exactly -Scope It
+        Assert-MockCalled Start-Sleep -Times 2 -Exactly -Scope It
+    }
 }
 
 Describe "Managed page completion and preservation" {

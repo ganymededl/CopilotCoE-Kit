@@ -500,12 +500,15 @@ param(
     [string]$OrgName, [string]$OrgNoun, [string]$ShortName, [string]$DisplayName, [string]$SampleNotice,
     [string]$SupportEmail, [string]$SettingsPath, [string]$OrgPath, [switch]$AcceptOrgAssets,
     [switch]$EnsureResourceTabs, [switch]$GuidesOnly, [switch]$GovernanceOnly, [switch]$RepairCapturedPages,
-    [switch]$AllowMissingDataSafetyIncidentRoute, [string]$ContentMode
+    [switch]$AllowMissingDataSafetyIncidentRoute, [string]$ContentMode,
+    [string]$AuthenticationMode, [switch]$ForceAuthentication
 )
 . (Join-Path $PSScriptRoot "OrganizationProfile.ps1")
 $settings = Get-Content -LiteralPath $SettingsPath -Raw | ConvertFrom-Json
 $profile = Get-CoEOrganizationProfile -Settings $settings -Overrides $PSBoundParameters
 $profile | Add-Member NoteProperty RepairCapturedPages ([bool]$RepairCapturedPages)
+$profile | Add-Member NoteProperty AuthenticationMode $AuthenticationMode
+$profile | Add-Member NoteProperty ForceAuthentication ([bool]$ForceAuthentication)
 $profile | Add-Member NoteProperty SiteUrl $SiteUrl
 $profile | Add-Member NoteProperty TeamAlias $TeamAlias
 $profile | ConvertTo-Json -Compress
@@ -533,6 +536,15 @@ $profile | ConvertTo-Json -Compress
                 $profile.RepairCapturedPages | Should Be $false
                 $profile.SiteUrl | Should Be "https://offline-fixture.sharepoint.com/sites/CopilotCoE"
                 $profile.TeamAlias | Should Be "CopilotCoE"
+                $profile.AuthenticationMode | Should Be "DeviceLogin"
+                $profile.ForceAuthentication | Should Be $false
+                $output = & $pwsh -NoProfile -File $update -SettingsPath $settingsPath -AuthenticationMode Interactive -ForceAuthentication `
+                    -SiteUrl "https://offline-fixture.sharepoint.com/teams/CopilotCoE" 2>&1
+                if ($LASTEXITCODE -ne 0) { throw ($output -join "`n") }
+                $profile = @($output | Where-Object { $_ -like "{*" })[0] | ConvertFrom-Json
+                $profile.AuthenticationMode | Should Be "Interactive"
+                $profile.ForceAuthentication | Should Be $true
+                $profile.SiteUrl | Should Be "https://offline-fixture.sharepoint.com/teams/CopilotCoE"
                 $output = & $pwsh -NoProfile -File $update -SettingsPath $settingsPath -OrgName "Beacon College" `
                     -DisplayName "University Copilot CoE" -OrgNoun "university" -SampleNotice "none" -RepairCapturedPages 2>&1
                 if ($LASTEXITCODE -ne 0) { throw ($output -join "`n") }

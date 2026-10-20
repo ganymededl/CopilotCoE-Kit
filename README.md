@@ -2,7 +2,7 @@
 
 A config-driven Teams + SharePoint **Center of Excellence (CoE)** kit for organizations rolling out Microsoft 365 Copilot. One kit, any organization: everything organization-specific (tenant, names, support links, policies, decks) lives in an **organization folder** passed to every script with `-OrgPath`, never edited in the kit itself.
 
-Source release: **v3.8.18**. The separately distributed, organization-neutral `Copilot-CoE-Implementation-Kit.zip` has SHA256 `6CB1BBFF0F3F2C30B96EB45D186830BC9086EACF10D82090D3C89FAF4F3593F2`. GitHub's generated source archives are not that prebuilt implementation ZIP; cloning GitHub and renaming an older ZIP does not produce it.
+Source release: **v3.8.21**. The separately distributed, organization-neutral `Copilot-CoE-Implementation-Kit.zip` has SHA256 `B31F641642BD2199C36C3F840F5A4878CEE8332E89B5C3AB4EC09FF72B264D6F`. GitHub's generated source archives are not that prebuilt implementation ZIP; cloning GitHub and renaming an older ZIP does not produce it.
 
 > **Not an official Microsoft product.** This is independently maintained sample/starter tooling. All seeded content (guides, FAQs, governance samples, prompt libraries) is starter material for your organization's own review — none of it is adopted policy, and no customer or tenant is implied, named, or endorsed by shipping this kit.
 
@@ -19,7 +19,7 @@ Source release: **v3.8.18**. The separately distributed, organization-neutral `C
    ```
    SourceOriginal/CopilotCoESite/CopilotCoESite.pnp
    ```
-   Verify SHA256 `2CC80587026E27B47992330122B75DEA4808E01D3DA2CB46EEF3EA404FF429CB`. This template's 88 inner files are unchanged in v3.8.18; repacked `.pnp` archives can have different outer ZIP hashes.
+   Verify SHA256 `2CC80587026E27B47992330122B75DEA4808E01D3DA2CB46EEF3EA404FF429CB`. This template's 88 inner files are unchanged in v3.8.21; repacked `.pnp` archives can have different outer ZIP hashes.
 3. Copy `CopilotCoE-Kit/Org-Template` (or `CopilotCoE-Kit/ContentPacks/Government-StateLocal` for state/local government) to a **new** organization folder **outside** this repo, e.g. `C:\CoE-Orgs\Contoso`, and fill in its `Deployment-Settings.json`. Do not copy a prior install's revision report, removal manifest or audit folder to a new site. Review organization Assets before approving uploads.
 4. Run the numbered scripts in order from inside `CopilotCoE-Kit/`:
    ```powershell
@@ -30,14 +30,18 @@ Source release: **v3.8.18**. The separately distributed, organization-neutral `C
    ```
    Verify the actual site URL printed by the installer. `ALL CHECKS PASSED` with a `WARN` still requires the named manual review. The provisioning app does not request tenant-wide `ChannelMessage.Read.All` solely to read its own posts: in Teams, confirm exactly one prepared welcome post each in General, Ask Us Anything and Share Your Prompt, with no Customer-mode demo notice. Posts appear under the administrator who ran the install. For a fresh internal acceptance site, also exercise a reviewed `-Scope All -RepairCapturedPages` content update and repeat the test and manual post check.
 
-## v3.8.18 acceptance and recovery
+## v3.8.21 acceptance and reliability
 
-- The checker resolves `SampleNotice` through the same organization-profile resolver as installation. `"none"` means no notice, not literal page text. Customer mode checks for notice leaks; Demo mode requires a nonempty resolved notice.
-- STOP / PROCEED choices permit explicit lab exceptions without weakening identity, governance or sharing checks. In Customer mode, a lab-looking support mailbox or a saved target-scoped mailbox PROCEED produces a manual-review WARN. An exception does not prove monitoring or approve a production route.
-- Run `Test-CoEInstall.ps1` separately after every install/update; the direct installer does not run it automatically. Check totals vary with mode and applicable assertions.
-- After an interrupted install, retain logs, verify the exact target and fix the cause before choosing resume. A fresh release acceptance must not use resume.
-- For a reviewed rebuild, back up organization content, preview `04_Remove-CopilotCoE.ps1 -Purge -WhatIf`, then complete the separately confirmed purge. Do not rebuild until `AliasReusable` is true. The standard numbered scripts require no local reset before or after purge. Optional organization-specific launcher state is separate; see the Quickstart.
-- A commercial lab with the Government content pack does not establish GCC Moderate acceptance. GCC High and DoD remain unsupported. Lab support and incident destinations must be replaced with approved operational routes before production.
+- `02_Install-CopilotCoE.ps1` and `03_Update-CoEContent.ps1` validate structured organization overrides before tenant connection. An obsolete fixed-date `Training-Calendar.csv`, malformed offsets/times, or duplicate session title stops locally with corrective guidance.
+- Updates resolve the existing SharePoint site from the deployment report or an explicit `-SiteUrl`, supporting tenants whose managed path is not `/sites/`.
+- `03_Update-CoEContent.ps1` and `04_Remove-CopilotCoE.ps1` support interactive sign-in for tenants that block device-code flow.
+- The installer checks Microsoft Entra group naming policy and owner/operator differences before resource creation when permissions allow, and gives explicit duplicate-prevention guidance if a policy rewrites the alias.
+- Newly provisioned shared-channel folders receive bounded retries for transient 404/NotFound, throttling, timeout, and service-availability errors. Access failures and other hard errors still stop immediately.
+- Site Page content types/libraries use stable identifiers rather than English display names; time-zone mismatches warn and leave the existing setting unchanged rather than guessing from UTC offset.
+- The checker resolves `SampleNotice` consistently, validates empty support-route notices, and reports a passing detail instead of displaying failure text on PASS.
+- Run `Test-CoEInstall.ps1` separately after every install/update. After an interruption, retain logs, verify the exact target and fix the cause before choosing resume. A fresh release acceptance must not use resume.
+- For a reviewed rebuild, preview `04_Remove-CopilotCoE.ps1 -Purge -WhatIf`, then complete the separately confirmed purge. Do not rebuild until `AliasReusable` is true. The numbered scripts require no launcher reset.
+- The accepted v3.8.21 E2E used a synthetic Government-content demo tenant; it is not customer production or GCC acceptance. GCC High and DoD remain unsupported. Replace all lab support/incident destinations before production.
 
 ## Security model
 

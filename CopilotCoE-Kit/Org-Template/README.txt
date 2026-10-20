@@ -148,7 +148,8 @@ Content\   OPTIONAL. Replace any kit text file by putting your version at the sa
                Other guides link to Is-This-OK, so keep that one.
              Content\Guides\12-Our-Own-Guide.md                     (adds a new guide)
              Content\Guides\05-Agents.md as an EMPTY file           (removes that kit guide)
-             Content\Training-Calendar.csv                          (your session dates)
+             Content\Training-Calendar.csv                          (your session offsets; copy the current
+                                                                     StartOffsetDays schema, never fixed dates)
              Content\Learning-Paths.json                             (sequenced role learning; stable IDs)
              Content\CoE-Revision-Content.json                      (champion page intro, governance Start here text)
              Content\Experience\Guided-Learning.json                (reviewed Microsoft Learn course cards)
