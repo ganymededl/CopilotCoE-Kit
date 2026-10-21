@@ -190,6 +190,9 @@ Describe "Shipped documents only use switches that exist" {
             $text | Should Match ([regex]::Escape($appId))
         }
         $text | Should Match 'App is blocked by app permission policy'
+        $text | Should Match 'App status: Unblocked is not sufficient when Available to says No one'
+        $text | Should Match 'Edit availability'
+        $text | Should Match 'Do not use Add to team'
         $text | Should Match 'Do not start clean or purge'
         $text | Should Match 'ResumeExisting'
         $text | Should Match 'CoE-Revision-Report\.json is written only after the installer finishes'
