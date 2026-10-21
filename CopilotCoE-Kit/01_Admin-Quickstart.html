@@ -147,8 +147,8 @@
       margin-right: 6px;
     }
     table { border-collapse: collapse; margin: 0.5rem 0 1rem; width: 100%; }
-  th, td { border: 1px solid #c8c8c8; padding: 6px 8px; text-align: left; vertical-align: top; }
-    td code { overflow-wrap: anywhere; }
+    th, td { border: 1px solid var(--cp-border); padding: 6px 8px; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+    p code, li code, td code { overflow-wrap: anywhere; word-break: break-word; }
     .visual-note {
       background: var(--cp-surface-soft);
       border-left: 4px solid var(--cp-accent);
@@ -177,12 +177,18 @@
     .screenshot figcaption p:last-child, .visual-note p:last-child { margin-bottom: 0; }
     .screenshot code { overflow-wrap: anywhere; }
     a { color: var(--cp-link); }
+    @media (max-width: 680px) {
+      main { padding: 20px 10px 36px; }
+      header, section { padding: 16px; }
+      table { display: block; overflow-x: auto; }
+    }
 </style>
 </head>
 <body>
   <main>
     <header>
       <h1>01 Admin Quickstart: Copilot CoE install</h1>
+      <p class="meta"><strong>Release 3.8.21 documentation updated October 21, 2026.</strong></p>
       <p class="meta">Run these steps one at a time in PowerShell 7.4 or later, as required by the kit scripts and PnP.PowerShell 3.2.0. Keep the customer&rsquo;s organization folder outside the kit folder; that way, updating the kit later will not overwrite the customer&rsquo;s settings.</p>
       <div class="warning">
         <p><strong>Two important rules:</strong></p>
@@ -233,6 +239,12 @@
       <p><strong>Content pack is not cloud acceptance.</strong> <code>LearningEnvironment: Government</code> selects government content; it does not select or prove GCC Moderate behavior. Confirm the actual target cloud separately. A Government-content run in a commercial lab is commercial evidence, not GCC Moderate acceptance. GCC High and DoD are unsupported.</p>
       <div class="warning">
         <p><strong>Choose one frozen release ZIP before you begin.</strong> Use the master ZIP or an identical customer copy named in its release receipt; verify that ZIP&rsquo;s SHA256 against the receipt. An older versioned folder is history, not an automatically updated copy. The authoring source and an extracted working folder are not release ZIPs. Renaming an old ZIP does not upgrade it.</p>
+        <p><strong>A GitHub ZIP is valid only when the release lists a named prebuilt
+          <code>Copilot-CoE-Implementation-Kit.zip</code> asset and its published SHA256 matches.</strong>
+          GitHub&rsquo;s automatic <em>Source code (zip)</em>, <em>Source code (tar.gz)</em>, and repository
+          <em>Code &gt; Download ZIP</em> are source snapshots, not the frozen implementation package.
+          Release 3.8.21 currently has no binary implementation asset on GitHub, so obtain its reviewed
+          implementation ZIP and receipt through the approved distribution channel.</p>
       </div>
       <p>Use commands like this:</p>
       <pre><code>$zip = 'C:\CoE-Releases\Copilot-CoE-Implementation-Kit.zip'
@@ -258,18 +270,38 @@ Copy-Item .\Org-Template $orgPath -Recurse
       <p>If you received a completed organization folder, point <code>$orgPath</code> to it instead of copying a template. When adapting a prior validation profile for a new site, copy only reviewed settings, Content and approved Assets into a fresh folder. Do not copy <code>CoE-Revision-Report.json</code>, <code>CoE-Removal-Manifest.json</code> or <code>RevisionAudit</code> from another deployment; those files identify its old Team and site.</p>
       <p>Then open the settings file:</p>
       <pre><code>notepad (Join-Path $orgPath 'Deployment-Settings.json')</code></pre>
-      <p>In that file, set:</p>
-      <ul class="checklist">
-        <li>Tenant details.</li>
-        <li>The owner&rsquo;s UPN.</li>
-        <li>A fresh <code>MailNickname</code> for this site and the intended <code>DisplayName</code>. Keep the alias in this file aligned with the install command: the updater and remover read it later. The installer rejects an active or recycled alias collision.</li>
-        <li>The organization name.</li>
-        <li>The support mailbox.</li>
-        <li>The organization&rsquo;s email domains.</li>
-        <li>Keep <code>TeamVisibility</code> set to <code>Private</code>.</li>
-        <li>Fill in real HTTPS addresses for <code>Links.ServiceDesk</code>, <code>TechnologyRequest</code>, <code>AIGuidelines</code>, and <code>DataSafetyIncident</code>.</li>
-        <li>For government deployments, replace every <code>&lt;placeholder&gt;</code> and set <code>TimeZone</code> &mdash; for example, <code>Central Standard Time</code>.</li>
-      </ul>
+      <p>Edit <code>$orgPath\Deployment-Settings.json</code>, not the generic settings files under
+        <code>$kitRoot</code>. Set or confirm every field below:</p>
+      <table>
+        <tr><th>JSON field</th><th>Value to enter</th><th>Source or rule</th></tr>
+        <tr><td><code>Tenant</code></td><td><code>yourtenant.onmicrosoft.com</code></td><td>The tenant&rsquo;s primary <code>.onmicrosoft.com</code> domain.</td></tr>
+        <tr><td><code>AdminFQDN</code></td><td><code>yourtenant-admin.sharepoint.com</code></td><td>The SharePoint admin host, without protocol or path.</td></tr>
+        <tr><td><code>SiteFQDN</code></td><td><code>yourtenant.sharepoint.com</code></td><td>The SharePoint content host, without protocol or path.</td></tr>
+        <tr><td><code>PnPClientID</code></td><td>Blank before the first registration in a new tenant</td><td>Step 02 writes the new tenant-owned app ID. Never copy a client ID across tenants.</td></tr>
+        <tr><td><code>SharedChannelOwnerUPN</code></td><td>An approved in-tenant Member UPN</td><td>Owner of the restricted governance shared channels.</td></tr>
+        <tr><td><code>OrgName</code>, <code>OrgNoun</code>, <code>ShortName</code></td><td>Approved full name, reader-facing noun, and abbreviation</td><td>For example, <code>Contoso County</code>, <code>county</code>, and <code>CC</code>.</td></tr>
+        <tr><td><code>MailNickname</code></td><td>A unique Microsoft 365 group alias</td><td>Controls the Team alias and SharePoint site path. Changing only a checker <code>$siteUrl</code> does not change the install target.</td></tr>
+        <tr><td><code>DisplayName</code></td><td>The approved Team and hub title</td><td>Reader-facing; do not put lab wording in a Customer profile.</td></tr>
+        <tr><td><code>TeamVisibility</code></td><td><code>Private</code></td><td>Required by the installer.</td></tr>
+        <tr><td><code>CoESiteSharingCapability</code></td><td><code>Disabled</code></td><td>Customer default. External preview is a separate lab decision.</td></tr>
+        <tr><td><code>OrganizationEmailDomains</code></td><td>Approved UPN domains for this tenant</td><td>Used to flag out-of-domain Team members; do not copy another tenant&rsquo;s domains.</td></tr>
+        <tr><td><code>GovernanceAdditionalAllowedMembers</code></td><td>Approved in-tenant UPNs, or <code>[]</code></td><td>Additional people allowed in restricted governance channels.</td></tr>
+        <tr><td><code>CatalogReviewerUPNs</code></td><td>Approved in-tenant reviewer UPNs, or <code>[]</code></td><td>Reviewers receive the catalog approval role; no guests are invited.</td></tr>
+        <tr><td><code>EnvironmentLabel</code></td><td><code>Production</code>, <code>Pilot</code>, or another approved label</td><td>Reader-facing environment name.</td></tr>
+        <tr><td><code>SampleNotice</code></td><td><code>none</code> only after Customer content is approved</td><td>Blank uses a generated sample notice; <code>none</code> means no notice.</td></tr>
+        <tr><td><code>SupportEmail</code></td><td>An approved monitored mailbox</td><td>Used by generated support mail links.</td></tr>
+        <tr><td><code>Links</code>, <code>GovernanceLinks</code>, <code>TrainingLinks</code></td><td>Approved HTTPS support, request, incident, AI-guidance, organization, and learning routes</td><td>Do not infer private mailboxes, ticket queues, or incident endpoints from a public website.</td></tr>
+        <tr><td><code>LearningEnvironment</code></td><td><code>HigherEducation</code> or <code>Government</code></td><td>Must match the profile copied above.</td></tr>
+        <tr><td><code>GuidesIntro</code>, <code>StoryAudiences</code>, <code>ScenarioLibraryUrl</code></td><td>Review the values supplied by the selected profile</td><td>The Government pack supplies government audiences and scenario links.</td></tr>
+        <tr><td><code>TimeZone</code></td><td>A Windows time-zone ID</td><td>For example, <code>Eastern Standard Time</code> or <code>Central Standard Time</code>.</td></tr>
+        <tr><td><code>PromptLibrary</code>, <code>ChampionDepartments</code>, <code>Agents</code>, navigation and developer settings</td><td>Reviewed organization choices</td><td>Remove template examples you are not adopting.</td></tr>
+      </table>
+      <p>Put organization text overrides under <code>$orgPath\Content</code> and reviewed hosted files under
+        <code>$orgPath\Assets</code>. Do not edit <code>$kitRoot\SeedContent</code>.</p>
+      <p>Run the same local structured-content check used by install and update before any tenant authentication:</p>
+      <pre><code>Set-Location $kitRoot
+. .\Internal\ContentPreflight.ps1
+Assert-CoEStructuredOrganizationContent -OrgPath $orgPath</code></pre>
       <h3>Optional: add the customer&rsquo;s own prompts</h3>
       <p>The Prompt Library starts with the base prompts included in the folder you copied.</p>
       <p>To add the customer&rsquo;s own prompts, put CSV files here:</p>
@@ -299,7 +331,10 @@ Copy-Item .\Org-Template $orgPath -Recurse
 
 Install-Module PnP.PowerShell -RequiredVersion 3.2.0 -Scope CurrentUser
 
-.\01_Register-CoEProvisioningApp.ps1 -OrgPath $orgPath</code></pre>
+.\01_Register-CoEProvisioningApp.ps1 -OrgPath $orgPath -Interactive
+
+# Confirm script 01 saved a nonempty client ID before installation.
+(Get-Content (Join-Path $orgPath 'Deployment-Settings.json') -Raw | ConvertFrom-Json).PnPClientID</code></pre>
       <div class="warning">
         <p>Before moving on, check that the Entra app permissions are granted, including the delegated <code>User.Read.All</code> permission.</p>
         <p>If consent changed after someone previously signed in, add <code>-ForceAuthentication</code> to the install command in the next step.</p>
@@ -407,7 +442,7 @@ Set-Location $kitRoot
         <p>If any line says <code>FAIL</code>, it names the problem. Send that output, along with the run log, to whoever is troubleshooting the install.</p>
       </div>
       <p>For an internal end-to-end validation of the full repair path, after the first check and the manual welcome-post review, run the following on the <em>same</em> new site, then repeat this test and step 05. <code>-RepairCapturedPages</code> can replace customized captured-page content, so use it on a fresh validation site or only after a reviewed repair decision:</p>
-      <pre><code>.\03_Update-CoEContent.ps1 -OrgPath $orgPath -Scope All -RepairCapturedPages -ContentMode Customer
+      <pre><code>.\03_Update-CoEContent.ps1 -OrgPath $orgPath -Scope All -RepairCapturedPages -AuthenticationMode Interactive -ContentMode Customer
 .\Test-CoEInstall.ps1 -OrgPath $orgPath -SiteUrl $siteUrl -ContentMode Customer</code></pre>
     </section>
 

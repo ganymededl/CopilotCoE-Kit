@@ -143,6 +143,34 @@ Describe "Shipped documents only use switches that exist" {
         $text | Should Not Match 'preserved on every later run unless you pass -ReplaceManagedPages'
         $text | Should Not Match 'an ordinary rerun intentionally leaves\s+an already-existing page alone'
     }
+    It "keeps the admin quickstart on the published end-to-end sequence" {
+        $text = ConvertTo-PlainDocumentText (Join-Path $kitRoot "01_Admin-Quickstart.html")
+        $text | Should Match 'Get-FileHash\s+-LiteralPath\s+\$zip\s+-Algorithm\s+SHA256'
+        $text | Should Match 'Expand-Archive\s+-LiteralPath\s+\$zip\s+-DestinationPath\s+\$installRoot'
+        $text | Should Match 'ContentPacks\\Government-StateLocal'
+        $text | Should Match 'Assert-CoEStructuredOrganizationContent\s+-OrgPath\s+\$orgPath'
+        $text | Should Match '01_Register-CoEProvisioningApp\.ps1\s+-OrgPath\s+\$orgPath\s+-Interactive'
+        $text | Should Match '02_Install-CopilotCoE\.ps1[\s\S]*?-ContentMode\s+Customer[\s\S]*?-SeedDemoContent'
+        @([regex]::Matches($text, 'Test-CoEInstall\.ps1[\s\S]*?-ContentMode\s+Customer')).Count |
+            Should BeGreaterThan 1
+        $text | Should Match '03_Update-CoEContent\.ps1[\s\S]*?-Scope\s+All[\s\S]*?-RepairCapturedPages[\s\S]*?-AuthenticationMode\s+Interactive[\s\S]*?-ContentMode\s+Customer'
+    }
+    It "distinguishes GitHub source archives from a hash-matched implementation asset" {
+        $text = ConvertTo-PlainDocumentText (Join-Path $kitRoot "01_Admin-Quickstart.html")
+        $text | Should Match 'Copilot-CoE-Implementation-Kit\.zip'
+        $text | Should Match 'Source code \(zip\)'
+        $text | Should Match 'Release 3\.8\.21 currently has no binary implementation asset on GitHub'
+    }
+    It "documents the settings that bind a deployment to its tenant and alias" {
+        $text = ConvertTo-PlainDocumentText (Join-Path $kitRoot "01_Admin-Quickstart.html")
+        foreach ($field in @("Tenant", "AdminFQDN", "SiteFQDN", "PnPClientID", "SharedChannelOwnerUPN",
+                "MailNickname", "OrganizationEmailDomains", "CatalogReviewerUPNs", "LearningEnvironment",
+                "GuidesIntro", "StoryAudiences", "ScenarioLibraryUrl")) {
+            $text | Should Match ([regex]::Escape($field))
+        }
+        $text | Should Match 'Never copy a client ID across tenants'
+        $text | Should Match 'Controls the Team alias and SharePoint site path'
+    }
 }
 
 Describe "Messages in kit scripts name switches the caller can use" {
