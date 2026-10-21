@@ -183,6 +183,17 @@ Describe "Shipped documents only use switches that exist" {
         $text | Should Match 'confirm the policy manually'
         $text | Should Match 'Do not grant Directory\.Read\.All solely to remove it'
     }
+    It "documents required Teams tab apps and policy-block recovery" {
+        $text = ConvertTo-PlainDocumentText (Join-Path $kitRoot "01_Admin-Quickstart.html")
+        foreach ($appId in @("com.microsoft.teamspace.tab.web", "com.microsoft.teamspace.tab.file.staticviewer.pdf",
+                "com.microsoft.teamspace.tab.file.staticviewer.powerpoint", "2a527703-1f6f-4559-a332-d8a7d288cd88")) {
+            $text | Should Match ([regex]::Escape($appId))
+        }
+        $text | Should Match 'App is blocked by app permission policy'
+        $text | Should Match 'Do not start clean or purge'
+        $text | Should Match 'ResumeExisting'
+        $text | Should Match 'CoE-Revision-Report\.json is written only after the installer finishes'
+    }
 }
 
 Describe "Messages in kit scripts name switches the caller can use" {

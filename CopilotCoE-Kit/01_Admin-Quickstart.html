@@ -370,6 +370,7 @@ Install-Module PnP.PowerShell -RequiredVersion 3.2.0 -Scope CurrentUser
           <li><strong>Sign-in.</strong> See the sign-in note in step 02 for device-code policies and the 03/04 switches.</li>
           <li><strong>SharePoint address.</strong> 03 reads the site address from <code>CoE-Revision-Report.json</code>, so tenants that create team sites under <code>/teams/</code> work after a completed install. If a report exists but identifies another host or alias, 03 stops rather than guessing. With no report, pass <code>-SiteUrl</code> with the exact address 02 printed when the site is not under <code>/sites/</code>.</li>
           <li><strong>Structured overrides.</strong> Before any tenant sign-in, 02 and 03 validate organization-owned structured content such as <code>Content\Training-Calendar.csv</code>. An obsolete <code>StartDate</code>/<code>EndDate</code> calendar stops locally with migration guidance instead of creating a Team/site and failing during content completion.</li>
+          <li><strong>Built-in Teams tab apps.</strong> Before installation, confirm that the installer account and intended CoE audience can use the built-in Teams tab providers required by the template: Website (<code>com.microsoft.teamspace.tab.web</code>), PDF (<code>com.microsoft.teamspace.tab.file.staticviewer.pdf</code>), PowerPoint (<code>com.microsoft.teamspace.tab.file.staticviewer.powerpoint</code>), and SharePoint pages/lists (<code>2a527703-1f6f-4559-a332-d8a7d288cd88</code>). In Teams admin center &gt; Teams apps &gt; Manage apps, verify each app is allowed. Under app-centric management, set <strong>Users and groups &gt; Availability</strong> for the approved users/groups; under legacy app permission policies, verify the policy assigned to the installer and intended users allows these Microsoft apps. Policy changes can take hours and up to 24 hours to apply.</li>
           <li><strong>Language.</strong> The installer identifies the Site Pages library by URL and its content type by ID rather than English display names. The site time zone is matched by name; if neither the machine-language nor English name matches what SharePoint returns, the time zone is left unchanged with a warning. Set it in Site settings &gt; Regional settings before relying on event times.</li>
           <li><strong>Validated envelope.</strong> Commercial lab tenant, a Global Administrator operator (also the owner, or a different owner), a fresh alias under <code>/sites/</code>, an English site and cached sign-ins. Test any other arrangement on a throwaway alias first.</li>
         </ol>
@@ -410,6 +411,23 @@ Install-Module PnP.PowerShell -RequiredVersion 3.2.0 -Scope CurrentUser
           <li>Confirm that the existing Team and SharePoint site have the exact intended identity.</li>
           <li>Only then use <code>-ResumeExisting</code> to finish that same build.</li>
         </ol>
+        <p>If Teams reports <code>App is blocked by app permission policy</code> for
+          <code>com.microsoft.teamspace.tab.web</code>, allow the built-in Website app through the tenant&rsquo;s
+          app-centric assignment or legacy permission policy, wait for propagation, and resume the existing Team/site.
+          Do not start clean or purge. Check General, Share Your Prompt, and Ask Us Anything before choosing which
+          missing welcome posts to publish:</p>
+        <pre><code>$missingWelcomeChannels = @('General', 'Share Your Prompt', 'Ask Us Anything 📢')
+.\02_Install-CopilotCoE.ps1 `
+  -OrgPath $orgPath `
+  -ContentMode Customer `
+  -SeedDemoContent `
+  -ResumeExisting `
+  -PublishWelcomeToChannels $missingWelcomeChannels `
+  -AuthenticationMode Interactive `
+  -ForceAuthentication</code></pre>
+        <p>Pass only channel names whose prepared post is confirmed missing; repeating a successful post can create a
+          duplicate. <code>CoE-Revision-Report.json</code> is written only after the installer finishes, so its absence
+          after a partial failure is expected.</p>
         <p>If you are validating a changed version of the kit, use a new site alias or perform a separately reviewed removal and fresh install. Using <code>-ResumeExisting</code> does not prove that a new kit version works.</p>
       </div>
       <div class="warning danger" id="purge-and-rebuild">
