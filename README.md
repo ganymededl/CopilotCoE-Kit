@@ -2,7 +2,7 @@
 
 A config-driven Teams + SharePoint **Center of Excellence (CoE)** kit for organizations rolling out Microsoft 365 Copilot. One kit, any organization: everything organization-specific (tenant, names, support links, policies, decks) lives in an **organization folder** passed to every script with `-OrgPath`, never edited in the kit itself.
 
-Source release: **v3.8.21**. The separately distributed, organization-neutral `Copilot-CoE-Implementation-Kit.zip` has SHA256 `B31F641642BD2199C36C3F840F5A4878CEE8332E89B5C3AB4EC09FF72B264D6F`. A named implementation ZIP attached to a GitHub release is valid when its published hash matches. Release v3.8.21 currently has no such binary asset. GitHub's automatic **Source code (zip)**, **Source code (tar.gz)** and repository **Download ZIP** are source snapshots, not the prebuilt implementation ZIP; cloning GitHub and renaming an older ZIP does not produce it.
+Release: **v3.8.21**. Customers install the named [`Copilot-CoE-Implementation-Kit.zip`](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.21/Copilot-CoE-Implementation-Kit.zip) release asset and verify SHA256 `B31F641642BD2199C36C3F840F5A4878CEE8332E89B5C3AB4EC09FF72B264D6F` against its [`.sha256` receipt](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.21/Copilot-CoE-Implementation-Kit.zip.sha256). GitHub's automatic **Source code (zip)**, **Source code (tar.gz)** and repository **Download ZIP** are source snapshots, not the prebuilt implementation ZIP; cloning GitHub and renaming an older ZIP does not produce it.
 
 > **Not an official Microsoft product.** This is independently maintained sample/starter tooling. All seeded content (guides, FAQs, governance samples, prompt libraries) is starter material for your organization's own review — none of it is adopted policy, and no customer or tenant is implied, named, or endorsed by shipping this kit.
 
@@ -14,8 +14,8 @@ Source release: **v3.8.21**. The separately distributed, organization-neutral `C
 
 ## Quick start
 
-1. Read **[`CopilotCoE-Kit/START-HERE.txt`](CopilotCoE-Kit/START-HERE.txt)** and **`CopilotCoE-Kit/01_Admin-Quickstart.html`** first.
-2. This repo excludes the vendor template package (`SourceOriginal/CopilotCoESite/CopilotCoESite.pnp`) because it exceeds GitHub's 100 MB per-file push limit. Download the existing **[reviewed template asset from v3.8.12](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.12/CopilotCoESite.pnp)** and place it at:
+1. For a customer installation, download the named implementation ZIP asset above, verify its hash, extract it, then follow **`01_Admin-Quickstart.html`** in the extracted kit.
+2. For source development, read **[`CopilotCoE-Kit/START-HERE.txt`](CopilotCoE-Kit/START-HERE.txt)** and **`CopilotCoE-Kit/01_Admin-Quickstart.html`** first. This source repo excludes the vendor template package (`SourceOriginal/CopilotCoESite/CopilotCoESite.pnp`) because it exceeds GitHub's 100 MB per-file push limit. Download the existing **[reviewed template asset from v3.8.12](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.12/CopilotCoESite.pnp)** and place it at:
    ```
    SourceOriginal/CopilotCoESite/CopilotCoESite.pnp
    ```

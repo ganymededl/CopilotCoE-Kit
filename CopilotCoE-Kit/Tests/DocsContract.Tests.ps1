@@ -159,7 +159,10 @@ Describe "Shipped documents only use switches that exist" {
         $text = ConvertTo-PlainDocumentText (Join-Path $kitRoot "01_Admin-Quickstart.html")
         $text | Should Match 'Copilot-CoE-Implementation-Kit\.zip'
         $text | Should Match 'Source code \(zip\)'
-        $text | Should Match 'Release 3\.8\.21 currently has no binary implementation asset on GitHub'
+        $text | Should Match '\.sha256 receipt'
+        $html = Get-Content -LiteralPath (Join-Path $kitRoot "01_Admin-Quickstart.html") -Raw
+        $html | Should Match 'releases/download/v3\.8\.21/Copilot-CoE-Implementation-Kit\.zip'
+        $html | Should Match 'Copilot-CoE-Implementation-Kit\.zip\.sha256'
     }
     It "documents the settings that bind a deployment to its tenant and alias" {
         $text = ConvertTo-PlainDocumentText (Join-Path $kitRoot "01_Admin-Quickstart.html")

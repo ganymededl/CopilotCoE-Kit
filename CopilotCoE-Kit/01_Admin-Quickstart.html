@@ -239,12 +239,13 @@
       <p><strong>Content pack is not cloud acceptance.</strong> <code>LearningEnvironment: Government</code> selects government content; it does not select or prove GCC Moderate behavior. Confirm the actual target cloud separately. A Government-content run in a commercial lab is commercial evidence, not GCC Moderate acceptance. GCC High and DoD are unsupported.</p>
       <div class="warning">
         <p><strong>Choose one frozen release ZIP before you begin.</strong> Use the master ZIP or an identical customer copy named in its release receipt; verify that ZIP&rsquo;s SHA256 against the receipt. An older versioned folder is history, not an automatically updated copy. The authoring source and an extracted working folder are not release ZIPs. Renaming an old ZIP does not upgrade it.</p>
-        <p><strong>A GitHub ZIP is valid only when the release lists a named prebuilt
-          <code>Copilot-CoE-Implementation-Kit.zip</code> asset and its published SHA256 matches.</strong>
-          GitHub&rsquo;s automatic <em>Source code (zip)</em>, <em>Source code (tar.gz)</em>, and repository
-          <em>Code &gt; Download ZIP</em> are source snapshots, not the frozen implementation package.
-          Release 3.8.21 currently has no binary implementation asset on GitHub, so obtain its reviewed
-          implementation ZIP and receipt through the approved distribution channel.</p>
+        <p><strong>Download the named
+          <a href="https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.21/Copilot-CoE-Implementation-Kit.zip"><code>Copilot-CoE-Implementation-Kit.zip</code></a>
+          release asset and verify its published SHA256.</strong> The matching
+          <a href="https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.21/Copilot-CoE-Implementation-Kit.zip.sha256"><code>.sha256</code> receipt</a>
+          is attached to the same release. GitHub&rsquo;s automatic <em>Source code (zip)</em>,
+          <em>Source code (tar.gz)</em>, and repository <em>Code &gt; Download ZIP</em> are source snapshots,
+          not the frozen implementation package.</p>
       </div>
       <p>Use commands like this:</p>
       <pre><code>$zip = 'C:\CoE-Releases\Copilot-CoE-Implementation-Kit.zip'
