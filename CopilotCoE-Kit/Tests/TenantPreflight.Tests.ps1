@@ -112,7 +112,13 @@ Describe "Tenant preflight before anything is created" {
         $script:policy.Detail = "403"
         Invoke-CoETenantPreflight @call
         Assert-MockCalled Confirm-CoEAdvisory -Times 0 -Exactly -Scope It
-        Assert-MockCalled Write-Warning -Times 1 -Exactly -Scope It -ParameterFilter { $Message -match "naming policy could not be read" }
+        Assert-MockCalled Write-Warning -Times 1 -Exactly -Scope It -ParameterFilter {
+            $Message -match "naming policy could not be read" -and
+                $Message -match "Directory.Read.All" -and
+                $Message -match "non-blocking" -and
+                $Message -match "does not prove that no naming policy exists" -and
+                $Message -match "Do not grant"
+        }
     }
     It "does not treat a blocked-word list alone as an alias rewrite" {
         $script:policy.BlockedWords = "Payroll"

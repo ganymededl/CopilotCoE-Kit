@@ -97,8 +97,12 @@ function Invoke-CoETenantPreflight {
 
     $policy = Get-CoEGroupNamingPolicy -Connection $Connection
     if (-not $policy.Verified) {
-        Write-Warning ("The group naming policy could not be read ($($policy.Detail)). If your organization applies a prefix or suffix to Microsoft 365 " +
-            "group aliases, run this script as a Global Administrator or User Administrator; otherwise the Team cannot be found by alias '$Alias'.")
+        Write-Warning ("The group naming policy could not be read ($($policy.Detail)). This optional Microsoft Graph read can return Insufficient privileges " +
+            "because the provisioning app intentionally does not request Directory.Read.All; a Global Administrator or User Administrator role does not add a " +
+            "missing delegated app scope. This warning is non-blocking, but it does not prove that no naming policy exists. Confirm Entra admin center > Groups > " +
+            "Naming policy before continuing. Global Administrator and User Administrator are exempt from an alias-rewriting naming policy. If this run later " +
+            "creates and finds the exact alias '$Alias' and proceeds to template application, the alias was not rewritten for this run. Do not grant " +
+            "Directory.Read.All solely to remove this warning.")
     } elseif ($policy.PrefixSuffix) {
         if ($operator.ExemptRole) {
             Write-Host "Group naming policy '$($policy.PrefixSuffix)' exists; $($operator.UserPrincipalName) holds $($operator.ExemptRole), which is exempt."

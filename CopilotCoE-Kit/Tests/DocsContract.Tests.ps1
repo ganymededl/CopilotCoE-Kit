@@ -174,6 +174,15 @@ Describe "Shipped documents only use switches that exist" {
         $text | Should Match 'Never copy a client ID across tenants'
         $text | Should Match 'Controls the Team alias and SharePoint site path'
     }
+    It "explains the non-blocking naming-policy permission warning without waiving manual review" {
+        $text = ConvertTo-PlainDocumentText (Join-Path $kitRoot "01_Admin-Quickstart.html")
+        $text | Should Match 'Directory\.Read\.All'
+        $text | Should Match 'Insufficient privileges'
+        $text | Should Match 'non-blocking'
+        $text | Should Match 'does not prove that no naming policy exists'
+        $text | Should Match 'confirm the policy manually'
+        $text | Should Match 'Do not grant Directory\.Read\.All solely to remove it'
+    }
 }
 
 Describe "Messages in kit scripts name switches the caller can use" {
