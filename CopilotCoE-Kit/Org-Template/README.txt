@@ -87,7 +87,10 @@ Deployment-Settings.json   REQUIRED. Tenant, names, support mailbox, and links.
                 [ "Office of Information Technology", "Library" ]. Each starts as "Not assigned".
                 Blank = the kit's generic sample rows. Rows already on the site are not changed.
   PnPClientID   Filled in by script 01. Organizations in the same tenant can share one app:
-                copy the ID into each organization's file instead of running 01 again.
+                copy the ID into each organization's file instead of running 01 again. The app
+                must have Authentication > Settings > Allow public client flows set to Yes.
+                Scripts 01-04 and Test-CoEInstall check this before sign-in and create nothing
+                when the check fails.
   TeamVisibility   Must remain "Private". The installer rejects Public Teams.
   CoESiteSharingCapability
                 Default "Disabled": customer deployments are internal-only. Missing settings

@@ -188,7 +188,7 @@
   <main>
     <header>
       <h1>01 Admin Quickstart: Copilot CoE install</h1>
-      <p class="meta"><strong>Release 3.8.21 documentation updated October 21, 2026.</strong></p>
+      <p class="meta"><strong>Release 3.8.22 documentation updated October 22, 2026.</strong></p>
       <p class="meta">Run these steps one at a time in PowerShell 7.4 or later, as required by the kit scripts and PnP.PowerShell 3.2.0. Keep the customer&rsquo;s organization folder outside the kit folder; that way, updating the kit later will not overwrite the customer&rsquo;s settings.</p>
       <div class="warning">
         <p><strong>Two important rules:</strong></p>
@@ -240,9 +240,9 @@
       <div class="warning">
         <p><strong>Choose one frozen release ZIP before you begin.</strong> Use the master ZIP or an identical customer copy named in its release receipt; verify that ZIP&rsquo;s SHA256 against the receipt. An older versioned folder is history, not an automatically updated copy. The authoring source and an extracted working folder are not release ZIPs. Renaming an old ZIP does not upgrade it.</p>
         <p><strong>Download the named
-          <a href="https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.21/Copilot-CoE-Implementation-Kit.zip"><code>Copilot-CoE-Implementation-Kit.zip</code></a>
+          <a href="https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.22/Copilot-CoE-Implementation-Kit.zip"><code>Copilot-CoE-Implementation-Kit.zip</code></a>
           release asset and verify its published SHA256.</strong> The matching
-          <a href="https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.21/Copilot-CoE-Implementation-Kit.zip.sha256"><code>.sha256</code> receipt</a>
+          <a href="https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.22/Copilot-CoE-Implementation-Kit.zip.sha256"><code>.sha256</code> receipt</a>
           is attached to the same release. GitHub&rsquo;s automatic <em>Source code (zip)</em>,
           <em>Source code (tar.gz)</em>, and repository <em>Code &gt; Download ZIP</em> are source snapshots,
           not the frozen implementation package.</p>
@@ -327,7 +327,7 @@ Assert-CoEStructuredOrganizationContent -OrgPath $orgPath</code></pre>
 
     <section class="step">
       <h2><span class="badge">02</span>Register or update the provisioning app</h2>
-      <p>A person approved to consent to app permissions runs this once per tenant. Afterward, they should confirm in Entra that every required permission shows as Granted.</p>
+      <p>A person approved to consent to app permissions runs this once per tenant. Afterward, they should confirm in Entra that every required permission shows as Granted and that <strong>Authentication &gt; Settings &gt; Allow public client flows</strong> is set to <strong>Yes</strong>.</p>
       <pre><code>Set-Location $kitRoot
 
 Install-Module PnP.PowerShell -RequiredVersion 3.2.0 -Scope CurrentUser
@@ -337,7 +337,7 @@ Install-Module PnP.PowerShell -RequiredVersion 3.2.0 -Scope CurrentUser
 # Confirm script 01 saved a nonempty client ID before installation.
 (Get-Content (Join-Path $orgPath 'Deployment-Settings.json') -Raw | ConvertFrom-Json).PnPClientID</code></pre>
       <div class="warning">
-        <p>Before moving on, check that the Entra app permissions are granted, including the delegated <code>User.Read.All</code> permission.</p>
+        <p>Before moving on, check that the Entra app permissions are granted, including the delegated <code>User.Read.All</code> permission, and that <strong>Allow public client flows</strong> is <strong>Yes</strong>. Script 01 does not change that setting itself: it checks it and, if it is off, stops (after saving <code>PnPClientID</code>) with the exact Entra path. From release 3.8.22, scripts 02, 03, 04 and the checker run the same check before sign-in; if the check cannot reach Entra or a tenant policy refuses it, they warn and continue to sign-in.</p>
         <p>If consent changed after someone previously signed in, add <code>-ForceAuthentication</code> to the install command in the next step.</p>
         <p><strong>Sign-in methods differ by script.</strong> 02 and the checker sign in through a browser. 01, 03 and 04 default to a device code and reuse a cached sign-in until it expires. A block can first appear on a later update, after that cached sign-in expires.</p>
         <p>If Conditional Access blocks device-code flow (Microsoft&rsquo;s &ldquo;Block device code flow&rdquo; managed policy), sign in through the browser instead:</p>

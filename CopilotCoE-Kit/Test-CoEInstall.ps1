@@ -50,6 +50,7 @@ $s = Get-Content -LiteralPath $SettingsPath -Raw | ConvertFrom-Json
 . (Join-Path $PSScriptRoot "Internal\OrganizationProfile.ps1")
 . (Join-Path $PSScriptRoot "Internal\HubExperience.ps1")
 . (Join-Path $PSScriptRoot "Internal\OperatorAdvisories.ps1")
+. (Join-Path $PSScriptRoot "Internal\ProvisioningApp.ps1")
 $environment = Get-CoELearningEnvironment -Settings $s
 $configuredNotice = (Get-CoEOrganizationProfile -Settings $s).SampleNotice
 if ($ContentMode -eq "Demo" -and -not $configuredNotice) {
@@ -71,6 +72,7 @@ function Invoke-Section([string]$Check, [scriptblock]$Body) {
     catch { Add-Result $Check "check could not run" $false $_.Exception.Message }
 }
 
+Assert-CoEProvisioningAppPublicClient -Tenant ([string]$s.Tenant) -ClientId ([string]$s.PnPClientID)
 $admin = Connect-PnPOnline -Url ("https://" + $s.AdminFQDN) -ClientId $s.PnPClientID -Tenant $s.Tenant `
     -Interactive -PersistLogin -ReturnConnection -ErrorAction Stop
 $site = Connect-PnPOnline -Url $SiteUrl -Connection $admin -ReturnConnection -ErrorAction Stop

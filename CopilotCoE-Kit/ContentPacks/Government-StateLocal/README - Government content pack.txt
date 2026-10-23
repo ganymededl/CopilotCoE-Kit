@@ -20,9 +20,11 @@ How to use it
   3. Put the agency's own files in Assets\ (see each README). Keep only agency-specific
      changes in Content\; unmodified government content is loaded from this pack.
   4. From the kit folder run, in order:
-       .\01_Register-CoEProvisioningApp.ps1 -OrgPath <folder>     (once per tenant)
-       .\02_Install-CopilotCoE.ps1 -OrgPath <folder> -SeedDemoContent -AcceptOrgAssets
-       .\Test-CoEInstall.ps1 -OrgPath <folder> -SiteUrl <site URL printed by the install>
+       .\01_Register-CoEProvisioningApp.ps1 -OrgPath <folder> -Interactive     (once per tenant)
+       .\02_Install-CopilotCoE.ps1 -OrgPath <folder> -ContentMode Customer -SeedDemoContent
+       .\Test-CoEInstall.ps1 -OrgPath <folder> -SiteUrl <site URL printed by the install> -ContentMode Customer
+     02 asks before hosting each Assets file. Add -AcceptOrgAssets only after the agency has reviewed
+     every file in Assets\. Use the same -ContentMode for install, update and test.
      If the same build stops partway, check its transcript and exact Team/site
      identity, fix the cause, and resume as described in START-HERE. To prove
      a changed kit, use a new alias or a separately reviewed removal and fresh

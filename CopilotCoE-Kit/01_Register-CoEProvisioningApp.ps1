@@ -40,6 +40,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 Import-Module PnP.PowerShell -RequiredVersion 3.2.0 -ErrorAction Stop
+. (Join-Path $PSScriptRoot "Internal\ProvisioningApp.ps1")
 if ($OrgPath) {
     if (-not (Test-Path -LiteralPath $OrgPath -PathType Container)) { throw "Organization folder not found: $OrgPath" }
     if (-not $SettingsPath) { $SettingsPath = Join-Path (Resolve-Path -LiteralPath $OrgPath).Path "Deployment-Settings.json" }
@@ -99,10 +100,12 @@ if ($SettingsPath) {
     Write-Host "Saved PnPClientID to $SettingsPath"
 }
 
+Assert-CoEProvisioningAppPublicClient -Tenant $Tenant -ClientId $clientId
+
 [pscustomobject]@{
     ApplicationName = $ApplicationName
     Tenant          = $Tenant
     ClientId        = $clientId
     AdminConsentUrl = $consentUrl
-    NextStep        = "Confirm all five permissions show Granted, then run .\02_Install-CopilotCoE.ps1 -SeedDemoContent."
+    NextStep        = "Confirm Allow public client flows is Yes and all five permissions show Granted, then run .\02_Install-CopilotCoE.ps1 -SeedDemoContent."
 }
