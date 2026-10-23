@@ -2,7 +2,7 @@
 
 A config-driven Teams + SharePoint **Center of Excellence (CoE)** kit for organizations rolling out Microsoft 365 Copilot. One kit, any organization: everything organization-specific (tenant, names, support links, policies, decks) lives in an **organization folder** passed to every script with `-OrgPath`, never edited in the kit itself.
 
-Release: **v3.8.21**. Customers install the named [`Copilot-CoE-Implementation-Kit.zip`](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.21/Copilot-CoE-Implementation-Kit.zip) release asset and verify SHA256 `B31F641642BD2199C36C3F840F5A4878CEE8332E89B5C3AB4EC09FF72B264D6F` against its [`.sha256` receipt](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.21/Copilot-CoE-Implementation-Kit.zip.sha256). GitHub's automatic **Source code (zip)**, **Source code (tar.gz)** and repository **Download ZIP** are source snapshots, not the prebuilt implementation ZIP; cloning GitHub and renaming an older ZIP does not produce it.
+Release: **v3.8.22**. Customers install the named [`Copilot-CoE-Implementation-Kit.zip`](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.22/Copilot-CoE-Implementation-Kit.zip) release asset and verify SHA256 `@@ZIP_SHA256@@` against its [`.sha256` receipt](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.22/Copilot-CoE-Implementation-Kit.zip.sha256). GitHub's automatic **Source code (zip)**, **Source code (tar.gz)** and repository **Download ZIP** are source snapshots, not the prebuilt implementation ZIP; cloning GitHub and renaming an older ZIP does not produce it.
 
 > **Not an official Microsoft product.** This is independently maintained sample/starter tooling. All seeded content (guides, FAQs, governance samples, prompt libraries) is starter material for your organization's own review — none of it is adopted policy, and no customer or tenant is implied, named, or endorsed by shipping this kit.
 
@@ -29,10 +29,20 @@ Release: **v3.8.21**. Customers install the named [`Copilot-CoE-Implementation-K
    .\01_Register-CoEProvisioningApp.ps1 -OrgPath C:\CoE-Orgs\Contoso -Interactive
    .\02_Install-CopilotCoE.ps1 -OrgPath C:\CoE-Orgs\Contoso -ContentMode Customer -SeedDemoContent
    .\Test-CoEInstall.ps1 -OrgPath C:\CoE-Orgs\Contoso -SiteUrl https://contoso.sharepoint.com/sites/CopilotCoE -ContentMode Customer
-   .\03_Update-CoEContent.ps1 -OrgPath C:\CoE-Orgs\Contoso -Scope All -RepairCapturedPages -AuthenticationMode Interactive -ContentMode Customer
+   .\03_Update-CoEContent.ps1 -OrgPath C:\CoE-Orgs\Contoso -Scope All -AuthenticationMode Interactive -ContentMode Customer
    .\Test-CoEInstall.ps1 -OrgPath C:\CoE-Orgs\Contoso -SiteUrl https://contoso.sharepoint.com/sites/CopilotCoE -ContentMode Customer
    ```
-   Verify the actual site URL printed by the installer. `ALL CHECKS PASSED` with a `WARN` still requires the named manual review. The provisioning app does not request tenant-wide `ChannelMessage.Read.All` solely to read its own posts: in Teams, confirm exactly one prepared welcome post each in General, Ask Us Anything and Share Your Prompt, with no Customer-mode demo notice. Posts appear under the administrator who ran the install. For a fresh internal acceptance site, also exercise a reviewed `-Scope All -RepairCapturedPages` content update and repeat the test and manual post check.
+   Use the exact site URL printed by the installer (also recorded as `Site` in `CoE-Revision-Report.json`). `ALL CHECKS PASSED` with a `WARN` still requires the named manual review. The provisioning app does not request tenant-wide `ChannelMessage.Read.All` solely to read its own posts: in Teams, confirm exactly one prepared welcome post each in General, Ask Us Anything and Share Your Prompt, with no Customer-mode demo notice. Posts appear under the administrator who ran the install. For a fresh internal acceptance site, also exercise a reviewed `-Scope All -RepairCapturedPages` content update and repeat the test and manual post check.
+
+## v3.8.22 changes
+
+- Scripts 01–04, `Test-CoEInstall.ps1` and `Test-CoELiveRegression.ps1` check that the provisioning app has **Authentication > Settings > Allow public client flows** set to Yes before sign-in, and stop with the exact Entra path when Entra reports it is off (`AADSTS7000218`) or that the app is not in the tenant (`AADSTS700016`). Any other probe result (network or proxy failure, a Conditional Access or authentication-flow policy) is a warning; sign-in still happens before anything is created. Script 01 does not change the setting itself; it checks the app it registered.
+- `CoE-Revision-Report.json` records `KitRelease` from the packaged `VERSION.txt`.
+- The Government pack's `CoE-Revision-Content.json` version matches the base kit (3.8.5).
+- Government tool pages tell readers to confirm current GCC availability for Researcher, Analyst and SharePoint agents.
+- `02_Install-CopilotCoE.ps1` is ASCII-only (the Ask Us Anything channel emoji is built from its code point).
+- Customer-mode Step 08 publishes with a plain `-Scope All` update; `-RepairCapturedPages` is for internal test sites or reviewed repair only.
+- v3.8.22 has not been re-run end to end in a tenant. Run the Windows PowerShell 5.1 offline gate (`Tests\Invoke-CoETests.ps1`) and your own acceptance before relying on it.
 
 ## v3.8.21 acceptance and reliability
 

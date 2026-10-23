@@ -161,7 +161,7 @@ Describe "Shipped documents only use switches that exist" {
         $text | Should Match 'Source code \(zip\)'
         $text | Should Match '\.sha256 receipt'
         $html = Get-Content -LiteralPath (Join-Path $kitRoot "01_Admin-Quickstart.html") -Raw
-        $html | Should Match 'releases/download/v3\.8\.21/Copilot-CoE-Implementation-Kit\.zip'
+        $html | Should Match 'releases/download/v3\.8\.22/Copilot-CoE-Implementation-Kit\.zip'
         $html | Should Match 'Copilot-CoE-Implementation-Kit\.zip\.sha256'
     }
     It "documents the settings that bind a deployment to its tenant and alias" {

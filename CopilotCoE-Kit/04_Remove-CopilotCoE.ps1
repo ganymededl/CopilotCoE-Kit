@@ -48,6 +48,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 Import-Module PnP.PowerShell -RequiredVersion 3.2.0 -ErrorAction Stop
 . (Join-Path $PSScriptRoot "Internal\TargetResolution.ps1")
+. (Join-Path $PSScriptRoot "Internal\ProvisioningApp.ps1")
 if ($ForceAuthentication -and $AuthenticationMode -ne "Interactive") {
     throw "-ForceAuthentication requires -AuthenticationMode Interactive."
 }
@@ -75,6 +76,7 @@ function Test-ConfiguredTenantSiteUrl([string]$Url) {
         ([uri]$Url).Scheme -eq "https" -and ([uri]$Url).Host.ToLowerInvariant() -eq $siteFqdn
 }
 
+Assert-CoEProvisioningAppPublicClient -Tenant ([string]$s.Tenant) -ClientId ([string]$s.PnPClientID)
 Write-Host "Connecting to the SharePoint admin endpoint. $(Get-CoESignInHint $AuthenticationMode)"
 $signInArguments = Get-CoESignInArguments -Url "https://$adminFqdn/" -ClientId ([string]$s.PnPClientID) `
     -Tenant ([string]$s.Tenant) -AuthenticationMode $AuthenticationMode -ForceAuthentication:$ForceAuthentication

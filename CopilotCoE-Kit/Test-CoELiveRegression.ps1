@@ -44,6 +44,7 @@ $SiteUrl = $SiteUrl.TrimEnd("/")
 . (Join-Path $kitRoot "Internal\ResourceTabs.ps1")
 . (Join-Path $kitRoot "Internal\AdoptionCatalogs.ps1")
 . (Join-Path $kitRoot "Internal\SuccessStoryCatalog.ps1")
+. (Join-Path $kitRoot "Internal\ProvisioningApp.ps1")
 
 $results = [System.Collections.Generic.List[object]]::new()
 function Invoke-Check([string]$Id, [string]$Name, [scriptblock]$Body) {
@@ -60,6 +61,7 @@ function Invoke-Check([string]$Id, [string]$Name, [scriptblock]$Body) {
     }
 }
 
+Assert-CoEProvisioningAppPublicClient -Tenant ([string]$s.Tenant) -ClientId ([string]$s.PnPClientID)
 $admin = Connect-PnPOnline -Url ("https://" + $s.AdminFQDN) -ClientId $s.PnPClientID -Tenant $s.Tenant `
     -Interactive -PersistLogin -ReturnConnection -ErrorAction Stop
 $site = Connect-PnPOnline -Url $SiteUrl -Connection $admin -ReturnConnection -ErrorAction Stop

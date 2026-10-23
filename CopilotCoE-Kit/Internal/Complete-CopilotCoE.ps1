@@ -44,6 +44,7 @@ Import-Module PnP.PowerShell -RequiredVersion 3.2.0
 . (Join-Path $PSScriptRoot "GovernanceLinks.ps1")
 . (Join-Path $PSScriptRoot "OperatorAdvisories.ps1")
 . (Join-Path $PSScriptRoot "TargetResolution.ps1")
+. (Join-Path $PSScriptRoot "ProvisioningApp.ps1")
 $runId = "$(Get-Date -Format 'yyyyMMdd-HHmmss')-$([guid]::NewGuid().ToString('N'))"
 
 # Organization profile: names, links, and support address from the org's Deployment-Settings.json.
@@ -297,6 +298,14 @@ if ($GovernanceOnly -or $GuidesOnly) {
 $report.Organization = @{ Name = $orgName; DisplayName = $DisplayName; Noun = $orgNoun; Short = $ShortName
     OrgPath = $OrgPath; ContentOverrides = $orgOverrides }
 $report.SupportRoutes = @($supportRoutes | Select-Object Key,Configured,Url)
+# "Version" is the content schema of CoE-Revision-Content.json. KitRelease is the packaged release that ran,
+# read from VERSION.txt at the root of the extracted ZIP (two levels above this kit folder).
+$kitReleaseFile = Join-Path (Split-Path -Parent (Split-Path -Parent $kitRoot)) "VERSION.txt"
+$report.KitRelease = "unpackaged source"
+if (Test-Path -LiteralPath $kitReleaseFile -PathType Leaf) {
+    $releaseLine = @(Get-Content -LiteralPath $kitReleaseFile | Where-Object { $_ -match '^\s*Version:\s*(\S+)' }) | Select-Object -First 1
+    if ($releaseLine -and $releaseLine -match '^\s*Version:\s*(\S+)') { $report.KitRelease = $Matches[1] }
+}
 $auditFolder = Join-Path $kitRoot "RevisionAudit"
 [void][System.IO.Directory]::CreateDirectory($auditFolder)
 $seedRoot = Join-Path $stageRoot "SeedContent"
@@ -408,6 +417,7 @@ foreach ($kind in @("program", "leadership")) {
 }
 
 if (-not $Connection) {
+    Assert-CoEProvisioningAppPublicClient -Tenant $Tenant -ClientId $ClientId
     Write-Host (Get-CoESignInHint $AuthenticationMode)
     $signInArguments = Get-CoESignInArguments -Url $AdminUrl -ClientId ([string]$ClientId) -Tenant $Tenant `
         -AuthenticationMode $AuthenticationMode -ForceAuthentication:$ForceAuthentication

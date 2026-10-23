@@ -176,9 +176,16 @@ QUICK START - RUN THE NUMBERED SCRIPTS IN ORDER (01, 02, then 03 when needed; 04
      Then confirm in Entra > App registrations > Copilot CoE Provisioning (PnP)
      > API permissions that all five permissions show Granted (including delegated User.Read.All,
      used to verify governance users' Member/Guest account type). User.ReadBasic.All cannot
-     read userType. For an existing app, add User.Read.All, grant admin consent, then clear
-     sign in again with installer -ForceAuthentication before installation. Another organization
-     in the same tenant can reuse the app: copy PnPClientID into its settings file.
+     read userType. Under Authentication > Settings, also confirm Allow public client flows is
+     set to Yes. Script 01 does not change this setting itself: it checks the app it registered and,
+     if the setting is off, stops after saving PnPClientID with the exact Entra path to fix it.
+     Before signing in or creating tenant resources, scripts 02, 03, 04 and Test-CoEInstall probe
+     the configured PnPClientID and stop with that path if the app is not enabled as a public client.
+     If the probe cannot reach Entra or is refused by a tenant policy, they warn and continue to
+     sign-in, which happens before anything is created. For an existing app,
+     enable public client flows, add User.Read.All, grant admin consent, then clear sign in again
+     with installer -ForceAuthentication before installation. Another organization in the same
+     tenant can reuse the app only with those same settings: copy PnPClientID into its settings file.
      Review the delegated scopes with your security team. The app uses SharePoint
      AllSites.FullControl; delete the app and revoke consent when it is no longer
      needed, and clear the persisted PnP sign-in after the work is complete.

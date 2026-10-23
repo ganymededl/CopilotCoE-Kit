@@ -36,7 +36,7 @@
       "description": "Researcher can synthesize complex questions from authorized work and web sources. Review the sources, findings and any generated citations.",
       "access": "Microsoft 365 Copilot license; check your tenant",
       "where": "Agents in the Microsoft Copilot app (work account), if enabled",
-      "gcc": "Check your tenant",
+      "gcc": "GCC availability can lag commercial. No GCC statement is included here; confirm current status in the Microsoft 365 roadmap (GCC filter) and in your tenant before announcing it.",
       "openUrl": "https://copilot.cloud.microsoft/",
       "learnUrl": "https://support.microsoft.com/en-us/microsoft-365-copilot/get-started-with-researcher-in-microsoft-365-copilot"
     },
@@ -47,7 +47,7 @@
       "description": "Analyst helps inspect data, explain patterns and create analyses. Check the source data and calculations before relying on its conclusions.",
       "access": "Microsoft 365 Copilot license; check your tenant",
       "where": "Agents in the Microsoft Copilot app (work account), if enabled",
-      "gcc": "Check your tenant",
+      "gcc": "GCC availability can lag commercial. No GCC statement is included here; confirm current status in the Microsoft 365 roadmap (GCC filter) and in your tenant before announcing it.",
       "openUrl": "https://copilot.cloud.microsoft/",
       "learnUrl": "https://support.microsoft.com/en-us/microsoft-365-copilot/get-started-with-analyst-in-microsoft-365-copilot"
     },
@@ -82,7 +82,7 @@
       "description": "Start from a site or library you can access. Sharing an agent does not grant people access to its source content; check the permissions and review path.",
       "access": "Check your tenant and any capacity requirements",
       "where": "Authorized SharePoint site or document library, if enabled",
-      "gcc": "Check your tenant",
+      "gcc": "GCC availability can lag commercial. No GCC statement is included here; confirm current status in the Microsoft 365 roadmap (GCC filter) and in your tenant before announcing it.",
       "openUrl": "https://support.microsoft.com/en-us/sharepoint/copilot-in-sharepoint/get-started-with-agents-in-sharepoint",
       "learnUrl": "https://support.microsoft.com/en-us/sharepoint/copilot-in-sharepoint/get-started-with-agents-in-sharepoint"
     },

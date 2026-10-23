@@ -171,6 +171,7 @@ Import-Module PnP.PowerShell -RequiredVersion 3.2.0 -ErrorAction Stop
 . (Join-Path $PSScriptRoot "Internal\HubExperience.ps1")
 . (Join-Path $PSScriptRoot "Internal\OperatorAdvisories.ps1")
 . (Join-Path $PSScriptRoot "Internal\TenantPreflight.ps1")
+. (Join-Path $PSScriptRoot "Internal\ProvisioningApp.ps1")
 $CoESiteSharingCapability = Get-CoEParentSharingCapability -Settings $settings
 $OrganizationEmailDomains = @(Get-CoEOrganizationDomains -Domains $OrganizationEmailDomains)
 if ($ForceAuthentication -and $AuthenticationMode -ne "Interactive") {
@@ -194,6 +195,7 @@ $advisoryContext = New-CoEAdvisoryContext -SettingsPath $SettingsPath -Tenant $T
 Invoke-CoEConfigurationAdvisories -Context $advisoryContext -Settings $settings `
     -SupportEmail $SupportEmail -DisplayName $DisplayName -SampleNotice $SampleNotice -ContentMode $ContentMode `
     -AllowMissingDataSafetyIncidentRoute:$AllowMissingDataSafetyIncidentRoute
+Assert-CoEProvisioningAppPublicClient -Tenant $Tenant -ClientId $PnPClientID
 
 $prepareScript = Join-Path $PSScriptRoot "Internal\Prepare-CopilotCoE.ps1"
 if ($settings -and $settings.PSObject.Properties["HomeTiles"] -and @($settings.HomeTiles).Count) {
@@ -741,10 +743,12 @@ foreach ($channel in $standardChannels) {
         throw "The expected standard channel '$($channel.DisplayName)' disappeared."
     }
 }
+# The channel name ends with a megaphone emoji (U+1F4E2). It is built from its code point so this file stays ASCII.
+$megaphone = [char]::ConvertFromUtf32(0x1F4E2)
 $requiredChannels = @(
     "General",
     "Share Your Prompt",
-    "Ask Us Anything 📢",
+    "Ask Us Anything $megaphone",
     "Leadership Governance",
     "Program Governance"
 )
@@ -774,7 +778,7 @@ $governanceSecurity = @(Initialize-CoEGovernanceSecurity -TeamId $coeGroup.Group
 $summaryChannels = @(
     Get-PnPTeamsChannel -Team $coeGroup.GroupId -Connection $adminConnection -ErrorAction Stop |
         Where-Object { $_.MembershipType -eq "standard" } |
-        ForEach-Object { $_.DisplayName -replace '\s*📢$', '' }
+        ForEach-Object { $_.DisplayName -replace ('\s*' + [regex]::Escape($megaphone) + '$'), '' }
 )
 $installSummary = [pscustomobject]@{
     TeamName         = $DisplayName
