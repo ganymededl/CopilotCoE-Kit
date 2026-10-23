@@ -11,12 +11,16 @@ failure that was found during live installs and that the offline tests passed st
   R2  CustomFormatter / DefaultValue must apply and read back without a PnP conversion warning.
   R3  SharePoint stores view CAML in a different form than it was sent; an unchanged view must be accepted.
   R4  Reviewer grants on the 2nd and 3rd catalog when the reviewer holds only Limited Access at site level.
-  R5  A second full run must change nothing and still succeed.
+  R5  Rerunning the three catalog synchronizers must change no catalog rows, views, fields, permissions or
+      reviewer membership. This is not a full 02/03 rerun test; prove that with a second 03 run and
+      Test-CoEInstall on an internal test site.
   R6  The connected-site comparison must accept the live connection.
   R7  The resume page list must match the packaged template.
 
-The target site is only written to by this script. It must not be a production or customer site; it refuses any
-URL that does not contain "Scratch" unless -AllowAnySite is passed.
+The target site is only written to by this script. It must not be a production or customer site. Without
+-AllowAnySite it refuses any URL that is not exactly https://<SiteFQDN from the settings file>/<managed path>/<alias>
+with an alias that starts with "CoEScratch" or "CoE-Scratch" (for example CoEScratch1), or whose alias is the
+settings file's own MailNickname.
 
 .EXAMPLE
 .\Test-CoELiveRegression.ps1 -SettingsPath C:\CoE-Orgs\Test\Deployment-Settings.json `
@@ -34,10 +38,12 @@ $ErrorActionPreference = "Stop"
 $kitRoot = $PSScriptRoot
 Import-Module PnP.PowerShell -RequiredVersion 3.2.0 -ErrorAction Stop
 
-if (-not $AllowAnySite -and $SiteUrl -notmatch 'Scratch') {
-    throw "Refusing to write to '$SiteUrl'. Use a throwaway site whose URL contains 'Scratch', or pass -AllowAnySite deliberately."
-}
 $s = Get-Content -LiteralPath $SettingsPath -Raw | ConvertFrom-Json
+. (Join-Path $kitRoot "Internal\TargetResolution.ps1")
+if (-not $AllowAnySite -and -not (Test-CoEScratchSiteUrl -Url $SiteUrl -SiteFqdn ([string]$s.SiteFQDN) -ProtectedAlias ([string]$s.MailNickname))) {
+    throw ("Refusing to write to '$SiteUrl'. Use a throwaway site at https://$($s.SiteFQDN)/<managed path>/CoEScratch<n> " +
+        "(not the configured CoE alias), or pass -AllowAnySite deliberately.")
+}
 $SiteUrl = $SiteUrl.TrimEnd("/")
 
 . (Join-Path $kitRoot "Internal\SecurityPosture.ps1")
@@ -109,17 +115,44 @@ Invoke-Check "R4b" "Reviewer group holds the reviewer role and Owners keep Full 
     "3 catalogs verified"
 }
 
-Invoke-Check "R5" "A second run changes nothing and still succeeds" {
-    $before = (Get-PnPList -Identity "Copilot Learning Paths" -Includes RoleAssignments -Connection $site)
-    $beforeVersion = (Get-PnPListItem -List "Copilot Learning Paths" -PageSize 500 -Connection $site).Count
+# A comparable snapshot of everything the catalog synchronizers own: rows (with modification time, version
+# and approval state), views (with their query), fields, list permissions and reviewer group membership.
+function Get-CoECatalogSnapshot {
+    $lines = [System.Collections.Generic.List[string]]::new()
+    foreach ($name in "Copilot Success Stories", "Copilot Learning Paths", "Copilot Agent Showcase") {
+        $list = Get-PnPList -Identity $name -Includes RoleAssignments,HasUniqueRoleAssignments,EnableModeration,DraftVersionVisibility -Connection $site
+        $lines.Add("$name|unique=$($list.HasUniqueRoleAssignments)|moderation=$($list.EnableModeration)|drafts=$($list.DraftVersionVisibility)")
+        foreach ($item in @(Get-PnPListItem -List $list.Id -PageSize 500 -Fields "Title","Modified","_UIVersionString","_ModerationStatus" -Connection $site)) {
+            $lines.Add("$name|item|$($item.Id)|$($item['Title'])|$($item['Modified'])|$($item['_UIVersionString'])|$($item['_ModerationStatus'])")
+        }
+        foreach ($view in @(Get-PnPView -List $list.Id -Includes ViewQuery,DefaultView,RowLimit -Connection $site)) {
+            $lines.Add("$name|view|$($view.Title)|default=$($view.DefaultView)|rows=$($view.RowLimit)|$($view.ViewQuery)")
+        }
+        foreach ($field in @(Get-PnPField -List $list.Id -Connection $site | Where-Object { -not $_.Hidden })) {
+            $lines.Add("$name|field|$($field.InternalName)|$($field.TypeAsString)|$($field.DefaultValue)")
+        }
+        $ctx = Get-PnPContext -Connection $site; $ctx.Load($list.RoleAssignments); Invoke-PnPQuery -Connection $site
+        foreach ($ra in $list.RoleAssignments) {
+            Get-PnPProperty -ClientObject $ra -Property Member,RoleDefinitionBindings -Connection $site | Out-Null
+            $lines.Add("$name|role|$($ra.Member.Id)|" + ((@($ra.RoleDefinitionBindings | ForEach-Object Name) | Sort-Object) -join ","))
+        }
+    }
+    foreach ($member in @(Get-PnPGroupMember -Group "CoE Catalog Reviewers" -Connection $site)) { $lines.Add("reviewer|$($member.LoginName)") }
+    return @($lines | Sort-Object)
+}
+
+Invoke-Check "R5" "Rerunning the catalog synchronizers changes no catalog state" {
+    $before = @(Get-CoECatalogSnapshot)
     Sync-CoESuccessStoryCatalog -Connection $site -SiteUrl $SiteUrl -Seeds @($seed) -ResolvedReviewers $reviewers | Out-Null
     Sync-CoELearningCatalog -Connection $site -SiteUrl $SiteUrl -Seeds $learningSeeds -ResolvedReviewers $reviewers | Out-Null
     Sync-CoEAgentCatalog -Connection $site -SiteUrl $SiteUrl -AgentSeeds $agentSeed -ResolvedReviewers $reviewers | Out-Null
-    $afterVersion = (Get-PnPListItem -List "Copilot Learning Paths" -PageSize 500 -Connection $site).Count
-    if ($beforeVersion -ne $afterVersion) { throw "Rerun changed the Learning Paths row count ($beforeVersion -> $afterVersion)." }
-    $members = @(Get-PnPGroupMember -Group "CoE Catalog Reviewers" -Connection $site)
-    if ($members.Count -ne $reviewers.Count) { throw "Rerun changed reviewer group membership." }
-    "rerun was a no-op"
+    $after = @(Get-CoECatalogSnapshot)
+    $changes = @(Compare-Object -ReferenceObject $before -DifferenceObject $after)
+    if ($changes.Count) {
+        $sample = @($changes | Select-Object -First 5 | ForEach-Object { "$($_.SideIndicator) $($_.InputObject)" }) -join "; "
+        throw "Rerun changed $($changes.Count) catalog state line(s): $sample"
+    }
+    "rerun left $($before.Count) catalog state lines unchanged"
 }
 
 Invoke-Check "R1" "A SharePoint-returned view address containing a space resolves" {

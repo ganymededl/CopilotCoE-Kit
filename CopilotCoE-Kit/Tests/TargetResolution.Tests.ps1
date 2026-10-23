@@ -182,3 +182,95 @@ Describe "Language-independent SharePoint identifiers" {
         $complete | Should Match '-List "SitePages"'
     }
 }
+
+Describe "Updates are bound to the Team recorded in the deployment report" {
+    $teamA = "11111111-1111-1111-1111-111111111111"
+    $teamB = "22222222-2222-2222-2222-222222222222"
+    It "accepts the same Team ID from a hashtable report" {
+        { Assert-CoEDeploymentTeamBinding -Report @{ Site = "https://t.sharepoint.com/sites/CoE"; TeamId = $teamA } -TeamId $teamA -Alias "CoE" } |
+            Should Not Throw
+    }
+    It "accepts the same Team ID from an object report regardless of case" {
+        { Assert-CoEDeploymentTeamBinding -Report ([pscustomobject]@{ TeamId = $teamA.ToUpperInvariant() }) -TeamId $teamA -Alias "CoE" } |
+            Should Not Throw
+    }
+    It "refuses a different Team ID before anything is changed" {
+        $message = Get-CoETestExceptionMessage {
+            Assert-CoEDeploymentTeamBinding -Report @{ TeamId = $teamA } -TeamId $teamB -Alias "CoE"
+        }
+        $message | Should Match "written for Team $teamA"
+        $message | Should Match "resolves to Team $teamB"
+        $message | Should Match "Nothing was changed"
+    }
+    It "warns but continues for an older report without TeamId" {
+        Mock Write-Warning {}
+        { Assert-CoEDeploymentTeamBinding -Report @{ Site = "https://t.sharepoint.com/sites/CoE" } -TeamId $teamA -Alias "CoE" } |
+            Should Not Throw
+        Assert-MockCalled Write-Warning -Times 1 -Exactly -Scope It -ParameterFilter { $Message -match "no TeamId" }
+    }
+    It "does nothing when there is no report" {
+        Mock Write-Warning {}
+        { Assert-CoEDeploymentTeamBinding -Report $null -TeamId $teamA -Alias "CoE" } | Should Not Throw
+        Assert-MockCalled Write-Warning -Times 0 -Exactly -Scope It
+    }
+}
+
+Describe "Completion verifies the target Team before any tenant write" {
+    $complete = Get-Content -LiteralPath (Join-Path $kitRoot "Internal\Complete-CopilotCoE.ps1") -Raw
+    $install = Get-Content -LiteralPath (Join-Path $kitRoot "02_Install-CopilotCoE.ps1") -Raw
+    $update = Get-Content -LiteralPath (Join-Path $kitRoot "03_Update-CoEContent.ps1") -Raw
+    $groupCheck = $complete.IndexOf('$group = Get-PnPMicrosoft365Group -Identity $TeamAlias')
+    $binding = $complete.IndexOf('Assert-CoEDeploymentTeamBinding -Report $priorReportForSite')
+    It "looks up the Team once and binds it before reviewers, time zone or pages are touched" {
+        $groupCheck | Should BeGreaterThan -1
+        ([regex]::Matches($complete, [regex]::Escape('$group = Get-PnPMicrosoft365Group -Identity $TeamAlias'))).Count | Should Be 1
+        $binding | Should BeGreaterThan $groupCheck
+        $binding | Should BeLessThan $complete.IndexOf('Resolve-CoECatalogReviewers -ReviewerUPNs $catalogReviewers')
+        $binding | Should BeLessThan $complete.IndexOf('Set-SiteTimeZone -SiteConnection $site')
+        $binding | Should BeLessThan $complete.IndexOf('Initialize-CoEGovernanceSecurity')
+    }
+    It "skips the report binding only for the installer, which created or resumed the Team itself" {
+        $install | Should Match '-ContentMode \$ContentMode -NewDeployment'
+        $update | Should Not Match 'NewDeployment'
+    }
+}
+
+Describe "Live regression only writes to a dedicated scratch site" {
+    $fqdn = "contoso.sharepoint.com"
+    It "accepts a scratch alias on the configured host under any one managed path" {
+        Test-CoEScratchSiteUrl -Url "https://contoso.sharepoint.com/sites/CoEScratch1" -SiteFqdn $fqdn -ProtectedAlias "CopilotCoE" | Should Be $true
+        Test-CoEScratchSiteUrl -Url "https://contoso.sharepoint.com/teams/coe-scratch-a/" -SiteFqdn $fqdn | Should Be $true
+    }
+    foreach ($case in @(
+            @{ Name = "a production site that merely contains Scratch"; Url = "https://contoso.sharepoint.com/sites/FinanceScratchpad" },
+            @{ Name = "Scratch only in the query string"; Url = "https://contoso.sharepoint.com/sites/CopilotCoE?x=Scratch" },
+            @{ Name = "Scratch only in the fragment"; Url = "https://contoso.sharepoint.com/sites/CopilotCoE#CoEScratch" },
+            @{ Name = "another tenant host"; Url = "https://fabrikam.sharepoint.com/sites/CoEScratch1" },
+            @{ Name = "a subsite below a scratch site"; Url = "https://contoso.sharepoint.com/sites/CoEScratch1/Finance" },
+            @{ Name = "a non-HTTPS address"; Url = "http://contoso.sharepoint.com/sites/CoEScratch1" },
+            @{ Name = "embedded credentials"; Url = "https://user@contoso.sharepoint.com/sites/CoEScratch1" },
+            @{ Name = "the root site"; Url = "https://contoso.sharepoint.com/" },
+            @{ Name = "an empty address"; Url = "" }
+        )) {
+        It "refuses $($case.Name)" {
+            Test-CoEScratchSiteUrl -Url $case.Url -SiteFqdn $fqdn -ProtectedAlias "CopilotCoE" | Should Be $false
+        }
+    }
+    It "refuses the organization's own configured alias even if it looks like a scratch name" {
+        Test-CoEScratchSiteUrl -Url "https://contoso.sharepoint.com/sites/CoEScratch1" -SiteFqdn $fqdn -ProtectedAlias "coescratch1" | Should Be $false
+    }
+    It "checks the guard before signing in or writing anything" {
+        $live = Get-Content -LiteralPath (Join-Path $kitRoot "Test-CoELiveRegression.ps1") -Raw
+        $guard = $live.IndexOf("Test-CoEScratchSiteUrl -Url")
+        $guard | Should BeGreaterThan -1
+        $guard | Should BeLessThan $live.IndexOf("Connect-PnPOnline")
+        $guard | Should BeLessThan $live.IndexOf("New-PnPList")
+        $live | Should Not Match "-notmatch 'Scratch'"
+    }
+    It "states R5 as a synchronizer rerun check, not a full-run idempotency test" {
+        $live = Get-Content -LiteralPath (Join-Path $kitRoot "Test-CoELiveRegression.ps1") -Raw
+        $live | Should Not Match "A second full run must change nothing"
+        $live | Should Match "Get-CoECatalogSnapshot"
+        $live | Should Match 'Compare-Object -ReferenceObject \$before -DifferenceObject \$after'
+    }
+}

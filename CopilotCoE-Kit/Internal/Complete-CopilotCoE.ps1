@@ -25,7 +25,10 @@ param(
     [ValidateSet("Customer", "Demo")][string]$ContentMode = "Customer",
     [ValidateSet("Interactive", "DeviceLogin")][string]$AuthenticationMode = "DeviceLogin",
     [switch]$ForceAuthentication,
-    [object]$Connection
+    [object]$Connection,
+    # Passed only by 02_Install-CopilotCoE.ps1, which has just created or resumed this Team and verified it itself.
+    # Without it (03 updates), a saved TeamId in the deployment report must match the Team the alias resolves to.
+    [switch]$NewDeployment
 )
 
 Set-StrictMode -Version Latest
@@ -272,11 +275,14 @@ $copy = Get-Content (Join-Path $stageRoot "CoE-Revision-Content.json") -Raw | Co
 $legacyReportPath = Join-Path $kitRoot "CoE-Revision-Report.json"
 $reportPath = if ($OrgPath) { Join-Path $OrgPath "CoE-Revision-Report.json" } else { $legacyReportPath }
 $previousTopTen = $null
+$priorReportForSite = $null
 $previousReportPath = if (Test-Path -LiteralPath $reportPath -PathType Leaf) { $reportPath } else { $legacyReportPath }
 if (-not $GovernanceOnly -and -not $GuidesOnly -and (Test-Path -LiteralPath $previousReportPath -PathType Leaf)) {
     $previousReport = Get-Content -LiteralPath $previousReportPath -Raw | ConvertFrom-Json -AsHashtable
-    if ($previousReport.ContainsKey("Site") -and $previousReport.Site.TrimEnd("/") -eq $SiteUrl.TrimEnd("/") -and
-        $previousReport.ContainsKey("TopTen")) { $previousTopTen = $previousReport.TopTen }
+    if ($previousReport.ContainsKey("Site") -and $previousReport.Site.TrimEnd("/") -eq $SiteUrl.TrimEnd("/")) {
+        $priorReportForSite = $previousReport
+        if ($previousReport.ContainsKey("TopTen")) { $previousTopTen = $previousReport.TopTen }
+    }
 }
 if ($GovernanceOnly -or $GuidesOnly) {
     $readPath = $reportPath
@@ -291,6 +297,7 @@ if ($GovernanceOnly -or $GuidesOnly) {
         throw "The existing deployment report does not match the supplied site."
     }
     $report.Version = $copy.version
+    $priorReportForSite = $report
     if ($GovernanceOnly) { $report.Governance = @() }
 } else {
     $report = [ordered]@{ Site = $SiteUrl; Version = $copy.version; Governance = @() }
@@ -424,6 +431,18 @@ if (-not $Connection) {
     $Connection = Connect-PnPOnline @signInArguments
 }
 $site = Connect-PnPOnline -Url $SiteUrl -Connection $Connection -ReturnConnection
+# Bind this run to the intended Team before ANY tenant write (reviewer principals, time zone, pages, lists).
+# The alias must resolve to the supplied site, and on an update the Team must be the one recorded in the
+# deployment report, so a stale organization folder cannot modify a different Team that later reused the alias.
+$group = Get-PnPMicrosoft365Group -Identity $TeamAlias -IncludeSiteUrl -Connection $Connection
+if (-not $group -or $group.SiteUrl.TrimEnd("/") -ne $SiteUrl.TrimEnd("/")) {
+    throw "The Team alias does not match the supplied SharePoint site. No repair has been applied."
+}
+if (-not $NewDeployment) {
+    Assert-CoEDeploymentTeamBinding -Report $priorReportForSite -TeamId ([string]$group.GroupId) -Alias $TeamAlias
+}
+$team = Get-PnPTeamsTeam -Identity $group.GroupId -Connection $Connection
+if ($team.Visibility -ne "Private") { throw "Team visibility is '$($team.Visibility)', not the required Private setting." }
 if (-not $GovernanceOnly) {
     # Resolve the entire reviewer roster before regional settings, pages or catalog permissions change.
     Assert-CoECatalogPreflight -SiteUrl $SiteUrl -Connection $site
@@ -432,12 +451,6 @@ if (-not $GovernanceOnly) {
 # Set the time zone before loading any site objects: the regional-settings update can leave
 # previously loaded SharePoint objects bound to a stale context ("used in a different context").
 Set-SiteTimeZone -SiteConnection $site
-$group = Get-PnPMicrosoft365Group -Identity $TeamAlias -IncludeSiteUrl -Connection $Connection
-if (-not $group -or $group.SiteUrl.TrimEnd("/") -ne $SiteUrl.TrimEnd("/")) {
-    throw "The Team alias does not match the supplied SharePoint site. No repair has been applied."
-}
-$team = Get-PnPTeamsTeam -Identity $group.GroupId -Connection $Connection
-if ($team.Visibility -ne "Private") { throw "Team visibility is '$($team.Visibility)', not the required Private setting." }
 $channels = @(Get-PnPTeamsChannel -Team $group.GroupId -Connection $Connection)
 $governanceSecurity = @(Initialize-CoEGovernanceSecurity -TeamId $group.GroupId -Channels $channels `
     -CoESiteSharingCapability $coeSiteSharingCapability `

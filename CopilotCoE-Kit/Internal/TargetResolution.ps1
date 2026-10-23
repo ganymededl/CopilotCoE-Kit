@@ -119,3 +119,50 @@ function Find-CoESharePointTimeZone {
     }
     return $null
 }
+
+# An update must act on the Team its deployment report was written for. A report is a hashtable or object with
+# an optional TeamId. No report (first update from a new computer) or an older report without TeamId is allowed
+# with a warning; a different TeamId means the alias or site address was reused and nothing may be changed.
+function Assert-CoEDeploymentTeamBinding {
+    [CmdletBinding()]
+    param(
+        [AllowNull()][object]$Report,
+        [Parameter(Mandatory)][string]$TeamId,
+        [Parameter(Mandatory)][string]$Alias
+    )
+    if ($null -eq $Report) { return }
+    $savedTeamId = ""
+    if ($Report -is [System.Collections.IDictionary]) {
+        if ($Report.Contains("TeamId")) { $savedTeamId = [string]$Report["TeamId"] }
+    } elseif ($Report.PSObject.Properties["TeamId"]) {
+        $savedTeamId = [string]$Report.TeamId
+    }
+    if ([string]::IsNullOrWhiteSpace($savedTeamId)) {
+        Write-Warning ("The deployment report has no TeamId (written by an older kit). This update is bound by alias and site address only; " +
+            "it will record TeamId $TeamId when it completes.")
+        return
+    }
+    if ($savedTeamId.Trim() -ine $TeamId.Trim()) {
+        throw ("The deployment report in this organization folder was written for Team $savedTeamId, but alias '$Alias' now resolves to " +
+            "Team $TeamId at the same site address. The alias or site was reused after the original deployment. Nothing was changed. " +
+            "Confirm which Team this organization folder should manage; do not edit the report to force a match.")
+    }
+}
+
+# Live regression writes lists and permissions. Only a dedicated throwaway site qualifies: the exact configured
+# host, one managed path, an alias that starts with CoEScratch or CoE-Scratch, and never the organization's own alias.
+function Test-CoEScratchSiteUrl {
+    [CmdletBinding()]
+    param([string]$Url, [Parameter(Mandatory)][string]$SiteFqdn, [string]$ProtectedAlias)
+    if ([string]::IsNullOrWhiteSpace($Url) -or [string]::IsNullOrWhiteSpace($SiteFqdn)) { return $false }
+    $uri = $null
+    if (-not [uri]::TryCreate($Url.Trim(), [UriKind]::Absolute, [ref]$uri)) { return $false }
+    if ($uri.Scheme -ne "https" -or $uri.UserInfo -or $uri.Query -or $uri.Fragment -or -not $uri.IsDefaultPort) { return $false }
+    if ($uri.Host -ine $SiteFqdn.Trim()) { return $false }
+    $segments = @($uri.AbsolutePath.Trim("/") -split "/")
+    if ($segments.Count -ne 2 -or [string]::IsNullOrWhiteSpace($segments[0])) { return $false }
+    $alias = [uri]::UnescapeDataString($segments[1])
+    if ($alias -notmatch '^(?i)CoE-?Scratch[A-Za-z0-9_-]*$') { return $false }
+    if ($ProtectedAlias -and $alias -ieq $ProtectedAlias.Trim()) { return $false }
+    return $true
+}

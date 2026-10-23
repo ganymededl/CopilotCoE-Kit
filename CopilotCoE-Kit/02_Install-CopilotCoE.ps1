@@ -800,7 +800,7 @@ if ($SeedDemoContent) {
         -OrgName $OrgName -OrgNoun $OrgNoun -DisplayName $DisplayName `
         -RepairCapturedPages:(!$ResumeExisting) `
         -AllowMissingDataSafetyIncidentRoute:$AllowMissingDataSafetyIncidentRoute `
-        -SettingsPath $SettingsPath -OrgPath $OrgPath -AcceptOrgAssets:$AcceptOrgAssets -ContentMode $ContentMode
+        -SettingsPath $SettingsPath -OrgPath $OrgPath -AcceptOrgAssets:$AcceptOrgAssets -ContentMode $ContentMode -NewDeployment
 } else {
     Write-CoESecurityPosture -SiteUrl $coeUrl -TeamId $coeGroup.GroupId -ExpectedVisibility $TeamVisibility `
         -CoESiteSharingCapability $CoESiteSharingCapability -SettingsPath $SettingsPath `

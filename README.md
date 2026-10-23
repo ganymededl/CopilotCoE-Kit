@@ -38,6 +38,9 @@ Release: **v3.8.22**. Customers install the named [`Copilot-CoE-Implementation-K
 
 - Scripts 01–04, `Test-CoEInstall.ps1` and `Test-CoELiveRegression.ps1` check that the provisioning app has **Authentication > Settings > Allow public client flows** set to Yes before sign-in, and stop with the exact Entra path when Entra reports it is off (`AADSTS7000218`) or that the app is not in the tenant (`AADSTS700016`). Any other probe result (network or proxy failure, a Conditional Access or authentication-flow policy) is a warning; sign-in still happens before anything is created. Script 01 does not change the setting itself; it checks the app it registered.
 - `CoE-Revision-Report.json` records `KitRelease` from the packaged `VERSION.txt`.
+- Updates (`03_Update-CoEContent.ps1`) verify the target before any tenant write: the alias must resolve to the supplied site, and the Team must match the `TeamId` saved in `CoE-Revision-Report.json`. A reused alias or site stops with nothing changed. Reports from older kits without `TeamId` continue with a warning and record it on completion.
+- `Test-CoELiveRegression.ps1` writes only to `https://<SiteFQDN>/<managed path>/CoEScratch*` (never the configured alias) unless `-AllowAnySite` is passed. R5 now compares a full snapshot of catalog rows, versions, approval state, views, fields, permissions and reviewer membership across a synchronizer rerun; it is not a full 02/03 rerun test.
+- The Share Your Prompt `ScenarioUseCaseTemplate.pptx` is replaced with an unencrypted copy.
 - The Government pack's `CoE-Revision-Content.json` version matches the base kit (3.8.5).
 - Government tool pages tell readers to confirm current GCC availability for Researcher, Analyst and SharePoint agents.
 - `02_Install-CopilotCoE.ps1` is ASCII-only (the Ask Us Anything channel emoji is built from its code point).
