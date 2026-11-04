@@ -14,25 +14,99 @@ Release: **v3.8.22**. Customers install the named [`Copilot-CoE-Implementation-K
 
 ## Quick start
 
-1. For a customer installation, download the named implementation ZIP asset above, verify its hash, extract it, then follow **`01_Admin-Quickstart.html`** in the extracted kit.
-2. For source development, read **[`CopilotCoE-Kit/START-HERE.txt`](CopilotCoE-Kit/START-HERE.txt)** and **`CopilotCoE-Kit/01_Admin-Quickstart.html`** first. This source repo excludes the vendor template package (`SourceOriginal/CopilotCoESite/CopilotCoESite.pnp`) because it exceeds GitHub's 100 MB per-file push limit. Download the existing **[reviewed template asset from v3.8.12](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.12/CopilotCoESite.pnp)** and place it at:
-   ```
-   SourceOriginal/CopilotCoESite/CopilotCoESite.pnp
-   ```
-   Verify SHA256 `2CC80587026E27B47992330122B75DEA4808E01D3DA2CB46EEF3EA404FF429CB`. This template's 88 inner files are unchanged in v3.8.21; repacked `.pnp` archives can have different outer ZIP hashes.
-3. Copy `CopilotCoE-Kit/Org-Template` (or `CopilotCoE-Kit/ContentPacks/Government-StateLocal` for state/local government) to a **new** organization folder **outside** this repo, e.g. `C:\CoE-Orgs\Contoso`, and fill in its `Deployment-Settings.json`. Do not copy a prior install's revision report, removal manifest or audit folder to a new site. Review organization Assets before approving uploads.
-4. Run the local content preflight, then the numbered scripts in order from inside `CopilotCoE-Kit/`:
+Run these steps **one block at a time in PowerShell 7.4 or later**. The first tenant operation is script 01; download, extraction, configuration, and content preflight are local.
+
+1. **Download the installable release assets.** Download the named [`Copilot-CoE-Implementation-Kit.zip`](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.22/Copilot-CoE-Implementation-Kit.zip) and its [`.sha256` receipt](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.22/Copilot-CoE-Implementation-Kit.zip.sha256). Do not use GitHub's **Code > Download ZIP**, **Source code (zip)**, or **Source code (tar.gz)**; those are source snapshots, not the implementation package.
+
+2. **Verify and unblock the ZIP before extracting it.** Windows marks internet downloads as untrusted. If the ZIP is extracted while still blocked, PowerShell can reject every `.ps1` file as "not digitally signed."
+
    ```powershell
-   . .\Internal\ContentPreflight.ps1
-   Assert-CoEStructuredOrganizationContent -OrgPath C:\CoE-Orgs\Contoso
-   Install-Module PnP.PowerShell -RequiredVersion 3.2.0 -Scope CurrentUser
-   .\01_Register-CoEProvisioningApp.ps1 -OrgPath C:\CoE-Orgs\Contoso -Interactive
-   .\02_Install-CopilotCoE.ps1 -OrgPath C:\CoE-Orgs\Contoso -ContentMode Customer -SeedDemoContent
-   .\Test-CoEInstall.ps1 -OrgPath C:\CoE-Orgs\Contoso -SiteUrl https://contoso.sharepoint.com/sites/CopilotCoE -ContentMode Customer
-   .\03_Update-CoEContent.ps1 -OrgPath C:\CoE-Orgs\Contoso -Scope All -AuthenticationMode Interactive -ContentMode Customer
-   .\Test-CoEInstall.ps1 -OrgPath C:\CoE-Orgs\Contoso -SiteUrl https://contoso.sharepoint.com/sites/CopilotCoE -ContentMode Customer
+   $zip = 'C:\CoE-Releases\Copilot-CoE-Implementation-Kit.zip'
+   $receipt = 'C:\CoE-Releases\Copilot-CoE-Implementation-Kit.zip.sha256'
+   $expectedHash = 'D0A59E2B9F3F543813E19FF98A3A465EFA0777FF81B36B6A0251916335033E3F'
+
+   $zipHash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash
+   $receiptHash = ((Get-Content -LiteralPath $receipt -Raw).Trim() -split '\s+')[0]
+   if ($zipHash -ne $expectedHash -or $receiptHash -ne $expectedHash) {
+       throw 'The implementation ZIP or its receipt does not match release 3.8.22.'
+   }
+   Unblock-File -LiteralPath $zip
    ```
-   Use the exact site URL printed by the installer (also recorded as `Site` in `CoE-Revision-Report.json`). `ALL CHECKS PASSED` with a `WARN` still requires the named manual review. The provisioning app does not request tenant-wide `ChannelMessage.Read.All` solely to read its own posts: in Teams, confirm exactly one prepared welcome post each in General, Ask Us Anything and Share Your Prompt, with no Customer-mode demo notice. Posts appear under the administrator who ran the install. For a fresh internal acceptance site, also exercise a reviewed `-Scope All -RepairCapturedPages` content update and repeat the test and manual post check.
+
+   GUI equivalent: right-click the ZIP, select **Properties**, select **Unblock** if shown, then select **OK**. Do this **before** **Extract All**. If the ZIP was already extracted while blocked, either delete that extraction and start again from the unblocked ZIP (recommended), or unblock the existing files:
+
+   ```powershell
+   Get-ChildItem -LiteralPath 'C:\CoE-Install\Contoso' -Recurse -File | Unblock-File
+   ```
+
+3. **Extract the kit into a fresh installation folder.** Keep the kit and customer configuration in different folders.
+
+   ```powershell
+   $installRoot = 'C:\CoE-Install\Contoso-v3.8.22'
+   $kitRoot = Join-Path $installRoot '03_Build\CopilotCoE-Kit'
+   $orgPath = 'C:\CoE-Orgs\Contoso'
+
+   if (Test-Path -LiteralPath $installRoot) { throw "Use a new install folder: $installRoot" }
+   Expand-Archive -LiteralPath $zip -DestinationPath $installRoot
+   Set-Location $kitRoot
+   ```
+
+4. **Create a separate organization folder.** `-OrgPath` must point to this copied profile, not to the extracted package root or the `Internal` folder.
+
+   ```powershell
+   if (Test-Path -LiteralPath $orgPath) { throw "Review the existing organization folder first: $orgPath" }
+   Copy-Item -LiteralPath '.\Org-Template' -Destination $orgPath -Recurse
+   # State/local government instead:
+   # Copy-Item -LiteralPath '.\ContentPacks\Government-StateLocal' -Destination $orgPath -Recurse
+   ```
+
+   Edit `$orgPath\Deployment-Settings.json`, not a settings file under `$kitRoot`. Complete at least `Tenant`, `AdminFQDN`, `SiteFQDN`, `SharedChannelOwnerUPN`, `OrgName`, `MailNickname`, and `SupportEmail`. Leave `PnPClientID` blank if script 01 will create the tenant app. Do not copy another deployment's `CoE-Revision-Report.json`, removal manifest, advisory decisions, or `RevisionAudit`.
+
+5. **Run the local content preflight correctly.** The leading dot and following space in `. .\Internal\ContentPreflight.ps1` are required: they load the function into the current PowerShell session. Running only `.\Internal\ContentPreflight.ps1` does not leave `Assert-CoEStructuredOrganizationContent` available afterward.
+
+   ```powershell
+   Set-Location $kitRoot
+   . .\Internal\ContentPreflight.ps1
+   Get-Command Assert-CoEStructuredOrganizationContent -ErrorAction Stop
+   Assert-CoEStructuredOrganizationContent -OrgPath $orgPath
+   Write-Host 'Offline content preflight completed.'
+   ```
+
+   The assertion can finish silently when the organization profile has no `Content\Training-Calendar.csv` override. The `Get-Command` line confirms that dot-sourcing worked, and the final message makes successful completion explicit. This step does not connect to Microsoft 365.
+
+6. **Install the required module, then register or reuse the tenant app.**
+
+   ```powershell
+   Install-Module PnP.PowerShell -RequiredVersion 3.2.0 -Scope CurrentUser
+   Get-Module PnP.PowerShell -ListAvailable |
+       Where-Object Version -eq ([version]'3.2.0') |
+       Select-Object Name, Version, Path
+   .\01_Register-CoEProvisioningApp.ps1 -OrgPath $orgPath -Interactive
+   ```
+
+   Script 01 is the first tenant operation. Confirm all required delegated permissions show **Granted** and **Authentication > Settings > Allow public client flows** is **Yes**. An organization profile in the same tenant can reuse an already approved kit app by setting `PnPClientID`; never reuse that ID across tenants.
+
+7. **Install and test.** Use `Customer` for an approved customer deployment. Use `Demo` only for a clearly labeled synthetic demonstration, and keep the same mode for install, update, and tests.
+
+   ```powershell
+   $contentMode = 'Customer' # Use 'Demo' only for a labeled internal demonstration.
+   .\02_Install-CopilotCoE.ps1 -OrgPath $orgPath -ContentMode $contentMode -SeedDemoContent
+
+   $siteUrl = (Get-Content (Join-Path $orgPath 'CoE-Revision-Report.json') -Raw |
+       ConvertFrom-Json).Site
+   .\Test-CoEInstall.ps1 -OrgPath $orgPath -SiteUrl $siteUrl -ContentMode $contentMode
+   ```
+
+   Do not add `-ResumeExisting` to a fresh installation. If script 02 stops after creating resources, inspect its saved transcript and verify the existing Team and site before deciding whether to resume. `ALL CHECKS PASSED` with a `WARN` still requires the named manual review. In Teams, confirm exactly one prepared welcome post in General, Ask Us Anything, and Share Your Prompt.
+
+8. **Publish reviewed changes and test again.**
+
+   ```powershell
+   .\03_Update-CoEContent.ps1 -OrgPath $orgPath -Scope All -AuthenticationMode Interactive -ContentMode $contentMode
+   .\Test-CoEInstall.ps1 -OrgPath $orgPath -SiteUrl $siteUrl -ContentMode $contentMode
+   ```
+
+For source development, read [`CopilotCoE-Kit/START-HERE.txt`](CopilotCoE-Kit/START-HERE.txt) and `CopilotCoE-Kit/01_Admin-Quickstart.html`. The source repository excludes `SourceOriginal/CopilotCoESite/CopilotCoESite.pnp` because it exceeds GitHub's 100 MB per-file limit. Use the reviewed [v3.8.12 template asset](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.12/CopilotCoESite.pnp) and verify SHA256 `2CC80587026E27B47992330122B75DEA4808E01D3DA2CB46EEF3EA404FF429CB`.
 
 ## v3.8.22 changes
 
