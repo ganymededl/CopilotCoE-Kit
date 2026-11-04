@@ -147,8 +147,17 @@ QUICK START - RUN THE NUMBERED SCRIPTS IN ORDER (01, 02, then 03 when needed; 04
   1. Right-click the ZIP > Properties > Unblock (if shown), then Extract All.
      Keep the folder structure.
   2. Open PowerShell 7 and run:
+     Paste only the command text below. Do not copy PS C:\...> or >> prompt text.
        cd <extracted-folder>\03_Build\CopilotCoE-Kit
-       Install-Module PnP.PowerShell -RequiredVersion 3.2.0 -Scope CurrentUser
+       if (-not (Get-Module PnP.PowerShell -ListAvailable |
+               Where-Object Version -eq ([version]'3.2.0'))) {
+           if (-not (Get-PSResourceRepository -Name PSGallery -ErrorAction SilentlyContinue)) {
+               Register-PSResourceRepository -PSGallery
+           }
+           Install-PSResource PnP.PowerShell -Version 3.2.0 -Scope CurrentUser `
+               -Repository PSGallery -TrustRepository
+       }
+       Import-Module PnP.PowerShell -RequiredVersion 3.2.0 -ErrorAction Stop
   3. Create the organization folder, outside the kit, for example:
        Copy-Item .\Org-Template C:\CoE-Orgs\Contoso -Recurse
      (or use your supplied organization folder). In its Deployment-Settings.json

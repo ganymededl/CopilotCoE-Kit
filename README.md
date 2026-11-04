@@ -74,15 +74,27 @@ Run these steps **one block at a time in PowerShell 7.4 or later**. The first te
 
    The assertion can finish silently when the organization profile has no `Content\Training-Calendar.csv` override. The `Get-Command` line confirms that dot-sourcing worked, and the final message makes successful completion explicit. This step does not connect to Microsoft 365.
 
-6. **Install the required module, then register or reuse the tenant app.** If `PnPClientID` already identifies this tenant's approved kit app, verify its five delegated permissions and **Allow public client flows = Yes**, then skip script 01. Script 01 creates a new app; rerunning it creates a duplicate, overwrites this profile's `PnPClientID`, and leaves the prior app in Entra.
+6. **Install the required module, then register or reuse the tenant app.** Paste only the commands inside the code block; do not copy PowerShell prompt text such as `PS C:\...>` or continuation prompts such as `>>`. If `PnPClientID` already identifies this tenant's approved kit app, verify its five delegated permissions and **Allow public client flows = Yes**, then skip script 01. Script 01 creates a new app; rerunning it creates a duplicate, overwrites this profile's `PnPClientID`, and leaves the prior app in Entra.
 
    ```powershell
-   Install-Module PnP.PowerShell -RequiredVersion 3.2.0 -Scope CurrentUser
+   if (-not (Get-Module PnP.PowerShell -ListAvailable |
+           Where-Object Version -eq ([version]'3.2.0'))) {
+       if (-not (Get-PSResourceRepository -Name PSGallery -ErrorAction SilentlyContinue)) {
+           Register-PSResourceRepository -PSGallery
+       }
+       Install-PSResource PnP.PowerShell -Version 3.2.0 -Scope CurrentUser `
+           -Repository PSGallery -TrustRepository
+   }
+   Import-Module PnP.PowerShell -RequiredVersion 3.2.0 -ErrorAction Stop
    Get-Module PnP.PowerShell -ListAvailable |
        Where-Object Version -eq ([version]'3.2.0') |
        Select-Object Name, Version, Path
    .\01_Register-CoEProvisioningApp.ps1 -OrgPath $orgPath -Interactive
    ```
+
+   Use `Install-PSResource`, included with supported PowerShell 7 releases, rather than the legacy
+   `Install-Module` command. The repository check handles machines where PowerShell Gallery is not yet registered;
+   the import then fails locally and clearly if the exact required module version is unavailable.
 
    Script 01 is the first tenant operation. Confirm all required delegated permissions show **Granted** and **Authentication > Settings > Allow public client flows** is **Yes**. An organization profile in the same tenant can reuse an already approved kit app by setting `PnPClientID`; never reuse that ID across tenants.
 
