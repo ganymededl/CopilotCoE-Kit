@@ -161,7 +161,7 @@ Describe "Shipped documents only use switches that exist" {
         $text | Should Match 'Source code \(zip\)'
         $text | Should Match '\.sha256 receipt'
         $html = Get-Content -LiteralPath (Join-Path $kitRoot "01_Admin-Quickstart.html") -Raw
-        $html | Should Match 'releases/download/v3\.8\.22/Copilot-CoE-Implementation-Kit\.zip'
+        $html | Should Match 'releases/download/v3\.8\.23/Copilot-CoE-Implementation-Kit\.zip'
         $html | Should Match 'Copilot-CoE-Implementation-Kit\.zip\.sha256'
     }
     It "documents the settings that bind a deployment to its tenant and alias" {
@@ -197,6 +197,22 @@ Describe "Shipped documents only use switches that exist" {
         $text | Should Match 'ResumeExisting'
         $text | Should Match 'CoE-Revision-Report\.json is written only after the installer finishes'
     }
+It "documents Windows unblocking and the dot-sourced offline preflight" {
+    $text = ConvertTo-PlainDocumentText (Join-Path $kitRoot "01_Admin-Quickstart.html")
+    $text | Should Match 'Unblock-File\s+-LiteralPath\s+\$zip'
+    $text | Should Match 'right-click the ZIP.*Properties.*Unblock'
+    $text | Should Match 'dot followed by a space'
+    $text | Should Match 'Get-Command\s+Assert-CoEStructuredOrganizationContent'
+    $text | Should Match 'Offline content preflight completed'
+    $text | Should Match 'finish silently'
+}
+It "warns that rerunning registration creates a second app" {
+    $text = ConvertTo-PlainDocumentText (Join-Path $kitRoot "01_Admin-Quickstart.html")
+    $text | Should Match 'Reuse an existing approved app; do not rerun script 01'
+    $text | Should Match 'Rerunning it creates another Entra app registration'
+    $text | Should Match 'overwrites PnPClientID'
+    $text | Should Match 'leaves the\s+previous app in the tenant'
+}
 }
 
 Describe "Messages in kit scripts name switches the caller can use" {

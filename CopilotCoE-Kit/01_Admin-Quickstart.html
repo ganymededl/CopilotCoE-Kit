@@ -188,7 +188,7 @@
   <main>
     <header>
       <h1>01 Admin Quickstart: Copilot CoE install</h1>
-      <p class="meta"><strong>Release 3.8.22 documentation updated October 22, 2026.</strong></p>
+      <p class="meta"><strong>Release 3.8.23 documentation updated November 3, 2026.</strong></p>
       <p class="meta">Run these steps one at a time in PowerShell 7.4 or later, as required by the kit scripts and PnP.PowerShell 3.2.0. Keep the customer&rsquo;s organization folder outside the kit folder; that way, updating the kit later will not overwrite the customer&rsquo;s settings.</p>
       <div class="warning">
         <p><strong>Two important rules:</strong></p>
@@ -228,7 +228,7 @@
     </section>
 
     <section class="step">
-      <h2><span class="badge">01</span>Extract the kit and create the organization folder</h2>
+      <h2><span class="badge">01</span>Verify, unblock, and extract the kit</h2>
       <p>First, choose where the customer&rsquo;s organization folder will live. This folder controls the site&rsquo;s wording, governance drafts, learning paths, and the starting prompts in the Copilot Prompt Library.</p>
       <p>If someone already gave you a completed organization folder, copy that folder instead of creating a new one.</p>
       <table>
@@ -240,34 +240,52 @@
       <div class="warning">
         <p><strong>Choose one frozen release ZIP before you begin.</strong> Use the master ZIP or an identical customer copy named in its release receipt; verify that ZIP&rsquo;s SHA256 against the receipt. An older versioned folder is history, not an automatically updated copy. The authoring source and an extracted working folder are not release ZIPs. Renaming an old ZIP does not upgrade it.</p>
         <p><strong>Download the named
-          <a href="https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.22/Copilot-CoE-Implementation-Kit.zip"><code>Copilot-CoE-Implementation-Kit.zip</code></a>
+          <a href="https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.23/Copilot-CoE-Implementation-Kit.zip"><code>Copilot-CoE-Implementation-Kit.zip</code></a>
           release asset and verify its published SHA256.</strong> The matching
-          <a href="https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.22/Copilot-CoE-Implementation-Kit.zip.sha256"><code>.sha256</code> receipt</a>
+          <a href="https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.23/Copilot-CoE-Implementation-Kit.zip.sha256"><code>.sha256</code> receipt</a>
           is attached to the same release. GitHub&rsquo;s automatic <em>Source code (zip)</em>,
           <em>Source code (tar.gz)</em>, and repository <em>Code &gt; Download ZIP</em> are source snapshots,
           not the frozen implementation package.</p>
       </div>
-      <p>Use commands like this:</p>
+      <p><strong>Run each block below separately in PowerShell 7.4 or later.</strong></p>
+      <h3>1. Set the paths</h3>
       <pre><code>$zip = 'C:\CoE-Releases\Copilot-CoE-Implementation-Kit.zip'
+$receipt = 'C:\CoE-Releases\Copilot-CoE-Implementation-Kit.zip.sha256'
 $expectedHash = '&lt;paste SHA256 from the release receipt&gt;'
-$installRoot = 'C:\CoE-Install\Contoso'
+$installRoot = 'C:\CoE-Install\Contoso-v3.8.23'
 $kitRoot = Join-Path $installRoot '03_Build\CopilotCoE-Kit'
-$orgPath = 'C:\CoE-Orgs\Contoso'
-
-if ($expectedHash -notmatch '^[0-9A-Fa-f]{64}$' -or
-    (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash -ne $expectedHash) {
-    throw 'The chosen release ZIP does not match its receipt.'
+$orgPath = 'C:\CoE-Orgs\Contoso'</code></pre>
+      <h3>2. Verify the ZIP and receipt</h3>
+      <pre><code>$zipHash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash
+$receiptHash = ((Get-Content -LiteralPath $receipt -Raw).Trim() -split '\s+')[0]
+if ($expectedHash -notmatch '^[0-9A-Fa-f]{64}$' -or $zipHash -ne $expectedHash -or
+    $receiptHash -ne $expectedHash) {
+    throw 'The implementation ZIP or its receipt does not match release 3.8.23.'
 }
-if (Test-Path -LiteralPath $installRoot) { throw 'Use a fresh extraction folder for a clean install.' }
+Write-Host 'Release ZIP and receipt verified.'</code></pre>
+      <h3>3. Unblock the ZIP before extraction</h3>
+      <pre><code>Unblock-File -LiteralPath $zip
+Write-Host 'ZIP unblocked. It is now safe to extract.'</code></pre>
+      <p>GUI equivalent: right-click the ZIP, select <strong>Properties</strong>, select <strong>Unblock</strong> if
+        shown, and select <strong>OK</strong>. Do this before selecting <strong>Extract All</strong>. If a script from
+        an existing extraction says it is not digitally signed, delete that extraction and start again from the
+        unblocked ZIP (recommended), or unblock every extracted file:</p>
+      <pre><code>Get-ChildItem -LiteralPath 'C:\CoE-Install\Contoso-v3.8.23' -Recurse -File | Unblock-File</code></pre>
+      <h3>4. Extract into a fresh kit folder</h3>
+      <pre><code>if (Test-Path -LiteralPath $installRoot) { throw 'Use a fresh extraction folder for a clean install.' }
 Expand-Archive -LiteralPath $zip -DestinationPath $installRoot
-Set-Location $kitRoot
-
+Set-Location $kitRoot</code></pre>
+      <h3>5. Create the separate organization folder</h3>
+      <p><code>$kitRoot</code> contains the installer. <code>$orgPath</code> contains the organization&rsquo;s
+        settings, content overrides, and approved assets. Every script&rsquo;s <code>-OrgPath</code> must point to
+        the separate organization folder, not the extracted package root and not <code>Internal</code>.</p>
+      <pre><code>Set-Location $kitRoot
 # Only when starting a NEW organization folder; do not overwrite a completed one.
 if (Test-Path -LiteralPath $orgPath) { throw 'Review the existing organization folder before using it.' }
-Copy-Item .\Org-Template $orgPath -Recurse
+Copy-Item -LiteralPath .\Org-Template -Destination $orgPath -Recurse
 
 # Government &mdash; use this instead of the line above:
-# Copy-Item .\ContentPacks\Government-StateLocal $orgPath -Recurse</code></pre>
+# Copy-Item -LiteralPath .\ContentPacks\Government-StateLocal -Destination $orgPath -Recurse</code></pre>
       <p>If you received a completed organization folder, point <code>$orgPath</code> to it instead of copying a template. When adapting a prior validation profile for a new site, copy only reviewed settings, Content and approved Assets into a fresh folder. Do not copy <code>CoE-Revision-Report.json</code>, <code>CoE-Removal-Manifest.json</code> or <code>RevisionAudit</code> from another deployment; those files identify its old Team and site.</p>
       <p>Then open the settings file:</p>
       <pre><code>notepad (Join-Path $orgPath 'Deployment-Settings.json')</code></pre>
@@ -302,7 +320,19 @@ Copy-Item .\Org-Template $orgPath -Recurse
       <p>Run the same local structured-content check used by install and update before any tenant authentication:</p>
       <pre><code>Set-Location $kitRoot
 . .\Internal\ContentPreflight.ps1
-Assert-CoEStructuredOrganizationContent -OrgPath $orgPath</code></pre>
+Get-Command Assert-CoEStructuredOrganizationContent -ErrorAction Stop
+Assert-CoEStructuredOrganizationContent -OrgPath $orgPath
+Write-Host 'Offline content preflight completed.'</code></pre>
+      <div class="warning">
+        <p><strong>The dot and space are required.</strong>
+          <code>. .\Internal\ContentPreflight.ps1</code> starts with a dot followed by a space. This dot-sources
+          the file and keeps its function in the current PowerShell session. Running only
+          <code>.\Internal\ContentPreflight.ps1</code> can appear to do nothing, then the assertion is not
+          recognized because the function was not retained.</p>
+        <p>The assertion can also finish silently when the organization profile has no
+          <code>Content\Training-Calendar.csv</code> override. <code>Get-Command</code> confirms the function loaded,
+          and the final message confirms that the offline check completed.</p>
+      </div>
       <h3>Optional: add the customer&rsquo;s own prompts</h3>
       <p>The Prompt Library starts with the base prompts included in the folder you copied.</p>
       <p>To add the customer&rsquo;s own prompts, put CSV files here:</p>
@@ -328,16 +358,27 @@ Assert-CoEStructuredOrganizationContent -OrgPath $orgPath</code></pre>
     <section class="step">
       <h2><span class="badge">02</span>Register or update the provisioning app</h2>
       <p>A person approved to consent to app permissions runs this once per tenant. Afterward, they should confirm in Entra that every required permission shows as Granted and that <strong>Authentication &gt; Settings &gt; Allow public client flows</strong> is set to <strong>Yes</strong>.</p>
+      <div class="warning danger">
+        <p><strong>Reuse an existing approved app; do not rerun script 01.</strong> If this tenant already has the
+          kit&rsquo;s approved provisioning app, put its Application (client) ID in
+          <code>$orgPath\Deployment-Settings.json</code> as <code>PnPClientID</code>, confirm the five permissions
+          and public-client setting below, and continue to script 02.</p>
+        <p>Script 01 is a create command, not an update command. Rerunning it creates another Entra app registration
+          with a new client ID, overwrites <code>PnPClientID</code> in this organization profile, and leaves the
+          previous app in the tenant. Entra display names are not unique, so the duplicate can have the same name.</p>
+      </div>
+      <h3>1. Install and verify the required local module</h3>
       <pre><code>Set-Location $kitRoot
-
 Install-Module PnP.PowerShell -RequiredVersion 3.2.0 -Scope CurrentUser
-
-.\01_Register-CoEProvisioningApp.ps1 -OrgPath $orgPath -Interactive
-
+Get-Module PnP.PowerShell -ListAvailable |
+  Where-Object Version -eq ([version]'3.2.0') |
+  Select-Object Name, Version, Path</code></pre>
+      <h3>2. Only when this tenant has no approved kit app, register one</h3>
+      <pre><code>.\01_Register-CoEProvisioningApp.ps1 -OrgPath $orgPath -Interactive
 # Confirm script 01 saved a nonempty client ID before installation.
 (Get-Content (Join-Path $orgPath 'Deployment-Settings.json') -Raw | ConvertFrom-Json).PnPClientID</code></pre>
       <div class="warning">
-        <p>Before moving on, check that the Entra app permissions are granted, including the delegated <code>User.Read.All</code> permission, and that <strong>Allow public client flows</strong> is <strong>Yes</strong>. Script 01 does not change that setting itself: it checks it and, if it is off, stops (after saving <code>PnPClientID</code>) with the exact Entra path. From release 3.8.22, scripts 02, 03, 04 and the checker run the same check before sign-in; if the check cannot reach Entra or a tenant policy refuses it, they warn and continue to sign-in.</p>
+        <p>Before moving on, check that the Entra app permissions are granted, including the delegated <code>User.Read.All</code> permission, and that <strong>Allow public client flows</strong> is <strong>Yes</strong>. Script 01 does not change that setting itself: it checks it and, if it is off, stops (after saving <code>PnPClientID</code>) with the exact Entra path. Scripts 02, 03, 04 and the checker run the same check before sign-in; if the check cannot reach Entra or a tenant policy refuses it, they warn and continue to sign-in.</p>
         <p>If consent changed after someone previously signed in, add <code>-ForceAuthentication</code> to the install command in the next step.</p>
         <p><strong>Sign-in methods differ by script.</strong> 02 and the checker sign in through a browser. 01, 03 and 04 default to a device code and reuse a cached sign-in until it expires. A block can first appear on a later update, after that cached sign-in expires.</p>
         <p>If Conditional Access blocks device-code flow (Microsoft&rsquo;s &ldquo;Block device code flow&rdquo; managed policy), sign in through the browser instead:</p>
