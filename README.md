@@ -77,6 +77,11 @@ Run these steps **one block at a time in PowerShell 7.4 or later**. The first te
 6. **Install the required module, then register or reuse the tenant app.** Paste only the commands inside the code block; do not copy PowerShell prompt text such as `PS C:\...>` or continuation prompts such as `>>`. If `PnPClientID` already identifies this tenant's approved kit app, verify its five delegated permissions and **Allow public client flows = Yes**, then skip script 01. Script 01 creates a new app; rerunning it creates a duplicate, overwrites this profile's `PnPClientID`, and leaves the prior app in Entra.
 
    ```powershell
+   # Re-enter the actual paths if you opened a new PowerShell window.
+   $kitRoot = 'C:\CoE-Install\Contoso-v3.8.23\03_Build\CopilotCoE-Kit'
+   $orgPath = 'C:\CoE-Orgs\Contoso'
+   Set-Location -LiteralPath $kitRoot
+
    if (-not (Get-Module PnP.PowerShell -ListAvailable |
            Where-Object Version -eq ([version]'3.2.0'))) {
        if (-not (Get-PSResourceRepository -Name PSGallery -ErrorAction SilentlyContinue)) {
@@ -94,7 +99,9 @@ Run these steps **one block at a time in PowerShell 7.4 or later**. The first te
 
    Use `Install-PSResource`, included with supported PowerShell 7 releases, rather than the legacy
    `Install-Module` command. The repository check handles machines where PowerShell Gallery is not yet registered;
-   the import then fails locally and clearly if the exact required module version is unavailable.
+   the import then fails locally and clearly if the exact required module version is unavailable. Do not run `pwsh`
+   between these commands: that opens a new session and clears `$kitRoot` and `$orgPath`. If you open a new window,
+   re-enter the path assignments at the top of the block.
 
    Script 01 is the first tenant operation. Confirm all required delegated permissions show **Granted** and **Authentication > Settings > Allow public client flows** is **Yes**. An organization profile in the same tenant can reuse an already approved kit app by setting `PnPClientID`; never reuse that ID across tenants.
 

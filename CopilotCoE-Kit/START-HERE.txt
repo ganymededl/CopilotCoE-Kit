@@ -190,7 +190,10 @@ QUICK START - RUN THE NUMBERED SCRIPTS IN ORDER (01, 02, then 03 when needed; 04
      New agent links default to pending approval with legacy status Submitted. Reviewed seed publication and
      catalog reviewer membership are described in Org-Template\README.txt.
   5. An approved consent approver with just-in-time admin access runs (once per tenant):
+       Set-Location -LiteralPath C:\CoE-Install\Contoso-v3.8.23\03_Build\CopilotCoE-Kit
        .\01_Register-CoEProvisioningApp.ps1 -OrgPath C:\CoE-Orgs\Contoso
+     Starting pwsh opens a new session. If you do that after setting path variables,
+     set them again and return to the kit folder before running a relative .\ script.
      If this tenant already has the approved kit provisioning app, do NOT rerun script 01.
      Copy that app's Application (client) ID into PnPClientID, verify the permissions and
      public-client setting below, and continue to script 02. Rerunning script 01 creates

@@ -370,7 +370,10 @@ Write-Host 'Offline content preflight completed.'</code></pre>
       <h3>1. Install and verify the required local module</h3>
       <p>Use the copyable command block below. Do not paste terminal prompt text such as
         <code>PS C:\...&gt;</code>, continuation prompts such as <code>&gt;&gt;</code>, or prior error output.</p>
-      <pre><code>Set-Location $kitRoot
+      <pre><code># Re-enter the actual paths if you opened a new PowerShell window.
+$kitRoot = 'C:\CoE-Install\Contoso-v3.8.23\03_Build\CopilotCoE-Kit'
+$orgPath = 'C:\CoE-Orgs\Contoso'
+Set-Location -LiteralPath $kitRoot
 if (-not (Get-Module PnP.PowerShell -ListAvailable |
     Where-Object Version -eq ([version]'3.2.0'))) {
   if (-not (Get-PSResourceRepository -Name PSGallery -ErrorAction SilentlyContinue)) {
@@ -387,9 +390,16 @@ Get-Module PnP.PowerShell -ListAvailable |
         repository check handles machines where PowerShell Gallery is not registered and avoids the legacy
         <code>PowerShellGet</code> autoload failure associated with <code>Install-Module</code>.</p>
       <h3>2. Only when this tenant has no approved kit app, register one</h3>
-      <pre><code>.\01_Register-CoEProvisioningApp.ps1 -OrgPath $orgPath -Interactive
+      <pre><code># Keep this block self-contained if it is run in another PowerShell window.
+$kitRoot = 'C:\CoE-Install\Contoso-v3.8.23\03_Build\CopilotCoE-Kit'
+$orgPath = 'C:\CoE-Orgs\Contoso'
+Set-Location -LiteralPath $kitRoot
+.\01_Register-CoEProvisioningApp.ps1 -OrgPath $orgPath -Interactive
 # Confirm script 01 saved a nonempty client ID before installation.
 (Get-Content (Join-Path $orgPath 'Deployment-Settings.json') -Raw | ConvertFrom-Json).PnPClientID</code></pre>
+      <p class="meta">Running <code>pwsh</code> starts another PowerShell session and clears ordinary variables such
+        as <code>$kitRoot</code> and <code>$orgPath</code>. Re-enter the paths in that new session before using a
+        relative <code>.\</code> script path.</p>
       <div class="warning">
         <p>Before moving on, check that the Entra app permissions are granted, including the delegated <code>User.Read.All</code> permission, and that <strong>Allow public client flows</strong> is <strong>Yes</strong>. Script 01 does not change that setting itself: it checks it and, if it is off, stops (after saving <code>PnPClientID</code>) with the exact Entra path. Scripts 02, 03, 04 and the checker run the same check before sign-in; if the check cannot reach Entra or a tenant policy refuses it, they warn and continue to sign-in.</p>
         <p>If consent changed after someone previously signed in, add <code>-ForceAuthentication</code> to the install command in the next step.</p>
