@@ -439,12 +439,27 @@ Set-Location -LiteralPath $kitRoot
           <li><strong>Validated envelope.</strong> Commercial lab tenant, a Global Administrator operator (also the owner, or a different owner), a fresh alias under <code>/sites/</code>, an English site and cached sign-ins. Test any other arrangement on a throwaway alias first.</li>
         </ol>
       </div>
-      <pre><code>Set-Location $kitRoot
+      <pre><code>$ErrorActionPreference = 'Stop'
+$kitRoot = 'C:\CoE-Install\Contoso-v3.8.23\03_Build\CopilotCoE-Kit'
+$orgPath = 'C:\CoE-Orgs\Contoso'
+$contentMode = 'Customer'
+Set-Location -LiteralPath $kitRoot
 
-.\02_Install-CopilotCoE.ps1 `
-  -OrgPath $orgPath `
-  -ContentMode Customer `
-  -SeedDemoContent</code></pre>
+$settings = Get-Content (Join-Path $orgPath 'Deployment-Settings.json') -Raw | ConvertFrom-Json
+if ([string]::IsNullOrWhiteSpace($settings.PnPClientID)) {
+  throw 'Run script 01 and confirm admin consent before installation.'
+}
+try {
+  &amp; .\02_Install-CopilotCoE.ps1 `
+    -OrgPath $orgPath `
+    -ContentMode $contentMode `
+    -SeedDemoContent
+} catch {
+  Write-Host 'Installation stopped. Do not run the checker or start another clean install.' -ForegroundColor Red
+  throw
+}</code></pre>
+      <p>Run this installation block by itself and wait for script 02 to print its completion message. Do not run the
+        checker after a failed or partial installation.</p>
       <p>If <code>$orgPath\Assets</code> has files, the installer lists them and asks which categories to host. Add <code>-AcceptOrgAssets</code> only after reviewing <em>every</em> eligible file and approving all of them; it is not a safe generic default. Do not grant visitors or loosen sharing merely to complete an install.</p>
       <p>The welcome posts are attributed to the account running this command. Use an approved CoE-owner or dedicated provisioning administrator identity, not an individual&rsquo;s personal admin identity, when that attribution matters.</p>
       <p><code>-ContentMode Customer</code> is the production setting: no generated demo disclaimer or seeded sample calendar events. Organization asset files whose names contain DEMO or SAMPLE as a whole word are filtered out instead of offered for hosting; prompt CSV rows are not covered by that filter. Use <code>-ContentMode Demo</code> only for an internal sales/content-demo site, never for a customer-facing install. <code>-SeedDemoContent</code> is required either way &mdash; omitting it skips all page, catalog, and calendar content regardless of <code>-ContentMode</code>, leaving only the Team and an empty SharePoint site.</p>
@@ -512,13 +527,24 @@ Set-Location -LiteralPath $kitRoot
 
     <section class="step">
       <h2><span class="badge">04</span>Check the result</h2>
-      <p>The install is not accepted until automated checks and every required manual review pass. This script reads the site; it does not change anything. Use the actual site address printed at the end of step 03, not the example host below.</p>
+      <p>The install is not accepted until automated checks and every required manual review pass. This script reads the site; it does not change anything. The block below reads the actual site address from the completed deployment report.</p>
       <p><strong>Step 03 does not automatically run this checker.</strong> Run the following block separately after installation, and again after every content update, using the checker from the same extracted release.</p>
-      <pre><code>$siteUrl = 'https://contoso.sharepoint.com/sites/CopilotCoE'
+      <pre><code>$kitRoot = 'C:\CoE-Install\Contoso-v3.8.23\03_Build\CopilotCoE-Kit'
+$orgPath = 'C:\CoE-Orgs\Contoso'
+$contentMode = 'Customer'
+Set-Location -LiteralPath $kitRoot
 
-Set-Location $kitRoot
+$reportPath = Join-Path $orgPath 'CoE-Revision-Report.json'
+if (-not (Test-Path -LiteralPath $reportPath -PathType Leaf)) {
+  throw 'No completed deployment report exists. Stop and investigate the installation.'
+}
+$siteUrl = (Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json).Site
+if ([string]::IsNullOrWhiteSpace($siteUrl)) {
+  throw 'The completed deployment report has no site URL.'
+}
 
-.\Test-CoEInstall.ps1 -OrgPath $orgPath -SiteUrl $siteUrl -ContentMode Customer</code></pre>
+.\Test-CoEInstall.ps1 -OrgPath $orgPath -SiteUrl $siteUrl -ContentMode $contentMode
+if ($LASTEXITCODE -ne 0) { throw 'Checker failed; stop and investigate.' }</code></pre>
       <p>Pass the <em>same</em> <code>-ContentMode</code> used for install: <code>Customer</code> unlocks the Customer-mode checks (no sample rows, no demo text, and the Home &ldquo;No sessions scheduled yet&rdquo; placeholder when the calendar is empty). For a reviewed internal demonstration, pass <code>-ContentMode Demo</code> to both commands. Omitting Customer here silently skips its checks.</p>
       <div class="warning">
         <p>Automated checks succeeded when its final line starts with:</p>
@@ -527,8 +553,8 @@ Set-Location $kitRoot
         <p>If any line says <code>FAIL</code>, it names the problem. Send that output, along with the run log, to whoever is troubleshooting the install.</p>
       </div>
       <p>For an internal end-to-end validation of the full repair path, after the first check and the manual welcome-post review, run the following on the <em>same</em> new site, then repeat this test and step 05. <code>-RepairCapturedPages</code> can replace customized captured-page content, so use it on a fresh validation site or only after a reviewed repair decision:</p>
-      <pre><code>.\03_Update-CoEContent.ps1 -OrgPath $orgPath -Scope All -RepairCapturedPages -AuthenticationMode Interactive -ContentMode Customer
-.\Test-CoEInstall.ps1 -OrgPath $orgPath -SiteUrl $siteUrl -ContentMode Customer</code></pre>
+      <pre><code>.\03_Update-CoEContent.ps1 -OrgPath $orgPath -Scope All -RepairCapturedPages -AuthenticationMode Interactive -ContentMode Customer</code></pre>
+      <p>Wait for script 03 to complete successfully, then run the separate checker block above again.</p>
     </section>
 
     <section class="step">

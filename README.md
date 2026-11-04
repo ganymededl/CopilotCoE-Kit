@@ -105,24 +105,73 @@ Run these steps **one block at a time in PowerShell 7.4 or later**. The first te
 
    Script 01 is the first tenant operation. Confirm all required delegated permissions show **Granted** and **Authentication > Settings > Allow public client flows** is **Yes**. An organization profile in the same tenant can reuse an already approved kit app by setting `PnPClientID`; never reuse that ID across tenants.
 
-7. **Install and test.** Use `Customer` for an approved customer deployment. Use `Demo` only for a clearly labeled synthetic demonstration, and keep the same mode for install, update, and tests.
+7. **Run the installation by itself.** Use `Customer` for an approved customer deployment. Use `Demo` only for a clearly labeled synthetic demonstration, and keep the same mode for install, update, and tests. Do not append report-reading or checker commands to this block.
 
    ```powershell
+   $ErrorActionPreference = 'Stop'
+   $kitRoot = 'C:\CoE-Install\Contoso-v3.8.23\03_Build\CopilotCoE-Kit'
+   $orgPath = 'C:\CoE-Orgs\Contoso'
    $contentMode = 'Customer' # Use 'Demo' only for a labeled internal demonstration.
-   .\02_Install-CopilotCoE.ps1 -OrgPath $orgPath -ContentMode $contentMode -SeedDemoContent
+   Set-Location -LiteralPath $kitRoot
 
-   $siteUrl = (Get-Content (Join-Path $orgPath 'CoE-Revision-Report.json') -Raw |
-       ConvertFrom-Json).Site
-   .\Test-CoEInstall.ps1 -OrgPath $orgPath -SiteUrl $siteUrl -ContentMode $contentMode
+   $settings = Get-Content (Join-Path $orgPath 'Deployment-Settings.json') -Raw | ConvertFrom-Json
+   if ([string]::IsNullOrWhiteSpace($settings.PnPClientID)) {
+       throw 'Run script 01 and confirm admin consent before installation.'
+   }
+
+   try {
+       & .\02_Install-CopilotCoE.ps1 `
+           -OrgPath $orgPath `
+           -ContentMode $contentMode `
+           -SeedDemoContent
+   } catch {
+       Write-Host 'Installation stopped. Do not run the checker or start another clean install.' -ForegroundColor Red
+       throw
+   }
    ```
 
-   Do not add `-ResumeExisting` to a fresh installation. If script 02 stops after creating resources, inspect its saved transcript and verify the existing Team and site before deciding whether to resume. `ALL CHECKS PASSED` with a `WARN` still requires the named manual review. In Teams, confirm exactly one prepared welcome post in General, Ask Us Anything, and Share Your Prompt.
+   Wait for script 02 to print its completion message. Do not add `-ResumeExisting` to a fresh installation. If script 02 stops after creating resources, inspect its saved transcript and verify the existing Team and site before deciding whether to resume.
 
-8. **Publish reviewed changes and test again.**
+8. **Only after installation completes, run the checker as a separate block.** This block restores every variable it needs and reads the actual site URL from the completed deployment report.
 
    ```powershell
-   .\03_Update-CoEContent.ps1 -OrgPath $orgPath -Scope All -AuthenticationMode Interactive -ContentMode $contentMode
-   .\Test-CoEInstall.ps1 -OrgPath $orgPath -SiteUrl $siteUrl -ContentMode $contentMode
+   $kitRoot = 'C:\CoE-Install\Contoso-v3.8.23\03_Build\CopilotCoE-Kit'
+   $orgPath = 'C:\CoE-Orgs\Contoso'
+   $contentMode = 'Customer' # Must match the installation mode.
+   Set-Location -LiteralPath $kitRoot
+
+   $reportPath = Join-Path $orgPath 'CoE-Revision-Report.json'
+   if (-not (Test-Path -LiteralPath $reportPath -PathType Leaf)) {
+       throw 'No completed deployment report exists. Stop and investigate the installation.'
+   }
+   $siteUrl = (Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json).Site
+   if ([string]::IsNullOrWhiteSpace($siteUrl)) {
+       throw 'The completed deployment report has no site URL.'
+   }
+
+   .\Test-CoEInstall.ps1 `
+       -OrgPath $orgPath `
+       -SiteUrl $siteUrl `
+       -ContentMode $contentMode
+   if ($LASTEXITCODE -ne 0) { throw 'Checker failed; stop and investigate.' }
+   ```
+
+   `ALL CHECKS PASSED` with a `WARN` still requires the named manual review. In Teams, confirm exactly one prepared welcome post in General, Ask Us Anything, and Share Your Prompt.
+
+9. **Publish reviewed changes, then run step 8 again.** Do not append the checker to the update command; wait for script 03 to complete successfully first.
+
+   ```powershell
+   $ErrorActionPreference = 'Stop'
+   $kitRoot = 'C:\CoE-Install\Contoso-v3.8.23\03_Build\CopilotCoE-Kit'
+   $orgPath = 'C:\CoE-Orgs\Contoso'
+   $contentMode = 'Customer'
+   Set-Location -LiteralPath $kitRoot
+
+   .\03_Update-CoEContent.ps1 `
+       -OrgPath $orgPath `
+       -Scope All `
+       -AuthenticationMode Interactive `
+       -ContentMode $contentMode
    ```
 
 For source development, read [`CopilotCoE-Kit/START-HERE.txt`](CopilotCoE-Kit/START-HERE.txt) and `CopilotCoE-Kit/01_Admin-Quickstart.html`. The source repository excludes `SourceOriginal/CopilotCoESite/CopilotCoESite.pnp` because it exceeds GitHub's 100 MB per-file limit. Use the reviewed [v3.8.12 template asset](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.12/CopilotCoESite.pnp) and verify SHA256 `2CC80587026E27B47992330122B75DEA4808E01D3DA2CB46EEF3EA404FF429CB`.
