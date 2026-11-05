@@ -1019,6 +1019,67 @@ function Set-CoESectionStripPart($SiteConnection, [string]$PageName, [string]$St
     }
 }
 
+# Mechanics must never go through Write-ManagedPage's general-purpose "remove every control, then re-add"
+# path. That path is safe everywhere else because every other managed page is one the kit creates and owns
+# outright (Add-PnPPage, exactly one kit-authored text control, nothing else, ever). Mechanics is different:
+# it is a vendor-captured page the kit does not fully own - it ships with the vendor's own real Microsoft
+# Mechanics video embeds (separate Embed web parts, never a Text control), merged with this function's
+# official-hub-links fallback text by Prepare-CopilotCoE.ps1's one-time template edit (see that script's own
+# header comment on this exact page). Confirmed live on a v3.8.24 site rebuilt during this engagement: running
+# -RepairCapturedPages/-ReplaceManagedPages to fix an unrelated Home/nav regression called Write-ManagedPage
+# against this page, which deletes EVERY control on the page before re-adding just the text body - destroying
+# the real video embeds along with the stale breadcrumb/notice it meant to fix, even though the embeds are a
+# completely different, unrelated web part it was never asked to touch. This function keeps the exact same
+# "one combined breadcrumb+notice+body control" shape described in Repair-CoEHubPages's own header comment
+# above its $mechanics block (still required so Set-CoESectionStripPart's stale-breadcrumb detection never
+# mistakes this control for stale and deletes it along with everything else on the page) - it just never
+# removes any OTHER control while doing so, so the vendor's video embeds now survive every future repair or
+# update run, on every site, regardless of which flags were passed. Reuses ConvertTo-CoEStableBreadcrumbText
+# and the same reload-before-remove safeguard as Set-CoESectionStripPart and Set-CoEHomeWelcomeText.
+function Write-CoEMechanicsNotice($SiteConnection, [object[]]$Links, [string]$Html) {
+    $pageName = "Copilot-on-Microsoft-Mechanics"
+    $existing = @(Get-PnPPage -Connection $SiteConnection | Where-Object Name -eq "$pageName.aspx")
+    if ($existing.Count -gt 1) { throw "Duplicate page identity: $pageName" }
+    $Html = $Html.Replace("<p><em></em></p>", "")
+    $strip = Get-CoESectionStripHtml $Links "$pageName.aspx"
+    if (-not $strip) {
+        $strip = "<p><a href='$($SiteUrl.TrimEnd('/'))/SitePages/TrainingHome.aspx'>Home</a></p>"
+    }
+    $combined = $strip + $Html
+    if ($existing.Count -eq 0) {
+        # Genuinely missing (never provisioned from the vendor template): there is nothing to preserve, so
+        # it is safe to fall back to a plain create-and-write, the same as Write-ManagedPage's own Add-PnPPage
+        # branch would have done.
+        Add-PnPPage -Name $pageName -Title "Microsoft Mechanics resources" -LayoutType Article -Connection $SiteConnection | Out-Null
+        Add-PnPPageTextPart -Page $pageName -Text $combined -Order 1 -Connection $SiteConnection -ErrorAction Stop | Out-Null
+        Set-PnPPage -Identity $pageName -HeaderType PageTitleWebPart -Publish -Connection $SiteConnection -ErrorAction Stop | Out-Null
+        return
+    }
+    $page = Get-PnPPage -Identity "$pageName.aspx" -Connection $SiteConnection -ErrorAction Stop
+    $matchedControls = @($page.Controls | Where-Object { $_.PSObject.Properties["Text"] -and [string]$_.Text -match '>Home</a> /' })
+    $decodedCombined = ConvertTo-CoEStableBreadcrumbText $combined
+    $current = @($matchedControls | Where-Object { (ConvertTo-CoEStableBreadcrumbText ([string]$_.Text)) -eq $decodedCombined })
+    if ($current.Count -eq 1 -and $matchedControls.Count -eq 1) { return }  # Already current; touch nothing.
+    $item = Get-PnPFile -Url "SitePages/$pageName.aspx" -AsListItem -Connection $SiteConnection
+    $siteKey = ([uri]$SiteUrl).AbsolutePath.Trim("/").Replace("/", "-")
+    $item.FieldValues | ConvertTo-Json -Depth 20 |
+        Set-Content (Join-Path $auditFolder "$runId-$siteKey-$pageName-before.json") -Encoding utf8
+    $priorIds = @($matchedControls | ForEach-Object InstanceId)
+    Add-PnPPageTextPart -Page $pageName -Text $combined -Order 1 -Connection $SiteConnection -ErrorAction Stop | Out-Null
+    Set-PnPPage -Identity $pageName -HeaderType PageTitleWebPart -Publish -Connection $SiteConnection -ErrorAction Stop | Out-Null
+    # Reload before identifying the new control, and again before each removal below - see
+    # Set-CoEHomeWelcomeText's own comment on why a stale pre-add page object must never be reused here.
+    $page = Get-PnPPage -Identity "$pageName.aspx" -Connection $SiteConnection -ErrorAction Stop
+    $added = @($page.Controls | Where-Object { $_.PSObject.Properties["Text"] -and
+        (ConvertTo-CoEStableBreadcrumbText ([string]$_.Text)) -eq $decodedCombined -and $_.InstanceId -notin $priorIds }) | Select-Object -First 1
+    if (-not $added) { throw "$pageName's new breadcrumb/notice control was not found after being added." }
+    foreach ($old in @($matchedControls | Where-Object { $_.InstanceId -ne $added.InstanceId })) {
+        $page = Get-PnPPage -Identity "$pageName.aspx" -Connection $SiteConnection -ErrorAction Stop
+        Remove-PnPPageComponent -Page $page -InstanceId $old.InstanceId -Force -Connection $SiteConnection -ErrorAction Stop | Out-Null
+        Set-PnPPage -Identity $pageName -Publish -Connection $SiteConnection -ErrorAction Stop | Out-Null
+    }
+}
+
 function Disable-CoEPageComments($SiteConnection) {
     # Comments are a SharePoint page default; this is a dedicated kit-managed site, so turn them off everywhere.
     # The site-wide setting covers pages the CoE team creates later; the per-page pass covers pages that
@@ -1122,12 +1183,36 @@ function Repair-CoEHubPages($SiteConnection, [object[]]$Links, [string]$Environm
             -Items @([pscustomobject]@{ Title = "Meet a Champion"; Description = "Find a Copilot champion near you"
                 Url = $championsLink[0].Url; Icon = "calendarmirrored" }) -Order 1 -Section 4 -Column 1
     }
-    if ("Copilot-on-Microsoft-Mechanics.aspx" -in @($pages | ForEach-Object Name)) {
-        $mechanics = '<p>Use Microsoft''s official hubs for current Copilot demonstrations and technical explanations. Video availability depends on your organization''s media policies and the publisher.</p><ul>' +
-            '<li><a href="https://www.microsoft.com/mechanics">Microsoft Mechanics</a></li>' +
-            '<li><a href="https://techcommunity.microsoft.com/category/microsoftmechanics">Microsoft Mechanics video hub</a></li></ul>'
-        $null = Write-ManagedPage $SiteConnection "Copilot-on-Microsoft-Mechanics" "Microsoft Mechanics resources" $mechanics
-    }
+    # Unconditional by design: Write-CoEMechanicsNotice re-queries Get-PnPPage itself to decide
+    # existing-vs-new, so gating this call on a second, independent "is it in $pages" check was pure
+    # redundancy - and a silent single point of failure. Confirmed live on two separate deployments (one
+    # built before this session, one rebuilt during it): the page kept its kit-managed breadcrumb (added
+    # lower in this same function, unconditionally, over the same $pages-filtered page set) but never
+    # received this body text, with no error anywhere in the run. Resuming without this guard removes that
+    # silent-skip surface entirely; if the page is genuinely missing, Write-CoEMechanicsNotice's own
+    # Add-PnPPage branch creates it.
+    #
+    # The sample notice is folded into this page's own body HTML (instead of being appended afterward by
+    # the per-page loop below, like the other three vendor-captured pages) for a second, independent
+    # reason: Write-CoEMechanicsNotice embeds its breadcrumb and body as ONE combined text control, so that
+    # control's text always starts with (and therefore satisfies a substring "-match") the generic
+    # ">Home</a> /" breadcrumb shape Set-CoESectionStripPart searches for on every page. A separate
+    # breadcrumb-only control plus a separate body control would make Set-CoESectionStripPart decide the
+    # breadcrumb-only control was STALE (its text doesn't carry the notice/body) and delete it - mistaking
+    # a deliberately plain control for an abandoned one. Mechanics is excluded from that loop's
+    # Set-CoESectionStripPart call below for exactly this reason; building the (optional) notice into this
+    # single combined write instead keeps this page's one managed content control the strip, the notice and
+    # the body together, with nothing left for that loop to mistake for stale.
+    #
+    # Write-CoEMechanicsNotice (not Write-ManagedPage) is what actually applies this: unlike every other
+    # managed page, Mechanics also carries the vendor's own real video embeds on the same page, which
+    # Write-ManagedPage's "remove every control, then re-add" path would delete outright. See that
+    # function's own header comment for the confirmed-live incident and the fix.
+    $mechanics = '<p>Use Microsoft''s official hubs for current Copilot demonstrations and technical explanations. Video availability depends on your organization''s media policies and the publisher.</p><ul>' +
+        '<li><a href="https://www.microsoft.com/mechanics">Microsoft Mechanics</a></li>' +
+        '<li><a href="https://techcommunity.microsoft.com/category/microsoftmechanics">Microsoft Mechanics video hub</a></li></ul>'
+    if ($SampleNotice) { $mechanics += "<p><em>$(Escape-Html $SampleNotice)</em></p>" }
+    Write-CoEMechanicsNotice -SiteConnection $SiteConnection -Links $Links -Html $mechanics
     foreach ($page in $pages | Where-Object Name -in @("Adoption-Best-Practices.aspx", "Meet-your-ProjectTeam.aspx",
         "Technical Readiness.aspx", "Copilot-on-Microsoft-Mechanics.aspx")) {
         # Named $pageArgs, not $args: $args is PowerShell's own automatic variable (the non-declared argument
@@ -1146,10 +1231,20 @@ function Repair-CoEHubPages($SiteConnection, [object[]]$Links, [string]$Environm
         # unlike every other kit-managed page. Set-CoESectionStripPart's existing idempotent single-block
         # machinery (shape match, normalized compare, dedupe) applies unchanged - the notice is just more text
         # in the same managed control, not a second one.
-        # Regression guard: Copilot-on-Microsoft-Mechanics.aspx gets its body rewritten by Write-ManagedPage
-        # just above (the Mechanics links block), which rebuilds its own fresh breadcrumb strip with no
-        # notice - this loop must run AFTER that rewrite for all four pages, Mechanics included, or its own
-        # notice gets silently wiped the moment it's added. Confirmed missing live before this reorder.
+        #
+        # Copilot-on-Microsoft-Mechanics.aspx is the one page of these four Write-ManagedPage actually writes
+        # a body for (just above), as a single control containing its breadcrumb, notice and body together -
+        # it is deliberately skipped here, not merely reordered after that write. Set-CoESectionStripPart
+        # matches any control whose text contains the generic ">Home</a> /" breadcrumb shape, which that
+        # combined control satisfies as a substring; comparing its full (breadcrumb+notice+body) text against
+        # a plain strip-only string then correctly finds no exact match, so this function would conclude the
+        # combined control was a STALE breadcrumb, add a new strip-only control as the "current" one, and
+        # delete every other matched control - including the one holding the real body. Confirmed live on a
+        # v3.8.24 install: the page kept only its breadcrumb, with both writes individually succeeding and
+        # nothing thrown anywhere in the run. Reordering this loop after the Write-ManagedPage call (the
+        # original fix for a different, now-removed bug) does not avoid this - the collision is the second
+        # write touching the same page at all, not which one runs first.
+        if ($page.Name -eq "Copilot-on-Microsoft-Mechanics.aspx") { continue }
         $strip = Get-CoESectionStripHtml $Links $page.Name
         if ($strip -and $SampleNotice) { $strip += "<p><em>$(Escape-Html $SampleNotice)</em></p>" }
         Set-CoESectionStripPart -SiteConnection $SiteConnection -PageName $page.Name -StripHtml $strip
