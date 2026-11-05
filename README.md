@@ -2,7 +2,7 @@
 
 A config-driven Teams + SharePoint **Center of Excellence (CoE)** kit for organizations rolling out Microsoft 365 Copilot. One kit, any organization: everything organization-specific (tenant, names, support links, policies, decks) lives in an **organization folder** passed to every script with `-OrgPath`, never edited in the kit itself.
 
-Release: **v3.8.23**. Customers install the named [`Copilot-CoE-Implementation-Kit.zip`](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.23/Copilot-CoE-Implementation-Kit.zip) release asset and verify SHA256 `0A3D70A545D87F4476E7547BF41F2BAFFF83ED28EC2EE05FE3682573F55378CC` against its [`.sha256` receipt](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.23/Copilot-CoE-Implementation-Kit.zip.sha256). GitHub's automatic **Source code (zip)**, **Source code (tar.gz)** and repository **Download ZIP** are source snapshots, not the prebuilt implementation ZIP; cloning GitHub and renaming an older ZIP does not produce it.
+Release: **v3.8.24**. Customers install the named [`Copilot-CoE-Implementation-Kit.zip`](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.24/Copilot-CoE-Implementation-Kit.zip) release asset and verify SHA256 `0A3D70A545D87F4476E7547BF41F2BAFFF83ED28EC2EE05FE3682573F55378CC` against its [`.sha256` receipt](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.24/Copilot-CoE-Implementation-Kit.zip.sha256). GitHub's automatic **Source code (zip)**, **Source code (tar.gz)** and repository **Download ZIP** are source snapshots, not the prebuilt implementation ZIP; cloning GitHub and renaming an older ZIP does not produce it.
 
 > **Not an official Microsoft product.** This is independently maintained sample/starter tooling. All seeded content (guides, FAQs, governance samples, prompt libraries) is starter material for your organization's own review — none of it is adopted policy, and no customer or tenant is implied, named, or endorsed by shipping this kit.
 
@@ -16,7 +16,7 @@ Release: **v3.8.23**. Customers install the named [`Copilot-CoE-Implementation-K
 
 Run these steps **one block at a time in PowerShell 7.4 or later**. The first tenant operation is script 01; download, extraction, configuration, and content preflight are local.
 
-1. **Download the installable release assets.** Download the named [`Copilot-CoE-Implementation-Kit.zip`](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.23/Copilot-CoE-Implementation-Kit.zip) and its [`.sha256` receipt](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.23/Copilot-CoE-Implementation-Kit.zip.sha256). Do not use GitHub's **Code > Download ZIP**, **Source code (zip)**, or **Source code (tar.gz)**; those are source snapshots, not the implementation package.
+1. **Download the installable release assets.** Download the named [`Copilot-CoE-Implementation-Kit.zip`](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.24/Copilot-CoE-Implementation-Kit.zip) and its [`.sha256` receipt](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.24/Copilot-CoE-Implementation-Kit.zip.sha256). Do not use GitHub's **Code > Download ZIP**, **Source code (zip)**, or **Source code (tar.gz)**; those are source snapshots, not the implementation package.
 
 2. **Verify and unblock the ZIP before extracting it.** Windows marks internet downloads as untrusted. If the ZIP is extracted while still blocked, PowerShell can reject every `.ps1` file as "not digitally signed."
 
@@ -28,7 +28,7 @@ Run these steps **one block at a time in PowerShell 7.4 or later**. The first te
    $zipHash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash
    $receiptHash = ((Get-Content -LiteralPath $receipt -Raw).Trim() -split '\s+')[0]
    if ($zipHash -ne $expectedHash -or $receiptHash -ne $expectedHash) {
-       throw 'The implementation ZIP or its receipt does not match release 3.8.23.'
+       throw 'The implementation ZIP or its receipt does not match release 3.8.24.'
    }
    Unblock-File -LiteralPath $zip
    ```
@@ -42,7 +42,7 @@ Run these steps **one block at a time in PowerShell 7.4 or later**. The first te
 3. **Extract the kit into a fresh installation folder.** Keep the kit and customer configuration in different folders.
 
    ```powershell
-   $installRoot = 'C:\CoE-Install\Contoso-v3.8.23'
+   $installRoot = 'C:\CoE-Install\Contoso-v3.8.24'
    $kitRoot = Join-Path $installRoot '03_Build\CopilotCoE-Kit'
    $orgPath = 'C:\CoE-Orgs\Contoso'
 
@@ -78,7 +78,7 @@ Run these steps **one block at a time in PowerShell 7.4 or later**. The first te
 
    ```powershell
    # Re-enter the actual paths if you opened a new PowerShell window.
-   $kitRoot = 'C:\CoE-Install\Contoso-v3.8.23\03_Build\CopilotCoE-Kit'
+   $kitRoot = 'C:\CoE-Install\Contoso-v3.8.24\03_Build\CopilotCoE-Kit'
    $orgPath = 'C:\CoE-Orgs\Contoso'
    Set-Location -LiteralPath $kitRoot
 
@@ -109,7 +109,7 @@ Run these steps **one block at a time in PowerShell 7.4 or later**. The first te
 
    ```powershell
    $ErrorActionPreference = 'Stop'
-   $kitRoot = 'C:\CoE-Install\Contoso-v3.8.23\03_Build\CopilotCoE-Kit'
+   $kitRoot = 'C:\CoE-Install\Contoso-v3.8.24\03_Build\CopilotCoE-Kit'
    $orgPath = 'C:\CoE-Orgs\Contoso'
    $contentMode = 'Customer' # Use 'Demo' only for a labeled internal demonstration.
    Set-Location -LiteralPath $kitRoot
@@ -135,7 +135,7 @@ Run these steps **one block at a time in PowerShell 7.4 or later**. The first te
 8. **Only after installation completes, run the checker as a separate block.** This block restores every variable it needs and reads the actual site URL from the completed deployment report.
 
    ```powershell
-   $kitRoot = 'C:\CoE-Install\Contoso-v3.8.23\03_Build\CopilotCoE-Kit'
+   $kitRoot = 'C:\CoE-Install\Contoso-v3.8.24\03_Build\CopilotCoE-Kit'
    $orgPath = 'C:\CoE-Orgs\Contoso'
    $contentMode = 'Customer' # Must match the installation mode.
    Set-Location -LiteralPath $kitRoot
@@ -162,7 +162,7 @@ Run these steps **one block at a time in PowerShell 7.4 or later**. The first te
 
    ```powershell
    $ErrorActionPreference = 'Stop'
-   $kitRoot = 'C:\CoE-Install\Contoso-v3.8.23\03_Build\CopilotCoE-Kit'
+   $kitRoot = 'C:\CoE-Install\Contoso-v3.8.24\03_Build\CopilotCoE-Kit'
    $orgPath = 'C:\CoE-Orgs\Contoso'
    $contentMode = 'Customer'
    Set-Location -LiteralPath $kitRoot
@@ -175,6 +175,19 @@ Run these steps **one block at a time in PowerShell 7.4 or later**. The first te
    ```
 
 For source development, read [`CopilotCoE-Kit/START-HERE.txt`](CopilotCoE-Kit/START-HERE.txt) and `CopilotCoE-Kit/01_Admin-Quickstart.html`. The source repository excludes `SourceOriginal/CopilotCoESite/CopilotCoESite.pnp` because it exceeds GitHub's 100 MB per-file limit. Use the reviewed [v3.8.12 template asset](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.12/CopilotCoESite.pnp) and verify SHA256 `2CC80587026E27B47992330122B75DEA4808E01D3DA2CB46EEF3EA404FF429CB`.
+
+## v3.8.24 changes
+
+- **Fixed a live defect that silently emptied the Microsoft Mechanics hub page.** The page's body write went through `Write-ManagedPage`'s generic "remove every control, then re-add" path, which is safe for the kit's own pages but deletes the vendor's real video embeds on this one vendor-captured page. A dedicated `Write-CoEMechanicsNotice` function now replaces only its own breadcrumb/notice/body control and never touches the video embeds; `Test-CoEInstall.ps1` independently asserts the page's real body text and links are present, not just a breadcrumb.
+- **Added a per-channel welcome-post journal** (`CoE-Welcome-Post-State.json`) tracking Pending/Posting/Posted state for the three standard-channel welcome posts. A clean install records sends as it goes; `-ResumeExisting`/`-PublishWelcomeToChannels` now automatically (re)posts only channels verifiably still Pending, without `ChannelMessage.Read.All`. Legacy organization folders with no journal file fall back to the prior manual-check warning instead of guessing.
+- **Clarified Learning Paths external training links.** Rows now carry a distinct `lmsUrl` ("External training") separate from Practice; the kit's own seed content points 11 of 18 rows to a specific, verified Microsoft Learn module per step instead of a repeated generic link. `Links.LearningSystem` is now documented as a fallback that only fills rows still missing a link, never a blanket override of a per-row destination.
+- **Documented the access model.** `CopilotCoE-Kit/Org-Template/README.txt` now explains Team membership (the kit's actual access control) versus SharePoint Visitors/reviewer groups (narrow, kit-managed exceptions), and the `GovernanceAdditionalAllowedMembers` workflow enforced by the shared-channel governance gate.
+- Local content preflight now accepts `Agents: []` and fully blank optional agent objects before any tenant write, instead of surfacing a late tenant-side error.
+- `Write-ManagedPage` correctly repairs a captured page whose canvas has only a full-width section, writing the replacement text into a valid regular section instead of silently no-op'ing.
+- The Ask Us Anything channel-folder lookup now goes through the kit's existing retry/destination-validation helper instead of a raw, unretried Graph call.
+- Fixed the release packager itself: it was omitting `TeamTemplate.xml` and the three Share Your Prompt files from `SourceOriginal` in the built ZIP. Fixed with a regression test, and the `.gitignore` now documents why `Package-CoE-Kit.ps1` and `ApprovedQuickstartImages.json` are maintainer-only and never shipped or committed.
+- Added admin-quickstart/START-HERE troubleshooting for the most common first error when a step is run from a fresh window or Windows PowerShell 5.1 instead of PowerShell 7.4+ (`...ScriptRequiresUnmatchedPSVersion`).
+- Full offline gate: **717 passed, 0 failed, 0 skipped across 18 Pester suites.** Separately validated live in a tenant: post-hotfix checker passed 281 automated checks with 0 failures and 2 expected manual WARNs.
 
 ## v3.8.23 changes
 

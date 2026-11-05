@@ -34,6 +34,15 @@ CopilotCoE-Kit/Orgs/
 # download link and where to place it locally.
 SourceOriginal/CopilotCoESite/CopilotCoESite.pnp
 
+# Authoring-only release packager and its approved-screenshot manifest. Reconstructed per
+# Tests/Preparation.Tests.ps1's own $hasPackager contract: a kit maintainer's local tool that
+# builds Copilot-CoE-Implementation-Kit.zip, never shipped inside the kit, and never committed.
+/Package-CoE-Kit.ps1
+/ApprovedQuickstartImages.json
+
+# Local build scratch created by Package-CoE-Kit.ps1 next to the kit while assembling a release.
+/03_Build/
+
 # OS / editor noise
 .DS_Store
 Thumbs.db

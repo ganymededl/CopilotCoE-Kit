@@ -351,6 +351,16 @@ Invoke-Section "4 Content" {
                 ($breadcrumbText -in @("Start", "Tools", "Training", "Agents", "Governance", "Help")) `
                 "found: '$breadcrumbText'"
         }
+        # Regression guard: unlike the other three vendor-captured pages (breadcrumb-only), Mechanics is the
+        # one page Write-ManagedPage actually writes a body for. A prior live defect left this page with only
+        # its breadcrumb control (the real body control was deleted by a second, colliding write) while still
+        # passing both checks above, since a breadcrumb-only control still contains ">Home</a> /" and still
+        # ends in a valid top-menu label. Assert the real body text/links are present, not just the breadcrumb.
+        if ($name -eq "Copilot-on-Microsoft-Mechanics.aspx") {
+            Add-Result "4 Content" "$name has its real body, not just a breadcrumb" `
+                ($canvas.Contains("https://www.microsoft.com/mechanics") -and
+                    $canvas.Contains("https://techcommunity.microsoft.com/category/microsoftmechanics")) ""
+        }
     }
     foreach ($name in @("CoE-Training-and-Enablement.aspx", "Guided-Learning.aspx")) {
         if ($name -notin $pages) { continue }

@@ -33,7 +33,10 @@ Deployment-Settings.json   REQUIRED. Tenant, names, support mailbox, and links.
                 "none" = no line, once the content is approved).
   Links         ServiceDesk, TechnologyRequest, AIGuidelines, AboutOrg page URLs (blank = text only).
                 Optional PromptLibrary is the HTTPS link to your existing customer-approved prompt library.
-                Optional LearningSystem is the HTTPS link to your LMS; no LMS integration or completion tracking is created.
+                Optional LearningSystem is a single HTTPS fallback link applied only to Learning Paths rows
+                that are still missing an "External training" link after SeedContent/Content\Learning-Paths.json
+                is read (see below for the per-row override, which is almost always the better fit for an
+                institution with its own LMS); no LMS integration or completion tracking is created either way.
                 Optional DataSafetyIncident is an approved HTTPS incident-reporting route;
                 blank = the Service Catalog/support mailbox route, not a tenant security setting.
   Home          On a fresh install, the kit replaces the captured five-tile layout with the
@@ -41,10 +44,11 @@ Deployment-Settings.json   REQUIRED. Tenant, names, support mailbox, and links.
                 before installation. Existing customized Home pages are preserved on updates
                 unless -RepairCapturedPages is explicitly requested.
   GovernanceLinks / TrainingLinks   Lists of {label, url} shown on those pages.
-  Agents        Insert-only seed proposals for the existing Agent Showcase list: name, description, audience,
+  Agents        Empty array by default. Add insert-only seed proposals for the existing Agent Showcase list:
+                name, description, audience,
                 examplePrompt, owner, url. The url is the agent's Copilot Chat link
                 (open the agent in Copilot Chat, Share > Copy link, e.g.
-                https://m365.cloud.microsoft/chat/?titleId=T_...). The neutral placeholder with an empty url is skipped.
+                https://m365.cloud.microsoft/chat/?titleId=T_...). An empty array or fully blank object is skipped.
                 New real links default to pending native approval, legacy status Submitted and featured=false.
                 Backward compatibility: a seed explicitly configured as status Published is approved at
                 insertion only with owner, sources, access, allowedData and reviewedOn (yyyy-MM-dd);
@@ -170,11 +174,13 @@ Content\   OPTIONAL. Replace any kit text file by putting your version at the sa
 LEARNING PATHS AND AGENT CATALOG UPGRADE
   The existing Training and Enablement page/Teams tab embeds the native Copilot Learning Paths list:
   18 starter steps across Faculty, Staff, Students, Champions, IT and Agent makers.
-  Fields cover path/audience/step, practice time, requirement, product/access, Learn/Practice links,
-  expected result, owner/review date and an optional LMS link. The top-of-page Learning steps view has
-  four fields: name, step, Learn and Practice, with roles expanded in Faculty, Staff, Students,
-  Champions, IT and Agent makers order. Rows wrap in narrow panes. Select a name for full details,
-  including practice time. Learning ID and the audience sort key are hidden from forms.
+  Fields cover path/audience/step, practice time, requirement, product/access, three links -
+  Learn (this organization's own guidance page), Practice (a prompt or hands-on exercise, often blank by
+  design where the real practice happens in a live product, not a page) and External training (an optional
+  specific destination; see below) - plus expected result, owner/review date. The top-of-page Learning steps
+  view has five fields: name, step, Learn, Practice and External training, with roles expanded in Faculty,
+  Staff, Students, Champions, IT and Agent makers order. Rows wrap in narrow panes. Select a name for full
+  details, including practice time. Learning ID and the audience sort key are hidden from forms.
   Assign actual content owners and record review dates only after review; blank metadata produces warnings.
   Full management views remain: By audience, By path and Required.
   Copy SeedContent\Learning-Paths.json into your organization's Content folder to tailor or opt out:
@@ -193,6 +199,23 @@ LEARNING PATHS AND AGENT CATALOG UPGRADE
   practiceUrl values. This validation checks source headings, not SharePoint's rendered link behavior.
   Links.PromptLibrary replaces the whole default practice destination, not just its page path;
   supply per-row practiceUrl deep links in Content\Learning-Paths.json for a different prompt library.
+
+  External training (lmsUrl) is deliberately NOT generic internal content: the kit's own default seed
+  (SeedContent\Learning-Paths.json) points 11 of the 18 rows to a specific, publicly verified Microsoft
+  Learn module or path chosen for that exact step (for example Agent makers step 1 links to the Copilot
+  agent-creation module, not a generic Agents page); the other 7 rows are left blank on purpose because no
+  good generic match exists, rather than forcing a weak one. Two fit-for-purpose exceptions reuse the same
+  Microsoft Learn module across two rows where it is genuinely the right destination for both (Champions
+  "share a pattern" and Agent makers "submit for review" both point to the agent-sharing module) - this is
+  the deliberate, substantiated opposite of the earlier bug where unrelated steps all opened the same page.
+  An institution with its own LMS (Blackboard, Canvas, D2L, etc.) gets two ways to point there instead:
+  (1) per-row, the precise way: copy SeedContent\Learning-Paths.json into Content\Learning-Paths.json and set
+  lmsUrl on any row to that institution's own deep link for that specific step (for example a direct link to
+  the matching Blackboard/Canvas module), leaving other rows on the Microsoft Learn default or blank as-is.
+  (2) blanket, the fallback: set Links.LearningSystem to one HTTPS URL (for example the LMS course catalog
+  home page); it only fills rows still left blank by (1) and the kit default, never replaces a row that
+  already has a link. Neither path creates real LMS integration, SSO, enrollment or completion tracking -
+  it is a link, not a sync.
 
   The existing Agent Showcase page puts compact Published/Featured views above its guidance.
   Both are ALWAYS embedded, even when empty, with neutral guidance independent of current row counts.
@@ -350,6 +373,32 @@ REVISION 3.4.1 - REVIEWER GROUP, LIVE VERIFICATION AND RUN LOGS
   navigation and page repairs, so a run that completes this way does not prove the new version.
   Validate with a plain install into a new alias or after a full removal (04_Remove-CopilotCoE.ps1).
 
+  RESUME AND REPAIR, PRECISELY: -ResumeExisting re-runs 02_Install against a site the kit already
+  built (for example after an earlier run failed partway, or to add seed content that was off at
+  first install). It is intentionally NOT a blind repeat of everything a fresh install does:
+    - Catalogs (Agent Showcase, Learning Paths, Success Stories, Prompt Library) and channel
+      tabs/folders are insert-only and safe to resume freely; existing rows/tabs are never
+      duplicated or deleted, and the resume-safe folder lookup retries rather than silently
+      skipping (the earlier Ask Us Anything folder-resolution defect this release fixes).
+    - Welcome posts to standard channels are tracked in a per-site, per-channel transaction
+      journal (CoE-Welcome-Post-State.json, beside Deployment-Settings.json in this folder):
+      each channel is Pending, Posting or Posted. A resume automatically (re)posts only
+      channels still verifiably Pending; it refuses to guess on Posting (an interrupted attempt)
+      or Unknown state rather than risk a duplicate or a silent skip, and legacy organization
+      folders with no journal file yet fall back to the old manual warning instead of guessing.
+      Use `.\02_Install-CopilotCoE.ps1 -OrgPath <folder> -PublishWelcomeToChannels` to force a
+      resume-repair pass that initializes/validates the journal and posts every Pending channel.
+    - Home, navigation order and the four vendor-captured pages (Adoption Best Practices, Meet
+      your Project Team, Technical Readiness, Microsoft Mechanics) are only repaired when
+      -RepairCapturedPages is explicitly set (02_Install always sets it on a true fresh install;
+      -ResumeExisting does not, matching the validation guidance above). 03_Update-CoEContent
+      -Scope Guides or -Scope All always repairs these pages, unconditionally, regardless of
+      whatever page inventory a prior run left behind - this release removed a redundant
+      existence check that could silently leave Microsoft Mechanics with only its breadcrumb
+      and no body text, with no error anywhere in the transcript. If you ever see a kit-managed
+      page with a breadcrumb but no real content, re-run 03_Update -Scope Guides; it does not
+      skip pages based on what it finds already there.
+
 Assets\    OPTIONAL. Files the installer offers to host. It lists what it finds in each
            folder and asks "Host these files?" before uploading (-AcceptOrgAssets = yes to all).
            Existing organization files are preserved unless -ReplaceOrgAssets is supplied;
@@ -365,6 +414,34 @@ Assets\    OPTIONAL. Files the installer offers to host. It lists what it finds 
   <your folder>\    for a section you added, if its Sections.json entry has an orgAssets block
 Every hosted file is listed with a link on its section page. Re-run 03 -Scope Guides
 (or -Scope All for the Top 10 deck) after adding files.
+
+=====================================================================================
+ACCESS MODEL - HOW TO ADD PEOPLE, AND WHAT ACTUALLY LOCKS DOWN GOVERNANCE CHANNELS
+=====================================================================================
+  Add every regular person (faculty, staff, students, champions, IT, reviewers) as a
+  Microsoft Teams Owner or Member of the CoE Team, in Teams or the admin center. That
+  single membership is what the kit expects and is what Test-CoEInstall checks; do not
+  try to add people only through the SharePoint site's own Members/Visitors groups as a
+  substitute for Team membership - those SharePoint groups exist underneath the Team
+  but are reserved for two narrow, kit-managed cases instead: (1) Visitors Read, used
+  only for the lab-only external preview guest flow described under CoESiteSharingCapability
+  above, never for regular in-tenant users; (2) the catalog reviewer group that
+  Set-CoECatalogReviewPermissions builds for Agent Showcase/Learning Paths/Success Stories
+  approval rights, which is a narrower content-moderation permission, not general site access.
+
+  Leadership and Program Governance are Microsoft Teams shared channels, not standard
+  channels - shared-channel membership is independent of the parent Team's membership
+  list, so adding someone as a Team Member (or Owner) does NOT put them into either
+  governance channel. The installer enforces this separation as a hard, Graph-API-backed
+  gate, not a convention: Initialize-CoEGovernanceSecurity/Get-CoEVerifiedGovernanceAccess
+  reads the channel's actual effective membership (including indirect members) and its
+  shared-Team relationships before every publish, and the run throws rather than proceeds
+  if it finds any member who is not SharedChannelOwnerUPN, not on the
+  GovernanceAdditionalAllowedMembers allowlist (see above), out-of-tenant, or if the
+  channel has been shared to an unexpected Team. To add a real leadership or governance
+  reviewer, put their UPN in GovernanceAdditionalAllowedMembers in Deployment-Settings.json
+  and rerun; do not add them to the shared channel directly in Teams first, since an
+  unexpected member found there is exactly what the gate is designed to stop.
 
 =====================================================================================
 EDIT THESE DIRECTLY IN SHAREPOINT OR TEAMS (the scripts do not overwrite them)

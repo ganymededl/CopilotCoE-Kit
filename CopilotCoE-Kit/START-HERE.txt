@@ -190,7 +190,7 @@ QUICK START - RUN THE NUMBERED SCRIPTS IN ORDER (01, 02, then 03 when needed; 04
      New agent links default to pending approval with legacy status Submitted. Reviewed seed publication and
      catalog reviewer membership are described in Org-Template\README.txt.
   5. An approved consent approver with just-in-time admin access runs (once per tenant):
-       Set-Location -LiteralPath C:\CoE-Install\Contoso-v3.8.23\03_Build\CopilotCoE-Kit
+       Set-Location -LiteralPath C:\CoE-Install\Contoso-v3.8.24\03_Build\CopilotCoE-Kit
        .\01_Register-CoEProvisioningApp.ps1 -OrgPath C:\CoE-Orgs\Contoso
      Starting pwsh opens a new session. If you do that after setting path variables,
      set them again and return to the kit folder before running a relative .\ script.
@@ -216,6 +216,12 @@ QUICK START - RUN THE NUMBERED SCRIPTS IN ORDER (01, 02, then 03 when needed; 04
      needed, and clear the persisted PnP sign-in after the work is complete.
   6. SharePoint + Teams administrator runs (once) from a SHA256-verified, freshly extracted
      release ZIP with a unique alias in the organization settings:
+     If this is a new pwsh window/session (including returning after step 5, after a reboot,
+     or on another day), it has NOT inherited anything from an earlier window: re-run the
+     PnP.PowerShell 3.2.0 check/install block from step 2 and re-set $kitRoot/$orgPath first.
+     Running this in Windows PowerShell 5.1 (powershell.exe) instead of pwsh fails immediately
+     with "...contained a '#requires' statement for Windows PowerShell 7.4...
+     ScriptRequiresUnmatchedPSVersion"; open pwsh and start over from the PnP.PowerShell check.
        .\02_Install-CopilotCoE.ps1 -OrgPath C:\CoE-Orgs\Contoso -ContentMode Customer -SeedDemoContent
      The signed-in administrator is shown as the author of the three welcome posts. Use
      an approved CoE-owner/provisioning identity. Review every Assets file before adding
