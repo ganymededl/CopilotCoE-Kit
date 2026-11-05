@@ -2,7 +2,7 @@
 
 A config-driven Teams + SharePoint **Center of Excellence (CoE)** kit for organizations rolling out Microsoft 365 Copilot. One kit, any organization: everything organization-specific (tenant, names, support links, policies, decks) lives in an **organization folder** passed to every script with `-OrgPath`, never edited in the kit itself.
 
-Release: **v3.8.24**. Customers install the named [`Copilot-CoE-Implementation-Kit.zip`](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.24/Copilot-CoE-Implementation-Kit.zip) release asset and verify SHA256 `0A3D70A545D87F4476E7547BF41F2BAFFF83ED28EC2EE05FE3682573F55378CC` against its [`.sha256` receipt](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.24/Copilot-CoE-Implementation-Kit.zip.sha256). GitHub's automatic **Source code (zip)**, **Source code (tar.gz)** and repository **Download ZIP** are source snapshots, not the prebuilt implementation ZIP; cloning GitHub and renaming an older ZIP does not produce it.
+Release: **v3.8.24**. Customers install the named [`Copilot-CoE-Implementation-Kit.zip`](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.24/Copilot-CoE-Implementation-Kit.zip) release asset and verify SHA256 `EFD59EDD830FDBE4FC7C83ECCA1163AAE98818234C645E71B1B7595D7B91BA9D` against its [`.sha256` receipt](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.24/Copilot-CoE-Implementation-Kit.zip.sha256). GitHub's automatic **Source code (zip)**, **Source code (tar.gz)** and repository **Download ZIP** are source snapshots, not the prebuilt implementation ZIP; cloning GitHub and renaming an older ZIP does not produce it.
 
 > **Not an official Microsoft product.** This is independently maintained sample/starter tooling. All seeded content (guides, FAQs, governance samples, prompt libraries) is starter material for your organization's own review — none of it is adopted policy, and no customer or tenant is implied, named, or endorsed by shipping this kit.
 
@@ -23,7 +23,7 @@ Run these steps **one block at a time in PowerShell 7.4 or later**. The first te
    ```powershell
    $zip = 'C:\CoE-Releases\Copilot-CoE-Implementation-Kit.zip'
    $receipt = 'C:\CoE-Releases\Copilot-CoE-Implementation-Kit.zip.sha256'
-   $expectedHash = '0A3D70A545D87F4476E7547BF41F2BAFFF83ED28EC2EE05FE3682573F55378CC'
+   $expectedHash = 'EFD59EDD830FDBE4FC7C83ECCA1163AAE98818234C645E71B1B7595D7B91BA9D'
 
    $zipHash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash
    $receiptHash = ((Get-Content -LiteralPath $receipt -Raw).Trim() -split '\s+')[0]
