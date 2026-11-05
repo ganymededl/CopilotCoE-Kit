@@ -53,14 +53,7 @@
       "url": ""
     }
   ],
-  "Agents": {
-    "name": "<Agent name>",
-    "description": "<One or two sentences: what the agent does>",
-    "audience": "<Who it is for>",
-    "examplePrompt": "<A prompt to try>",
-    "owner": "<Owner name or team>",
-    "url": ""
-  },
+  "Agents": [],
   "GuidesIntro": "Practical guidance for staff, supervisors, and IT. Start with the guide that matches your role.",
   "StoryAudiences": [
     "Staff",

@@ -8,6 +8,10 @@ function Write-Calendar([string]$Path, [string]$Header, [string[]]$Rows) {
     [IO.Directory]::CreateDirectory((Split-Path -Parent $Path)) | Out-Null
     [IO.File]::WriteAllLines($Path, @($Header) + $Rows)
 }
+function Write-Settings([string]$Path, $Agents) {
+    [IO.Directory]::CreateDirectory((Split-Path -Parent $Path)) | Out-Null
+    [IO.File]::WriteAllText($Path, (@{ Agents = $Agents } | ConvertTo-Json -Depth 10))
+}
 
 Describe "Structured organization content preflight" {
     BeforeEach {
@@ -44,19 +48,45 @@ Describe "Structured organization content preflight" {
         Write-Calendar $calendar $headerWithEnd @($crossDay)
         { Assert-CoEStructuredOrganizationContent -OrgPath $org } | Should Not Throw
     }
+    It "accepts empty optional agents and rejects partial agents before tenant work" {
+        $settings = Join-Path $org "Deployment-Settings.json"
+        Write-Settings $settings @()
+        { Assert-CoEStructuredOrganizationContent -OrgPath $org } | Should Not Throw
+        Write-Settings $settings ([pscustomobject]@{
+                name = "Staff helper"; description = ""; audience = ""; examplePrompt = ""; owner = ""; url = ""
+            })
+        Get-CoETestExceptionMessage { Assert-CoEStructuredOrganizationContent -OrgPath $org } |
+            Should Match "nonempty HTTPS URL"
+    }
+    It "accepts profiles without Agents and validates an explicit settings path" {
+        $settings = Join-Path $org "alternate.json"
+        [IO.Directory]::CreateDirectory($org) | Out-Null
+        [IO.File]::WriteAllText($settings, '{}')
+        { Assert-CoEStructuredOrganizationContent -SettingsPath $settings } | Should Not Throw
+        [IO.File]::WriteAllText($settings, '{"Agents":{}}')
+        { Assert-CoEStructuredOrganizationContent -SettingsPath $settings } | Should Not Throw
+        [IO.File]::WriteAllText($settings, '{"Agents":[{}]}')
+        { Assert-CoEStructuredOrganizationContent -SettingsPath $settings } | Should Not Throw
+        Write-Settings $settings ([pscustomobject]@{
+                name = "Staff helper"; description = ""; audience = ""; examplePrompt = ""; owner = ""; url = ""
+            })
+        Get-CoETestExceptionMessage {
+            Assert-CoEStructuredOrganizationContent -OrgPath $org -SettingsPath $settings
+        } | Should Match "nonempty HTTPS URL"
+    }
 }
 
 Describe "Entry-point wiring" {
     It "runs 02 preflight before importing PnP or connecting" {
         $source = Get-Content -LiteralPath (Join-Path $kitRoot "02_Install-CopilotCoE.ps1") -Raw
-        $call = $source.IndexOf("Assert-CoEStructuredOrganizationContent")
+        $call = $source.IndexOf("Assert-CoEStructuredOrganizationContent -OrgPath `$OrgPath -SettingsPath `$SettingsPath")
         $call | Should BeGreaterThan -1
         $call | Should BeLessThan $source.IndexOf("Import-Module PnP.PowerShell")
         $call | Should BeLessThan $source.IndexOf("Connect-PnPOnline")
     }
     It "runs 03 preflight before invoking the tenant-connected completion helper" {
         $source = Get-Content -LiteralPath (Join-Path $kitRoot "03_Update-CoEContent.ps1") -Raw
-        $call = $source.IndexOf("Assert-CoEStructuredOrganizationContent")
+        $call = $source.IndexOf("Assert-CoEStructuredOrganizationContent -OrgPath `$OrgPath -SettingsPath `$SettingsPath")
         $call | Should BeGreaterThan -1
         $call | Should BeLessThan $source.IndexOf("& (Join-Path `$PSScriptRoot ""Internal\Complete-CopilotCoE.ps1"")")
     }

@@ -129,7 +129,7 @@ if ($s.SiteFQDN -notmatch "^[A-Za-z0-9-]+\.sharepoint\.com$") { throw "SiteFQDN 
 if ($s.PnPClientID -notmatch "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$") { throw "PnPClientID must be the app's Application (client) ID GUID." }
 if ($s.MailNickname -notmatch "^[A-Za-z0-9_-]{1,64}$") { throw "MailNickname may use letters, numbers, hyphen, and underscore only." }
 if ($s.SupportEmail -notmatch "^[^@\s<>]+@[^@\s<>]+\.[^@\s<>]+$") { throw "SupportEmail must be an email address." }
-Assert-CoEStructuredOrganizationContent -OrgPath $OrgPath
+Assert-CoEStructuredOrganizationContent -OrgPath $OrgPath -SettingsPath $SettingsPath
 
 $reportForTarget = if ($OrgPath) { Join-Path $OrgPath "CoE-Revision-Report.json" } else { Join-Path $PSScriptRoot "CoE-Revision-Report.json" }
 $targetSite = Resolve-CoESiteUrl -SiteFqdn $s.SiteFQDN -Alias $s.MailNickname `

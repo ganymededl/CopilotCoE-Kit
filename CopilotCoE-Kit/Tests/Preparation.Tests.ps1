@@ -376,10 +376,20 @@ Describe "Offline preparation and packaging integration" {
                     }
                     ($document.OuterXml -match '(?i)guidFile=00000000|visualtemplatetitleimage|preview\.ashx') | Should Be $false
                     $mechanics = $document.SelectSingleNode('//pnp:ClientSidePage[@PageName="Copilot-on-Microsoft-Mechanics.aspx"]', $ns)
-                    $mechanics.SelectNodes('.//pnp:CanvasControl', $ns).Count | Should Be 1
+                    # Prepare-CopilotCoE.ps1 keeps the vendor's real video embeds (and dividers/headings)
+                    # intact on this page and appends the official-hub fallback links into the existing intro
+                    # text control, instead of replacing the page - so every non-text control the captured
+                    # source carries must survive untouched. Regression guard: an earlier design stripped this
+                    # page down to a single plain fallback-links control, destroying the real embeds; a later
+                    # live-tenant equivalent of that same mistake (Write-ManagedPage's "remove every control,
+                    # then re-add" path) is covered separately in Completion.Tests.ps1.
+                    $mechanicsControls = @($mechanics.SelectNodes('.//pnp:CanvasControl', $ns))
+                    (@($mechanicsControls | Where-Object { $_.GetAttribute("WebPartType") -eq "Custom" })).Count |
+                        Should BeGreaterThan 0
+                    $mechanicsControls.Count | Should BeGreaterThan 1
                     $mechanics.OuterXml.Contains("https://www.microsoft.com/mechanics") | Should Be $true
                     $mechanics.OuterXml.Contains("https://techcommunity.microsoft.com/category/microsoftmechanics") | Should Be $true
-                    ($mechanics.OuterXml -match "embedCode|iframe") | Should Be $false
+                    ($mechanics.OuterXml -match "embedCode|iframe") | Should Be $true
                 }
                 (Get-FileHash (Join-Path $sourceRoot "CopilotCoESite.pnp")).Hash | Should Be $sourceHash
             }
@@ -610,6 +620,17 @@ $profile | ConvertTo-Json -Compress
                 ($null -ne $zip.GetEntry("03_Build/CopilotCoE-Kit/SeedContent/Experience/Guided-Learning.json")) | Should Be $true
                 ($null -ne $zip.GetEntry("03_Build/CopilotCoE-Kit/SeedContent/Experience/Tools.json")) | Should Be $true
                 ($null -ne $zip.GetEntry("03_Build/CopilotCoE-Kit/Internal/OrganizationProfile.ps1")) | Should Be $true
+                # Regression guard: the nested .pnp alone is not a complete source tree. 02_Install-CopilotCoE.ps1
+                # (via Internal\Prepare-CopilotCoE.ps1's required-file check, and its own hardcoded
+                # $shareYourPromptFiles list) also reads TeamTemplate.xml and three ShareYourPrompt files
+                # directly out of 03_Build\SourceOriginal\CopilotCoESite\ at install time. Confirmed live: an
+                # earlier build of this packager shipped only the .pnp, so a real customer install failed at
+                # "Required source file was not found: ...\TeamTemplate.xml" right after the first two
+                # STOP/PROCEED advisories - after tenant sign-in, with resources already probed.
+                ($null -ne $zip.GetEntry("03_Build/SourceOriginal/CopilotCoESite/TeamTemplate.xml")) | Should Be $true
+                foreach ($shareYourPromptFile in @("Prompt-dos-and-donts-one-pager.pdf", "Prompt-ingredients-one-pager.pdf", "ScenarioUseCaseTemplate.pptx")) {
+                    ($null -ne $zip.GetEntry("03_Build/SourceOriginal/CopilotCoESite/ShareYourPrompt/$shareYourPromptFile")) | Should Be $true
+                }
                 # Regression guard: the 3.8 ZIP shipped zero *.Tests.ps1 files, so "442 of 443 offline Pester
                 # tests pass" in a change list could not be independently checked by anyone else. Every
                 # offline test file present in the source kit must land in the package too.

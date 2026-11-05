@@ -24,7 +24,7 @@ function Get-InstallBlock([string]$Prefix) {
 }
 $longDisplayNameWarningBlock = Get-InstallBlock 'if ($DisplayName.Length -gt 30) {'
 $welcomePostGuard = Get-InstallBlock 'if ($PublishWelcomeToChannels -and -not $ResumeExisting) {'
-$welcomePostBlock = Get-InstallBlock 'if ($ResumeExisting -and -not $PublishWelcomeToChannels) {'
+$welcomePostBlock = Get-InstallBlock 'if ($ResumeExisting -and -not $PublishWelcomeToChannels -and -not (Test-Path'
 
 Describe "Exception assertion scope" {
     It "evaluates test-local values before the Pester assertion" {
@@ -70,9 +70,11 @@ Describe "Long DisplayName warning does not crash the install" {
 }
 
 function Publish-CoEStandardChannelMessages {
-    [CmdletBinding()]param($Team, $Channels, $Specifications, [string[]]$SelectedChannelNames, $Connection)
+    [CmdletBinding()]param($Team, $Channels, $Specifications, [string[]]$SelectedChannelNames, $Connection, $StatePath)
     throw "Unexpected welcome post"
 }
+function Read-CoEWelcomePostState($Path) { $script:welcomeState }
+function Assert-CoEWelcomePostStateMatches($State, $Team, $Channels, $Specifications) {}
 
 Describe "Install welcome-post orchestration" {
     BeforeEach {
@@ -83,6 +85,13 @@ Describe "Install welcome-post orchestration" {
         )
         $script:standardChannels = @("verified-General", "verified-Share")
         $script:adminConnection = "offline"
+        $script:welcomeStatePath = Join-Path $TestDrive ("welcome-state-" + [guid]::NewGuid().ToString("N") + ".json")
+        $script:welcomeState = [pscustomobject]@{
+            Channels = @(
+                [pscustomobject]@{ Name = "General"; Status = "Pending" },
+                [pscustomobject]@{ Name = "Share Your Prompt"; Status = "Posted" }
+            )
+        }
         Mock Publish-CoEStandardChannelMessages {}
         Mock Write-Warning {}
     }
@@ -93,10 +102,28 @@ Describe "Install welcome-post orchestration" {
         . $welcomePostBlock
         Assert-MockCalled Publish-CoEStandardChannelMessages -Times 1 -Exactly -Scope It -ParameterFilter {
             $Team -eq "runtime-team" -and $SelectedChannelNames.Count -eq 2 -and
-            $SelectedChannelNames[0] -eq "General" -and $SelectedChannelNames[1] -eq "Share Your Prompt"
+            $SelectedChannelNames[0] -eq "General" -and $SelectedChannelNames[1] -eq "Share Your Prompt" -and
+            $StatePath -eq $welcomeStatePath
         }
     }
-    It "does not duplicate any post during an ordinary resume" {
+    It "automatically posts only journaled Pending channels during resume" {
+        $ResumeExisting = $true
+        $PublishWelcomeToChannels = @()
+        Set-Content -LiteralPath $welcomeStatePath -Value '{}'
+        . $welcomePostBlock
+        Assert-MockCalled Publish-CoEStandardChannelMessages -Times 1 -Exactly -Scope It -ParameterFilter {
+            $SelectedChannelNames.Count -eq 1 -and $SelectedChannelNames[0] -eq "General"
+        }
+    }
+    It "does not duplicate posts already journaled as Posted" {
+        $ResumeExisting = $true
+        $PublishWelcomeToChannels = @()
+        $welcomeState.Channels[0].Status = "Posted"
+        Set-Content -LiteralPath $welcomeStatePath -Value '{}'
+        . $welcomePostBlock
+        Assert-MockCalled Publish-CoEStandardChannelMessages -Times 0 -Exactly -Scope It
+    }
+    It "keeps legacy resumes manual when no state exists" {
         $ResumeExisting = $true
         $PublishWelcomeToChannels = @()
         . $welcomePostBlock
@@ -109,7 +136,8 @@ Describe "Install welcome-post orchestration" {
         . $welcomePostGuard
         . $welcomePostBlock
         Assert-MockCalled Publish-CoEStandardChannelMessages -Times 1 -Exactly -Scope It -ParameterFilter {
-            $SelectedChannelNames.Count -eq 1 -and $SelectedChannelNames[0] -eq "General"
+            $SelectedChannelNames.Count -eq 1 -and $SelectedChannelNames[0] -eq "General" -and
+            $StatePath -eq $welcomeStatePath
         }
     }
     It "rejects an explicit repost flag before a fresh install creates resources" {

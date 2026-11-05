@@ -53,12 +53,5 @@
       "url": ""
     }
   ],
-  "Agents": {
-    "name": "<Agent name>",
-    "description": "<One or two sentences: what the agent does>",
-    "audience": "<Who it is for>",
-    "examplePrompt": "<A prompt to try>",
-    "owner": "<Owner name or team>",
-    "url": ""
-  }
+  "Agents": []
 }

@@ -162,7 +162,7 @@ if ($AdminFQDN -notmatch "^[A-Za-z0-9-]+-admin\.sharepoint\.com$") {
 if ($SiteFQDN -notmatch "^[A-Za-z0-9-]+\.sharepoint\.com$") {
     throw "SiteFQDN must be the SharePoint tenant host, for example tenant.sharepoint.com."
 }
-Assert-CoEStructuredOrganizationContent -OrgPath $OrgPath
+Assert-CoEStructuredOrganizationContent -OrgPath $OrgPath -SettingsPath $SettingsPath
 
 Import-Module PnP.PowerShell -RequiredVersion 3.2.0 -ErrorAction Stop
 . (Join-Path $PSScriptRoot "Internal\SecurityPosture.ps1")
@@ -500,6 +500,25 @@ if (-not $ResumeExisting) {
         -ErrorAction Stop
 }
 $standardChannels = @(Ensure-CoEStandardChannels -Team $coeGroup.GroupId -Specifications $standardChannelSpecs -Connection $adminConnection)
+$welcomeStatePath = Join-Path (Split-Path -Parent $SettingsPath) "CoE-Welcome-Post-State.json"
+if (-not $ResumeExisting) {
+    $null = Initialize-CoEWelcomePostState -Path $welcomeStatePath -Team $coeGroup.GroupId `
+        -Channels $standardChannels -Specifications $standardChannelSpecs -DefaultStatus Pending
+} elseif ($PublishWelcomeToChannels) {
+    $state = Initialize-CoEWelcomePostState -Path $welcomeStatePath -Team $coeGroup.GroupId `
+        -Channels $standardChannels -Specifications $standardChannelSpecs -DefaultStatus Unknown `
+        -SelectedChannelNames $PublishWelcomeToChannels
+    Assert-CoEWelcomePostStateMatches $state $coeGroup.GroupId $standardChannels $standardChannelSpecs
+    foreach ($name in $PublishWelcomeToChannels) {
+        $entry = @($state.Channels | Where-Object Name -ceq $name)
+        if ($entry.Count -ne 1) { throw "Welcome-post state has no unique channel '$name'." }
+        if ($entry[0].Status -eq "Posted") { throw "Welcome post '$name' is already recorded as Posted." }
+        if ($entry[0].Status -eq "Posting") { throw "Welcome post '$name' has ambiguous Posting state; inspect it first." }
+        $entry[0].Status = "Pending"
+    }
+    $state.UpdatedAt = [datetime]::UtcNow.ToString("o")
+    Save-CoEWelcomePostState $welcomeStatePath $state
+}
 $resourceApps = @(Get-CoETeamResourceApps -Team $coeGroup.GroupId -Connection $adminConnection)
 $resourceTabChoices = @()
 
@@ -807,13 +826,26 @@ if ($SeedDemoContent) {
         -OrganizationEmailDomains $OrganizationEmailDomains -OwnerUPN $SharedChannelOwnerUPN `
         -AdditionalAllowedMembers $GovernanceAdditionalAllowedMembers -Connection $adminConnection
 }
-if ($ResumeExisting -and -not $PublishWelcomeToChannels) {
-    Write-Warning "Resume mode does not repeat welcome posts. Inspect the standard channels in Teams; use -PublishWelcomeToChannels with only the names confirmed to be missing if repair is needed."
+if ($ResumeExisting -and -not $PublishWelcomeToChannels -and -not (Test-Path -LiteralPath $welcomeStatePath -PathType Leaf)) {
+    Write-Warning "This legacy deployment has no welcome-post state. Inspect Teams and use -PublishWelcomeToChannels with only names confirmed missing."
 } else {
-    $postChannels = if ($ResumeExisting) { $PublishWelcomeToChannels }
-        else { @($standardChannelSpecs | ForEach-Object { $_.DisplayName }) }
+    $postChannels = if ($ResumeExisting -and -not $PublishWelcomeToChannels) {
+        $state = Read-CoEWelcomePostState $welcomeStatePath
+        Assert-CoEWelcomePostStateMatches $state $coeGroup.GroupId $standardChannels $standardChannelSpecs
+        $ambiguous = @($state.Channels | Where-Object Status -in @("Posting", "Unknown"))
+        if ($ambiguous.Count) {
+            throw "Welcome-post state requires manual channel inspection: $(($ambiguous | ForEach-Object Name) -join ', ')."
+        }
+        @($state.Channels | Where-Object Status -eq "Pending" | ForEach-Object Name)
+    } elseif ($ResumeExisting) { $PublishWelcomeToChannels }
+    else { @($standardChannelSpecs | ForEach-Object { $_.DisplayName }) }
+    if (@($postChannels).Count) {
     Publish-CoEStandardChannelMessages -Team $coeGroup.GroupId -Channels $standardChannels `
-        -Specifications $standardChannelSpecs -SelectedChannelNames $postChannels -Connection $adminConnection
+            -Specifications $standardChannelSpecs -SelectedChannelNames $postChannels `
+            -Connection $adminConnection -StatePath $welcomeStatePath
+    } else {
+        Write-Host "Welcome-post state shows every prepared message as Posted; no duplicate messages were sent."
+    }
 }
 Write-Host "Next: verify the site with .\Test-CoEInstall.ps1 -OrgPath <your organization folder> -SiteUrl $coeUrl"
 Stop-CoERunLog -Log $script:CoERunLog -Succeeded $true

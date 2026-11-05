@@ -543,20 +543,19 @@ try {
 
     $mechanicsPage = $xmlDocument.SelectSingleNode('//pnp:ClientSidePage[@PageName="Copilot-on-Microsoft-Mechanics.aspx"]', $namespaceManager)
     if ($mechanicsPage) {
+        # Keep the vendor's real video embeds (and dividers/headings) intact. Reliable client-side
+        # "detect blocked, then fall back" isn't achievable on a modern SharePoint page (no custom script
+        # without an SPFx extension, and cross-origin iframe load failures don't throw catchable errors
+        # anyway), so instead we always show both: the embeds AND the official-hub links, appended to the
+        # existing intro text. If a tenant blocks YouTube, the embeds render blank but the links still work.
         $textControls = @($mechanicsPage.SelectNodes('.//pnp:CanvasControl[@WebPartType="Text"]', $namespaceManager))
         if ($textControls.Count -eq 0) { throw "The Microsoft Mechanics page has no text control for official resource links." }
         $text = $textControls[0].SelectSingleNode('pnp:CanvasControlProperties/pnp:CanvasControlProperty[@Key="Text"]', $namespaceManager)
-        $text.SetAttribute("Value", (
-            "<h3>Microsoft Mechanics resources</h3><p>Use Microsoft's official hubs for current Copilot demonstrations and technical explanations. " +
-            "Video availability depends on your organization's media policies and the publisher.</p><ul>" +
+        $text.SetAttribute("Value", ($text.GetAttribute("Value") +
+            "<p>If the embedded videos below don't render (for example, if your organization restricts YouTube), " +
+            "use Microsoft's official hubs instead:</p><ul>" +
             "<li><a href=`"https://www.microsoft.com/mechanics`">Microsoft Mechanics</a></li>" +
             "<li><a href=`"https://techcommunity.microsoft.com/category/microsoftmechanics`">Microsoft Mechanics video hub</a></li></ul>"))
-        foreach ($control in @($mechanicsPage.SelectNodes('.//pnp:CanvasControl', $namespaceManager))) {
-            if ($control -ne $textControls[0]) { [void]$control.ParentNode.RemoveChild($control) }
-        }
-        foreach ($section in @($mechanicsPage.SelectNodes('pnp:Sections/pnp:Section[not(pnp:Controls/pnp:CanvasControl)]', $namespaceManager))) {
-            [void]$section.ParentNode.RemoveChild($section)
-        }
     }
     Set-CoETemplateBannerDefaults $xmlDocument $namespaceManager
 

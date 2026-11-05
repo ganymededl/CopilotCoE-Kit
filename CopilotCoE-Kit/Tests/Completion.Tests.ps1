@@ -14,7 +14,7 @@ $source = $completionAst.Extent.Text
 . (Join-Path $kitRoot "Internal\GovernanceLinks.ps1")
 . (Join-Path $kitRoot "Internal\OrganizationProfile.ps1")
 . (Join-Path $kitRoot "Internal\HubExperience.ps1")
-foreach ($name in @("Write-ManagedPage", "Test-ManagedPageWritten",
+foreach ($name in @("Get-CoEManagedPageTextSection", "Write-ManagedPage", "Test-ManagedPageWritten",
     "Sync-TopTenTab", "Get-CalendarLocalDate", "Get-OrgValue", "Resolve-OrgTokens",
     "Get-ManagedNavigationUrl", "Sync-GuideNavigation", "Sync-ChampionPageNavigation",
     "Escape-Html", "Add-CoECatalogPageView", "Add-CoEUpcomingSessionsWebPart", "Add-CoECalendarLinkTextPart",
@@ -61,6 +61,7 @@ $longDisplayNameNavWarningBlock = Get-CompletionBlock 'if ($DisplayName.Length -
 # Stand-ins fail closed even if a regression introduces an unmocked tenant call.
 function Get-PnPPage { [CmdletBinding()] param($Identity, $Connection) throw "Unmocked page read" }
 function Add-PnPPage { [CmdletBinding()] param($Name, $Title, $LayoutType, $Connection) throw "Unmocked page write" }
+function Add-PnPPageSection { [CmdletBinding()] param($Page, $SectionTemplate, $Order, $Connection) throw "Unmocked page section write" }
 function Set-PnPPage { [CmdletBinding()] param($Identity, $Title, $HeaderType, $HeaderLayoutType, [switch]$Publish, $CommentsEnabled, $Connection) throw "Unmocked page write" }
 function Set-PnPWeb { [CmdletBinding()] param($CommentsOnSitePagesDisabled, $HorizontalQuickLaunch, $MegaMenuEnabled, $Connection) throw "Unmocked web write" }
 function Add-PnPPageTextPart { [CmdletBinding()] param($Page, $Text, $Order, $Section, $Column, $Connection) throw "Unmocked page write" }
@@ -137,7 +138,9 @@ Describe "Managed page completion and preservation" {
         $script:reviewedPages = @()
         $script:SiteUrl = "https://example.sharepoint.com/sites/CoE"
         $script:site = [pscustomobject]@{ Url = "https://example.sharepoint.com/sites/CoE" }
-        $script:pages = @([pscustomobject]@{ Name = "Existing.aspx"; Controls = @([pscustomobject]@{ InstanceId = "custom" }) })
+        $regularSection = [pscustomobject]@{ Type = "OneColumn"; Columns = @([pscustomobject]@{}) }
+        $script:pages = @([pscustomobject]@{ Name = "Existing.aspx"; Controls = @([pscustomobject]@{ InstanceId = "custom" })
+                Sections = @($regularSection) })
         $script:auditFolder = $PSScriptRoot
         $script:runId = "offline"
         Mock Write-Host {}
@@ -145,16 +148,28 @@ Describe "Managed page completion and preservation" {
             if ($Identity) { $script:pages | Where-Object { $_.Name -eq ($Identity -replace '\.aspx$', '') + ".aspx" } }
             else { $script:pages }
         }
+
         Mock Add-PnPPage {
-            $page = [pscustomobject]@{ Name = "$Name.aspx"; Controls = @() }
+            $page = [pscustomobject]@{ Name = "$Name.aspx"; Controls = @(); Sections = @($regularSection) }
             $script:pages += $page
             $page
         }
         Mock Set-PnPPage {}
         Mock Add-PnPPageTextPart {}
+        Mock Add-PnPPageSection {
+            $target = @($script:pages | Where-Object Name -eq (($Page -replace '\.aspx$', '') + ".aspx"))[0]
+            $target.Sections = @($target.Sections) + @([pscustomobject]@{
+                    Type = [string]$SectionTemplate
+                    Columns = @([pscustomobject]@{})
+                })
+        }
         Mock Remove-PnPPageComponent {}
         Mock Get-PnPFile { [pscustomobject]@{ FieldValues = @{ Title = "Customized" } } }
         Mock Set-Content {}
+    }
+    It "uses the retrying standard-channel helper with the parent-site connection" {
+        $source | Should Match '(?s)\$askFolder\s*=\s*Get-CoEStandardChannelFilesFolder.+?-SiteUrl\s+\$SiteUrl.+?-ExpectedFolderUrl\s+\$expectedAskFolderUrl.+?-Connection\s+\$site'
+        $source | Should Not Match '\$askFolder\s*=\s*Get-PnPTeamsChannelFilesFolder'
     }
     It "resumes past existing pages and creates missing pages without changing existing content" {
         $kept = Write-ManagedPage $site "Existing" "Kit title" "<h2>Kit title</h2><p>Draft</p>"
@@ -174,6 +189,23 @@ Describe "Managed page completion and preservation" {
         Assert-MockCalled Set-Content -Times 1 -Exactly -Scope It
         Assert-MockCalled Remove-PnPPageComponent -Times 1 -Exactly -Scope It
         Assert-MockCalled Add-PnPPageTextPart -Times 1 -Exactly -Scope It
+        Assert-MockCalled Add-PnPPageTextPart -Times 1 -Exactly -Scope It -ParameterFilter {
+            $Section -eq 1 -and $Column -eq 1
+        }
+        Assert-MockCalled Add-PnPPageSection -Times 0 -Exactly -Scope It
+    }
+    It "adds a regular section before replacing a captured page that has only a full-width section" {
+        $script:ReplaceManagedPages = $true
+        $script:pages[0].Sections = @([pscustomobject]@{
+                Type = "OneColumnFullWidth"; Columns = @([pscustomobject]@{})
+            })
+        Write-ManagedPage $site "Existing" "Kit title" "<p>Draft</p>" | Out-Null
+        Assert-MockCalled Add-PnPPageSection -Times 1 -Exactly -Scope It -ParameterFilter {
+            $Page -eq "Existing" -and [string]$SectionTemplate -eq "OneColumn" -and $Order -eq 1
+        }
+        Assert-MockCalled Add-PnPPageTextPart -Times 1 -Exactly -Scope It -ParameterFilter {
+            $Section -eq 2 -and $Column -eq 1
+        }
     }
     It "fails on ambiguous duplicate page identities without mutations" {
         $script:pages += $script:pages[0]
@@ -389,6 +421,53 @@ Describe "Home section and linked cards" {
         $checker = Get-Content (Join-Path $kitRoot "Test-CoEInstall.ps1") -Raw
         $checker | Should Match "keeps the template's Hero web part"
         $checker | Should Match 'Copilot tools Quick Links replaces the vendor Resources box'
+    }
+    It "writes the Mechanics body through Write-CoEMechanicsNotice, never through Write-ManagedPage" {
+        # Regression test, two generations of the same page. First: a redundant
+        # "if ($pageName -in @($pages | ForEach-Object Name))" guard wrapped the Mechanics write even though
+        # Write-ManagedPage already re-queries Get-PnPPage itself to decide existing-vs-new - the page kept its
+        # kit-managed breadcrumb (added lower in this function from the same $pages-derived set) but silently
+        # never received this body text, with no error anywhere in the run. Removing the guard fixed that, but
+        # left the write going through Write-ManagedPage, which "remove every control, then re-add" - safe for
+        # every other managed page here (the kit owns them outright), but not this one: Mechanics is a
+        # vendor-captured page that also carries the vendor's own real Microsoft Mechanics video embeds,
+        # merged with this body text by Prepare-CopilotCoE.ps1's own template edit (see that script's header
+        # comment on this exact page). Confirmed live on a v3.8.24 rebuild: running -RepairCapturedPages to fix
+        # an unrelated Home/nav regression deleted every control on this page before re-adding just the text
+        # body, destroying the real video embeds along with the stale breadcrumb it meant to fix. Mechanics
+        # must go through Write-CoEMechanicsNotice instead, which replaces only its own breadcrumb/notice/body
+        # control and never touches any other control on the page - see that function's own header comment.
+        $repair = $completionAst.Find({ param($node)
+            $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq "Repair-CoEHubPages"
+        }, $true).Extent.Text
+        $repair | Should Not Match 'Copilot-on-Microsoft-Mechanics\.aspx"\s*-in\s*@\(\$pages'
+        $repair | Should Not Match 'Write-ManagedPage \$SiteConnection "Copilot-on-Microsoft-Mechanics"'
+        $repair | Should Match 'Write-CoEMechanicsNotice -SiteConnection \$SiteConnection -Links \$Links -Html \$mechanics'
+        $repair | Should Match "Use Microsoft''s official hubs for current Copilot demonstrations"
+        # Mechanics is excluded from the trailing per-page Set-CoESectionStripPart loop below (its breadcrumb
+        # is already folded into the one combined control Write-CoEMechanicsNotice just wrote) - confirmed by
+        # name, not merely by position, since reordering alone was the (insufficient) original fix.
+        $repair | Should Match '\$page\.Name -eq "Copilot-on-Microsoft-Mechanics\.aspx"\)\s*\{\s*continue\s*\}'
+    }
+    It "never lets Write-ManagedPage's remove-then-readd path touch the Mechanics page" {
+        # Belt-and-suspenders companion to the test above: even if some future edit reintroduces a
+        # Write-ManagedPage call for this page name anywhere else in the file, this catches it, because
+        # Write-ManagedPage's "remove every control, then re-add" design is unconditionally unsafe for any
+        # vendor-captured page and Mechanics is the only one of the four with real non-text controls to lose.
+        $source | Should Not Match 'Write-ManagedPage [^\n]*"Copilot-on-Microsoft-Mechanics"'
+    }
+    It "Write-CoEMechanicsNotice only ever removes breadcrumb-shaped controls, never a real video embed" {
+        # The vendor's video embeds are Embed web parts carrying PropertiesJson, not a Text CanvasControl
+        # property - they structurally can never match the breadcrumb-shape regex this function scopes its
+        # removals to, so this asserts the safety invariant holds at the source-text level as a second,
+        # independent guard alongside the live-behavior test in HubExperience.Tests.ps1 (if present) or any
+        # future live validation.
+        $notice = $completionAst.Find({ param($node)
+            $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq "Write-CoEMechanicsNotice"
+        }, $true).Extent.Text
+        $notice | Should Not BeNullOrEmpty
+        $notice | Should Match "Where-Object \{ \`$_\.PSObject\.Properties\[.Text.\] -and \[string\]\`$_\.Text -match '>Home</a> /' \}"
+        $notice | Should Match "Remove-PnPPageComponent -Page \`$page -InstanceId \`$old\.InstanceId"
     }
     It "reloads the page before removing, so the stale pre-add canvas never wipes the just-added block" {
         # Regression test for the most likely live-install failure in 3.8.2: Remove-PnPPageComponent saves

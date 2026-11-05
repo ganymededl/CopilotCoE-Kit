@@ -257,6 +257,53 @@ Describe "Prepared standard channel welcome posts" {
             -SelectedChannelNames @("General") -Connection offline } | Should Throw "Inspect that channel before retrying"
         Assert-MockCalled Submit-PnPTeamsChannelMessage -Times 1 -Exactly -Scope It
     }
+    It "journals Pending through Posting to Posted for each successful message" {
+        $statePath = Join-Path $TestDrive ("welcome-state-" + [guid]::NewGuid().ToString("N") + ".json")
+        $stateTeam = "11111111-1111-1111-1111-111111111111"
+        $stateChannels = @($specs | ForEach-Object {
+                New-ResourceChannel ("19:" + [guid]::NewGuid().ToString("N") + "@thread.tacv2") $_.DisplayName
+            })
+        $state = Initialize-CoEWelcomePostState -Path $statePath -Team $stateTeam -Channels $stateChannels `
+            -Specifications $specs -DefaultStatus Pending
+        @($state.Channels | Where-Object Status -eq "Pending").Count | Should Be 3
+        Mock Submit-PnPTeamsChannelMessage { [pscustomobject]@{ Id = "message-$Channel" } }
+        Publish-CoEStandardChannelMessages -Team $stateTeam -Channels $stateChannels -Specifications $specs `
+            -SelectedChannelNames @("General") -Connection offline -StatePath $statePath
+        $saved = Read-CoEWelcomePostState $statePath
+        @($saved.Channels | Where-Object Name -eq "General")[0].Status | Should Be "Posted"
+        @($saved.Channels | Where-Object Name -eq "General")[0].MessageId | Should Match "^message-19:"
+        @($saved.Channels | Where-Object Name -eq "Share Your Prompt")[0].Status | Should Be "Pending"
+    }
+    It "leaves an ambiguous failed send in Posting state and refuses automatic retry" {
+        $statePath = Join-Path $TestDrive ("welcome-state-" + [guid]::NewGuid().ToString("N") + ".json")
+        $stateTeam = "11111111-1111-1111-1111-111111111111"
+        $stateChannels = @($specs | ForEach-Object {
+                New-ResourceChannel ("19:" + [guid]::NewGuid().ToString("N") + "@thread.tacv2") $_.DisplayName
+            })
+        $null = Initialize-CoEWelcomePostState -Path $statePath -Team $stateTeam -Channels $stateChannels `
+            -Specifications $specs -DefaultStatus Pending
+        Mock Submit-PnPTeamsChannelMessage { throw "Timeout after Teams accepted the post" }
+        { Publish-CoEStandardChannelMessages -Team $stateTeam -Channels $stateChannels -Specifications $specs `
+            -SelectedChannelNames @("General") -Connection offline -StatePath $statePath } |
+            Should Throw "Inspect that channel before retrying"
+        @((Read-CoEWelcomePostState $statePath).Channels | Where-Object Name -eq "General")[0].Status |
+            Should Be "Posting"
+        { Publish-CoEStandardChannelMessages -Team $stateTeam -Channels $stateChannels -Specifications $specs `
+            -SelectedChannelNames @("General") -Connection offline -StatePath $statePath } |
+            Should Throw "ambiguous Posting state"
+        Assert-MockCalled Submit-PnPTeamsChannelMessage -Times 1 -Exactly -Scope It
+    }
+    It "initializes selected legacy-repair channels as Pending and leaves others Unknown" {
+        $statePath = Join-Path $TestDrive ("welcome-state-" + [guid]::NewGuid().ToString("N") + ".json")
+        $stateTeam = "11111111-1111-1111-1111-111111111111"
+        $stateChannels = @($specs | ForEach-Object {
+                New-ResourceChannel ("19:" + [guid]::NewGuid().ToString("N") + "@thread.tacv2") $_.DisplayName
+            })
+        $state = Initialize-CoEWelcomePostState -Path $statePath -Team $stateTeam -Channels $stateChannels `
+            -Specifications $specs -DefaultStatus Unknown -SelectedChannelNames @("General")
+        @($state.Channels | Where-Object Name -eq "General")[0].Status | Should Be "Pending"
+        @($state.Channels | Where-Object Name -eq "Share Your Prompt")[0].Status | Should Be "Unknown"
+    }
 }
 
 Describe "Durable standard channel provisioning" {

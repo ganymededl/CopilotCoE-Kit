@@ -913,6 +913,27 @@ function Convert-GuideMarkdown([string]$Text) {
 }
 
 $writtenManagedPages = @()
+function Get-CoEManagedPageTextSection {
+    param([object]$SiteConnection, [string]$Name)
+
+    $page = Get-PnPPage -Identity "$Name.aspx" -Connection $SiteConnection -ErrorAction Stop
+    for ($index = 0; $index -lt @($page.Sections).Count; $index++) {
+        $section = $page.Sections[$index]
+        if ([string]$section.Type -ne "OneColumnFullWidth" -and @($section.Columns).Count -gt 0) {
+            return $index + 1
+        }
+    }
+
+    Add-PnPPageSection -Page $Name -SectionTemplate OneColumn -Order 1 -Connection $SiteConnection | Out-Null
+    $page = Get-PnPPage -Identity "$Name.aspx" -Connection $SiteConnection -ErrorAction Stop
+    for ($index = 0; $index -lt @($page.Sections).Count; $index++) {
+        $section = $page.Sections[$index]
+        if ([string]$section.Type -ne "OneColumnFullWidth" -and @($section.Columns).Count -gt 0) {
+            return $index + 1
+        }
+    }
+    throw "Managed page '$Name' has no section that can host text controls."
+}
 function Write-ManagedPage {
     param([object]$SiteConnection, [string]$Name, [string]$Title, [string]$Html, [string]$IntroHtml = "")
     $existing = @(Get-PnPPage -Connection $SiteConnection | Where-Object Name -eq "$Name.aspx")
@@ -952,10 +973,13 @@ function Write-ManagedPage {
             $Html += "<p>Last checked: $(Escape-Html $toolsCatalog.reviewedOn). Confirm your tenant's current features and policies.</p>"
         }
     }
+    $textSection = Get-CoEManagedPageTextSection -SiteConnection $SiteConnection -Name $Name
     if ($IntroHtml) {
-        Add-PnPPageTextPart -Page $Name -Text ($IntroHtml.Replace("<p><em></em></p>", "")) -Order 1 -Connection $SiteConnection | Out-Null
+        Add-PnPPageTextPart -Page $Name -Text ($IntroHtml.Replace("<p><em></em></p>", "")) -Section $textSection -Column 1 `
+            -Order 1 -Connection $SiteConnection | Out-Null
     }
-    Add-PnPPageTextPart -Page $Name -Text $Html -Order $(if ($IntroHtml) { 2 } else { 1 }) -Connection $SiteConnection | Out-Null
+    Add-PnPPageTextPart -Page $Name -Text $Html -Section $textSection -Column 1 `
+        -Order $(if ($IntroHtml) { 2 } else { 1 }) -Connection $SiteConnection | Out-Null
     # PageTitleWebPart renders the title inline with the content instead of Default's large banner area, which
     # left a tall empty gap above the body on every tool and guide page.
     Set-PnPPage -Identity $Name -HeaderType PageTitleWebPart -Publish -Connection $SiteConnection | Out-Null
@@ -2287,7 +2311,10 @@ if (@($sectionConfig.sections | Where-Object page -eq "CoE-Training-and-Enableme
     Write-CoEStep "START Learning Paths catalog" $SiteUrl
     $learningCatalog = Sync-CoELearningCatalog -Connection $site -SiteUrl $SiteUrl -Seeds $learningSeeds -ResolvedReviewers $resolvedCatalogReviewers
     Add-CoECatalogPageView $site "CoE-Training-and-Enablement" $learningCatalog $learningCatalog.Views.Page "Learning paths" `
-        -IntroText "Choose your role, open Learn, then try Practice. Select a step's name for the full instructions."
+        -IntroText ("Choose your role, open Learn for this organization's own guidance, then try Practice. " +
+            "External training (where shown) links to a specific Microsoft Learn module by default; " +
+            "your institution's own LMS (for example Blackboard or Canvas) can replace it per step. " +
+            "Select a step's name for the full instructions.")
     $report.LearningPaths = @{ List = $learningCatalog.ListUrl; Added = $learningCatalog.Added; Preserved = $learningCatalog.Preserved
         Views = @{ Page = $learningCatalog.Views.Page.Id; ByAudience = $learningCatalog.Views.ByAudience.Id; ByPath = $learningCatalog.Views.ByPath.Id; Required = $learningCatalog.Views.Required.Id }
         Source = "SeedContent/Learning-Paths.json"; CompletionTracking = $false
@@ -2325,8 +2352,7 @@ if ($promptLibraryMode -eq "On") {
 $availablePages = @(Get-PnPPage -Connection $site -ErrorAction Stop | ForEach-Object Name)
 $omittedNames = @($omittedGuideUrls | ForEach-Object { [uri]::UnescapeDataString(([uri]$_).Segments[-1]) })
 $availablePages = @($availablePages | Where-Object { $_ -notin $omittedNames })
-$calendarLink = if ($report.Keys -contains "TrainingCalendar") { [string]$report.TrainingCalendar.Url } else { "" }
-$hubLinks = @(Get-CoEHubLinks $SiteUrl $availablePages $calendarLink $incidentLink $developerEnabled)
+$hubLinks = @(Get-CoEHubLinks $SiteUrl $availablePages $calendarPageUrl $incidentLink $developerEnabled)
 if ($RepairCapturedPages) {
     Write-CoEStep "START Home page and hub repair" $SiteUrl
     $report.HubExperience = Repair-CoEHubPages -SiteConnection $site -Links $hubLinks -Environment $learningEnvironment
@@ -2357,7 +2383,7 @@ if ($RepairCapturedPages) {
         Remove-CoEUpcomingSessionsWebPart $site "TrainingHome" $calendar $upcomingView
         Add-CoENoSessionsPlaceholder $site "TrainingHome" -Order 4 -Section 2 -Column 1
     }
-    Add-CoECalendarLinkTextPart $site "TrainingHome" $calendarUrl -Order 5 -Section 2 -Column 1
+    Add-CoECalendarLinkTextPart $site "TrainingHome" $calendarPageUrl -Order 5 -Section 2 -Column 1
 } else {
     $homeCanvas = [string](Get-PnPFile -Url "SitePages/TrainingHome.aspx" -AsListItem -Connection $site)["CanvasContent1"]
     if ($homeCanvas -match 'Which Copilot should I use\?' -and $homeCanvas -match 'Upcoming sessions') {
@@ -2368,7 +2394,7 @@ if ($RepairCapturedPages) {
             Remove-CoEUpcomingSessionsWebPart $site "TrainingHome" $calendar $upcomingView
             Add-CoENoSessionsPlaceholder $site "TrainingHome" -Order 4 -Section 2 -Column 1
         }
-        Add-CoECalendarLinkTextPart $site "TrainingHome" $calendarUrl -Order 5 -Section 2 -Column 1
+        Add-CoECalendarLinkTextPart $site "TrainingHome" $calendarPageUrl -Order 5 -Section 2 -Column 1
     } else {
         Write-Warning "Home was preserved and still needs the 3.7 layout. Run 03_Update-CoEContent.ps1 -Scope All -RepairCapturedPages before accepting this site."
     }
@@ -2452,7 +2478,13 @@ if ($navOrder -in @("TaskFirst", "AToZ")) {
 
 if (-not $GovernanceOnly -and -not $GuidesOnly) {
 
-$askFolder = Get-PnPTeamsChannelFilesFolder -Team $group.GroupId -Channel $askChannel[0].Id -Connection $Connection
+$expectedAskFolderUrl = if ($previousTopTen -and $previousTopTen.FileUrl) {
+    ([string]$previousTopTen.FileUrl).Substring(0, ([string]$previousTopTen.FileUrl).LastIndexOf('/'))
+} else {
+    "$($SiteUrl.TrimEnd('/'))/Shared%20Documents/$([uri]::EscapeDataString([string]$askChannel[0].DisplayName))"
+}
+$askFolder = Get-CoEStandardChannelFilesFolder -Team $group.GroupId -Channel $askChannel[0].Id `
+    -SiteUrl $SiteUrl -ExpectedFolderUrl $expectedAskFolderUrl -Connection $site
 $askPath = [uri]::UnescapeDataString(([uri]$askFolder.webUrl).AbsolutePath).Substring(([uri]$SiteUrl).AbsolutePath.Length).TrimStart("/")
 $handoutName = "Microsoft365Copilot_Top10toTry_Handout.pptx"
 $handoutLocal = Join-Path $kitRoot $handoutName

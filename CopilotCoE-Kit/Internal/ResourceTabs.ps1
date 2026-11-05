@@ -477,9 +477,95 @@ function Ensure-CoEStandardChannels {
     }
 }
 
+function Get-CoEWelcomePostHash([string]$Html) {
+    $bytes = [Text.Encoding]::UTF8.GetBytes($Html)
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { ([BitConverter]::ToString($sha.ComputeHash($bytes))).Replace("-", "") } finally { $sha.Dispose() }
+}
+
+function Read-CoEWelcomePostState([string]$Path) {
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $null }
+    $state = Get-Content -LiteralPath $Path -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+    if ($state.SchemaVersion -ne 1 -or $state.TeamId -notmatch '^[0-9a-fA-F-]{36}$' -or
+        $state.Channels -isnot [array]) {
+        throw "Welcome-post state is invalid: $Path"
+    }
+    foreach ($entry in @($state.Channels)) {
+        if (-not $entry.Name -or $entry.ChannelId -notmatch '^19:.+@thread\.tacv2$' -or
+            $entry.ContentHash -notmatch '^[0-9A-F]{64}$' -or
+            $entry.Status -notin @("Pending", "Posting", "Posted", "Unknown")) {
+            throw "Welcome-post state has an invalid channel entry: $Path"
+        }
+    }
+    return $state
+}
+
+function Save-CoEWelcomePostState([string]$Path, $State) {
+    $parent = Split-Path -Parent $Path
+    if (-not (Test-Path -LiteralPath $parent -PathType Container)) {
+        [void][IO.Directory]::CreateDirectory($parent)
+    }
+    $temp = Join-Path $parent (".{0}.{1}.tmp" -f (Split-Path -Leaf $Path), [guid]::NewGuid().ToString("N"))
+    try {
+        $State | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $temp -Encoding utf8 -ErrorAction Stop
+        Move-Item -LiteralPath $temp -Destination $Path -Force -ErrorAction Stop
+    } finally {
+        if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Force }
+    }
+}
+
+function Initialize-CoEWelcomePostState {
+    param([string]$Path, [string]$Team, [object[]]$Channels, [object[]]$Specifications,
+        [ValidateSet("Pending", "Unknown")][string]$DefaultStatus = "Pending",
+        [string[]]$SelectedChannelNames = @())
+
+    $existing = Read-CoEWelcomePostState $Path
+    if ($existing) {
+        if ([string]$existing.TeamId -ne $Team) {
+            throw "Welcome-post state belongs to another Team. Use a clean organization folder: $Path"
+        }
+        return $existing
+    }
+    $entries = foreach ($spec in $Specifications) {
+        $channel = Get-CoEVerifiedStandardChannel $Channels $spec.DisplayName
+        if (-not $channel -or -not $spec.WelcomeHtml) {
+            throw "Cannot initialize welcome-post state for '$($spec.DisplayName)'."
+        }
+        [pscustomobject][ordered]@{
+            Name = [string]$spec.DisplayName
+            ChannelId = [string]$channel.Id
+            ContentHash = Get-CoEWelcomePostHash ([string]$spec.WelcomeHtml)
+            Status = $(if ($spec.DisplayName -in $SelectedChannelNames) { "Pending" } else { $DefaultStatus })
+            PostedAt = $null
+            MessageId = $null
+        }
+    }
+    $state = [pscustomobject][ordered]@{
+        SchemaVersion = 1
+        TeamId = $Team
+        UpdatedAt = [datetime]::UtcNow.ToString("o")
+        Channels = @($entries)
+    }
+    Save-CoEWelcomePostState $Path $state
+    return $state
+}
+
+function Assert-CoEWelcomePostStateMatches {
+    param($State, [string]$Team, [object[]]$Channels, [object[]]$Specifications)
+    if ([string]$State.TeamId -ne $Team) { throw "Welcome-post state does not match the target Team." }
+    foreach ($spec in $Specifications) {
+        $channel = Get-CoEVerifiedStandardChannel $Channels $spec.DisplayName
+        $matches = @($State.Channels | Where-Object Name -ceq $spec.DisplayName)
+        if ($matches.Count -ne 1 -or [string]$matches[0].ChannelId -ne [string]$channel.Id -or
+            [string]$matches[0].ContentHash -ne (Get-CoEWelcomePostHash ([string]$spec.WelcomeHtml))) {
+            throw "Welcome-post state does not match prepared channel '$($spec.DisplayName)'."
+        }
+    }
+}
+
 function Publish-CoEStandardChannelMessages {
     param([string]$Team, [object[]]$Channels, [object[]]$Specifications,
-        [string[]]$SelectedChannelNames, [object]$Connection)
+        [string[]]$SelectedChannelNames, [object]$Connection, [string]$StatePath)
     if (-not $Team -or -not $SelectedChannelNames -or -not $SelectedChannelNames.Count) {
         throw "Specify the Team and the exact channel names to receive welcome posts."
     }
@@ -496,12 +582,38 @@ function Publish-CoEStandardChannelMessages {
         if (-not $channel) { throw "No verified standard channel '$name'. No messages were sent." }
         $pending += [pscustomobject]@{ DisplayName = $name; Channel = $channel.Id; Html = $specs[0].WelcomeHtml }
     }
+    $state = if ($StatePath) { Read-CoEWelcomePostState $StatePath } else { $null }
+    if ($StatePath -and -not $state) { throw "Welcome-post state is missing: $StatePath" }
+    if ($state) { Assert-CoEWelcomePostStateMatches $state $Team $Channels $Specifications }
     foreach ($post in $pending) {
+        $stateEntry = if ($state) { @($state.Channels | Where-Object Name -ceq $post.DisplayName)[0] } else { $null }
+        if ($stateEntry) {
+            if ($stateEntry.Status -eq "Posted") {
+                throw "Welcome post '$($post.DisplayName)' is already recorded as Posted; refusing a duplicate."
+            }
+            if ($stateEntry.Status -eq "Posting") {
+                throw "Welcome post '$($post.DisplayName)' has ambiguous Posting state. Inspect the channel before retrying."
+            }
+            if ($stateEntry.Status -eq "Unknown") {
+                throw "Welcome post '$($post.DisplayName)' has Unknown state. Confirm it is missing before selecting it explicitly."
+            }
+            $stateEntry.Status = "Posting"
+            $state.UpdatedAt = [datetime]::UtcNow.ToString("o")
+            Save-CoEWelcomePostState $StatePath $state
+        }
         try {
-            Submit-PnPTeamsChannelMessage -Team $Team -Channel $post.Channel -Message $post.Html `
-                -ContentType Html -Connection $Connection -ErrorAction Stop | Out-Null
+            $submitted = Submit-PnPTeamsChannelMessage -Team $Team -Channel $post.Channel -Message $post.Html `
+                -ContentType Html -Connection $Connection -ErrorAction Stop
         } catch {
             throw "Could not confirm the welcome post in '$($post.DisplayName)'. Inspect that channel before retrying; the request may have succeeded. $($_.Exception.Message)"
+        }
+        if ($stateEntry) {
+            $stateEntry.Status = "Posted"
+            $stateEntry.PostedAt = [datetime]::UtcNow.ToString("o")
+            $submittedWithId = @($submitted | Where-Object { $_ -and $_.PSObject.Properties["Id"] })
+            $stateEntry.MessageId = if ($submittedWithId.Count) { [string]$submittedWithId[0].Id } else { $null }
+            $state.UpdatedAt = [datetime]::UtcNow.ToString("o")
+            Save-CoEWelcomePostState $StatePath $state
         }
         Write-Host "Submitted the prepared welcome post to '$($post.DisplayName)'. Verify it in Teams."
     }

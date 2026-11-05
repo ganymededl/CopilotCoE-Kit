@@ -158,7 +158,30 @@ function ConvertTo-CoEAgentSeeds([object[]]$Items) {
     $urls = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
     $titles = @{}
     $result = [System.Collections.Generic.List[object]]::new()
+    $knownFields = @("name", "url", "description", "audience", "examplePrompt", "owner", "product",
+        "sources", "connections", "access", "allowedData", "backupOwner", "support", "reviewedOn",
+        "nextReview", "status", "featured")
     foreach ($row in $Items) {
+        if ($null -eq $row -or $row -is [string] -or $row.GetType().IsPrimitive) {
+            throw "Agent seed entries must be JSON objects."
+        }
+        $rowFields = if ($row -is [System.Collections.IDictionary]) {
+            @($row.Keys | ForEach-Object { [string]$_ })
+        } else {
+            @($row.PSObject.Properties | ForEach-Object { $_.Name })
+        }
+        $unknownFields = @($rowFields | Where-Object { $_ -notin $knownFields })
+        if ($unknownFields.Count) {
+            throw "Agent seed has unsupported field(s): $($unknownFields -join ', ')."
+        }
+        $configuredValues = $knownFields | ForEach-Object { Get-CoECatalogValue $row $_ } |
+            Where-Object {
+                $null -ne $_ -and
+                (($_ -is [string] -and -not [string]::IsNullOrWhiteSpace($_)) -or
+                    ($_ -is [bool] -and $_) -or ($_ -isnot [string] -and $_ -isnot [bool]))
+            }
+        if (@($configuredValues).Count -eq 0) { continue }
+
         $context = "Agent seed '$([string](Get-CoECatalogValue $row 'name'))'"
         $values = [ordered]@{}
         foreach ($field in @("name", "url")) {
@@ -401,7 +424,8 @@ function Get-CoELearningViewFormatter([switch]$Compact) {
                 style = @{ flex = "1"; "min-width" = "160px"; "white-space" = "normal"; "text-align" = "left"
                     border = "none"; background = "transparent"; cursor = "pointer"; padding = "6px 4px" } }
         )
-        foreach ($entry in @(@{ Name = "LearningResource"; Label = "Learn" }, @{ Name = "LearningPractice"; Label = "Practice" })) {
+        foreach ($entry in @(@{ Name = "LearningResource"; Label = "Learn" }, @{ Name = "LearningPractice"; Label = "Practice" },
+            @{ Name = "LearningLms"; Label = "External training" })) {
             $reference = '[$' + $entry.Name + ']'
             $children += @{
                 elmType = "a"; txtContent = $entry.Label
@@ -572,12 +596,18 @@ function Sync-CoELearningCatalog {
         Presentation = @{ Title = "Audience order" } }
     $definitions.LearningResource.Presentation = @{ CustomFormatter = Get-CoECatalogLinkFormatter "Learn" }
     $definitions.LearningPractice.Presentation = @{ CustomFormatter = Get-CoECatalogLinkFormatter "Practice" }
+    $definitions.LearningLms.Presentation = @{ CustomFormatter = Get-CoECatalogLinkFormatter "External training" }
     $titles = @{
         LearningId = "Learning ID"; LearningPath = "Path"; LearningAudience = "Audience"
         LearningStep = "Step"; LearningMinutes = "Practice time (minutes)"; LearningRequirement = "Requirement"
         LearningProduct = "Product and access needed"; LearningResource = "Learn"; LearningPracticeTitle = "Practice task or prompt"
         LearningPractice = "Practice"; LearningExpectedResult = "What good looks like"; LearningOwner = "Content owner"
-        LearningReviewedOn = "Last reviewed"; LearningLms = "Learning system"
+        # LearningLms defaults to a free, publicly verified Microsoft Learn module/path per step (see
+        # SeedContent/Learning-Paths.json); an organization with its own LMS (for example Blackboard or
+        # Canvas) overrides this exact field per row in Content/Learning-Paths.json with its own deep link,
+        # or sets Links.LearningSystem in Deployment-Settings.json as a single blanket fallback for any
+        # row still left blank. Neither path creates real LMS integration or completion tracking.
+        LearningReviewedOn = "Last reviewed"; LearningLms = "External training"
     }
     foreach ($name in $titles.Keys) {
         $definitions[$name].Title = $titles[$name]
@@ -629,7 +659,7 @@ function Sync-CoELearningCatalog {
         "LearningProduct", "LearningResource", "LearningPracticeTitle", "LearningPractice", "LearningExpectedResult",
         "LearningOwner", "LearningReviewedOn", "LearningLms")
     $order = '<OrderBy><FieldRef Name="LearningStep" Ascending="TRUE"/><FieldRef Name="Title" Ascending="TRUE"/></OrderBy>'
-    $pageFields = @("Title", "LearningStep", "LearningResource", "LearningPractice")
+    $pageFields = @("Title", "LearningStep", "LearningResource", "LearningPractice", "LearningLms")
     $groupFormatting = @{ CustomFormatter = Get-CoELearningViewFormatter }
     $pageView = Sync-CoECatalogView $list "Learning steps" $pageFields `
         ('<Where><Eq><FieldRef Name="_ModerationStatus"/><Value Type="ModStat">0</Value></Eq></Where>' +

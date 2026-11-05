@@ -1,6 +1,8 @@
 # Local-only validation for structured organization overrides. Dot-sourcing and calling this helper never connects
 # to Microsoft 365. Entry scripts call it before importing PnP.PowerShell or opening a tenant connection.
 
+. (Join-Path $PSScriptRoot "AdoptionCatalogs.ps1")
+
 function Assert-CoETrainingCalendarOverride {
     [CmdletBinding()]
     param([Parameter(Mandatory)][string]$Path)
@@ -57,8 +59,17 @@ function Assert-CoETrainingCalendarOverride {
 
 function Assert-CoEStructuredOrganizationContent {
     [CmdletBinding()]
-    param([string]$OrgPath)
+    param([string]$OrgPath, [string]$SettingsPath)
 
+    if ([string]::IsNullOrWhiteSpace($OrgPath) -and [string]::IsNullOrWhiteSpace($SettingsPath)) { return }
+    if ([string]::IsNullOrWhiteSpace($SettingsPath) -and -not [string]::IsNullOrWhiteSpace($OrgPath)) {
+        $SettingsPath = Join-Path $OrgPath "Deployment-Settings.json"
+    }
+    if (Test-Path -LiteralPath $settingsPath -PathType Leaf) {
+        $settings = Get-Content -LiteralPath $settingsPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+        $agents = if ($settings.PSObject.Properties["Agents"]) { @($settings.Agents) } else { @() }
+        $null = @(ConvertTo-CoEAgentSeeds -Items $agents)
+    }
     if ([string]::IsNullOrWhiteSpace($OrgPath)) { return }
     $calendar = Join-Path $OrgPath "Content\Training-Calendar.csv"
     Assert-CoETrainingCalendarOverride -Path $calendar

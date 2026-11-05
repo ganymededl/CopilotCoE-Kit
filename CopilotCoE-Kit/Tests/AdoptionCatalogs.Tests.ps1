@@ -491,6 +491,10 @@ Describe "Learning reader layout and upgrade-compatible audience order" {
         $format.rowFormatter.children[3].txtContent | Should Be "Practice"
         $format.rowFormatter.children[3].attributes.href | Should Be '[$LearningPractice]'
         $format.rowFormatter.children[3].style.'white-space' | Should Be "nowrap"
+        $format.rowFormatter.children[4].txtContent | Should Be "External training"
+        $format.rowFormatter.children[4].attributes.href | Should Be '[$LearningLms]'
+        $format.rowFormatter.children[4].style.'white-space' | Should Be "nowrap"
+        $format.rowFormatter.children[4].style.display | Should Match "LearningLms"
         $result.ReaderViewUrl | Should Be "https://example.sharepoint.com/sites/CoE/Lists/CopilotLearningPaths/Learning%20steps.aspx"
     }
     It "formats existing hyperlinks without replacing customer descriptions, URLs, owners or dates" {
@@ -503,7 +507,8 @@ Describe "Learning reader layout and upgrade-compatible audience order" {
         $before = $values | ConvertTo-Json -Depth 8 -Compress
         $result = Sync-CoELearningCatalog @learningArgs
         ($values | ConvertTo-Json -Depth 8 -Compress) | Should Be $before
-        foreach ($entry in @(@{ Name = "LearningResource"; Label = "Learn" }, @{ Name = "LearningPractice"; Label = "Practice" })) {
+        foreach ($entry in @(@{ Name = "LearningResource"; Label = "Learn" }, @{ Name = "LearningPractice"; Label = "Practice" },
+            @{ Name = "LearningLms"; Label = "External training" })) {
             $field = @($fieldsByList["list-1"] | Where-Object InternalName -eq $entry.Name)[0]
             $format = $field.CustomFormatter | ConvertFrom-Json
             $format.txtContent | Should Be $entry.Label
@@ -590,10 +595,10 @@ Describe "Native approval, compact views and legacy migration" {
         $itemsByList["list-1"][1].FieldValues["_ModerationStatus"] | Should Be 0
         $result.Views.Published.ViewQuery | Should Match '_ModerationStatus'
     }
-    It "makes starter learning visible without fabricating review dates and retains four compact page fields" {
+    It "makes starter learning visible without fabricating review dates and retains five compact page fields" {
         $result = Sync-CoELearningCatalog -Connection offline -SiteUrl $migrationArgs.SiteUrl -Seeds @(New-TestLearningSeed) -ResolvedReviewers @()
         $itemsByList["list-1"][0].FieldValues["_ModerationStatus"] | Should Be 0
-        $result.Views.Page.Fields -join "," | Should Be "Title,LearningStep,LearningResource,LearningPractice"
+        $result.Views.Page.Fields -join "," | Should Be "Title,LearningStep,LearningResource,LearningPractice,LearningLms"
         $result.Views.Page.ViewQuery | Should Match 'Collapse="FALSE"'
     }
     It "migrates legacy featured status and configured highlights without replacing links or customer metadata" {
@@ -769,6 +774,24 @@ Describe "Agent seeds and existing showcase preservation" {
         $values.AgentLink.Description | Should Be "Staff helper"
         @($fieldsByList["list-1"] | Where-Object InternalName -eq AgentFeatured)[0].SchemaXml | Should Match '<Default>0</Default>'
         $fieldsByList["list-1"].Count | Should Be 17
+    }
+    It "skips a fully blank optional agent object" {
+        $blank = [pscustomobject]@{
+            name = ""; description = ""; audience = ""; examplePrompt = ""; owner = ""; url = ""
+        }
+        @(ConvertTo-CoEAgentSeeds @($blank)).Count | Should Be 0
+        @(ConvertTo-CoEAgentSeeds @([pscustomobject]@{})).Count | Should Be 0
+    }
+    It "still rejects a partially configured agent without a launch URL" {
+        $partial = [pscustomobject]@{
+            name = "Staff helper"; description = ""; audience = ""; examplePrompt = ""; owner = ""; url = ""
+        }
+        { ConvertTo-CoEAgentSeeds @($partial) } | Should Throw "nonempty HTTPS URL"
+    }
+    It "rejects malformed or typo-only agent entries instead of silently skipping them" {
+        { ConvertTo-CoEAgentSeeds @("not an object") } | Should Throw "JSON objects"
+        { ConvertTo-CoEAgentSeeds @([pscustomobject]@{ launchUrl = "https://agents.example.org/launch" }) } |
+            Should Throw "unsupported field"
     }
     It "accepts explicit customer-reviewed Published seeds and inserts every supplied metadata value" {
         $seed = New-TestPublishedSeed
