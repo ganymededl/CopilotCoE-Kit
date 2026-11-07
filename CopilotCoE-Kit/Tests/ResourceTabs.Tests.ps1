@@ -1068,6 +1068,29 @@ Describe "Expanded Teams app identity reconciliation" {
                 $Identity -eq "external"
             }
         }
+        It "records a compatibility step when Teams reports success but the shared-channel page tab is absent" {
+            $pageUrl = "https://neutral.sharepoint.com/sites/CoE-Program/SitePages/CoE-Governance-Start-Here.aspx"
+            Initialize-CoEResourceTabRuntime -AdvisoryContext ([pscustomobject]@{ Path="offline" })
+            Mock Get-PnPTeamsTab { @() }
+            Mock Add-PnPTeamsTab { [pscustomobject]@{ Id = "reported-created" } }
+            Mock Get-PnPTeamsTeam { [pscustomobject]@{ DisplayName = "Offline CoE Team" } }
+            Mock Get-PnPTeamsChannel {
+                [pscustomobject]@{ Id="channel"; DisplayName="Program Governance"; MembershipType="shared" }
+            }
+            Mock Confirm-CoEAdvisory {}
+
+            $result = Sync-CoESharePointPageTab -Team $teamId -Channel channel -DisplayName "Start here" `
+                -PageUrl $pageUrl -Connection $connection
+
+            $result | Should BeNullOrEmpty
+            @(Get-CoEManualTabSteps).Count | Should Be 1
+            (Get-CoEManualTabSteps)[0].Action | Should Match "accepts only Loop pages"
+            (Get-CoEManualTabSteps)[0].Action | Should Match "do not substitute a Loop or Website tab"
+            Assert-MockCalled Confirm-CoEAdvisory -Times 1 -Exactly -Scope It -ParameterFilter {
+                $Id -eq "SharedChannelTabManualInstall" -and "MembershipType=shared" -in $Facts -and
+                    "Tab=Start here" -in $Facts
+            }
+        }
         It "recognizes standalone HTTP authorization codes without matching digits inside GUIDs" {
             (Test-CoEAuthorizationFailure "403 Forbidden") | Should Be $true
             (Test-CoEAuthorizationFailure "401 Unauthorized") | Should Be $true

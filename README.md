@@ -6,7 +6,9 @@ Release: **v3.8.24**. Customers install the named [`Copilot-CoE-Implementation-K
 
 > **Pending release change:** The provisioning app now requests delegated Microsoft Graph permission `TeamsAppInstallation.ReadWriteForTeam`. This lets the installer add a tab's approved Teams app to a fresh Team scope before retrying tab creation. Any tenant previously registered under the old five-permission app must add this delegated permission and grant admin consent again before using the updated kit.
 >
-> If Teams still refuses a tab after the approved app installation, the run can complete with explicit `ManualStepsRequired` entries in `CoE-Revision-Report.json`. These are not successful tab creations: the operator must add each listed tab in Teams and rerun with `-ResumeExisting`.
+> If Teams still refuses a tab after the approved app installation, or reports success without exposing the tab, the run can complete with explicit `ManualStepsRequired` entries in `CoE-Revision-Report.json`. These are not successful tab creations. For shared-channel SharePoint pages, the current Teams **Page > Existing page** picker may accept only Loop pages; do not substitute a Loop or Website tab. Keep the page as the channel site's home page and retain the report entry as a compatibility exception until Teams exposes a supported SharePoint page-tab option.
+>
+> The checker now honors its documented optional-mode behavior: omitting `-ContentMode` skips mode-specific notice checks. Release 3.8.24 operators should still pass the same explicit mode used for install; an omitted mode in that release can produce false missing-notice failures.
 
 > **Not an official Microsoft product.** This is independently maintained sample/starter tooling. All seeded content (guides, FAQs, governance samples, prompt libraries) is starter material for your organization's own review — none of it is adopted policy, and no customer or tenant is implied, named, or endorsed by shipping this kit.
 
@@ -78,7 +80,7 @@ Run these steps **one block at a time in PowerShell 7.4 or later**. The first te
 
    The assertion can finish silently when the organization profile has no `Content\Training-Calendar.csv` override. The `Get-Command` line confirms that dot-sourcing worked, and the final message makes successful completion explicit. This step does not connect to Microsoft 365.
 
-6. **Install the required module, then register or reuse the tenant app.** Paste only the commands inside the code block; do not copy PowerShell prompt text such as `PS C:\...>` or continuation prompts such as `>>`. If `PnPClientID` already identifies this tenant's approved kit app, verify its five delegated permissions and **Allow public client flows = Yes**, then skip script 01. Script 01 creates a new app; rerunning it creates a duplicate, overwrites this profile's `PnPClientID`, and leaves the prior app in Entra.
+6. **Install the required module, then register or reuse the tenant app.** Paste only the commands inside the code block; do not copy PowerShell prompt text such as `PS C:\...>` or continuation prompts such as `>>`. If `PnPClientID` already identifies this tenant's approved kit app, verify all required delegated permissions and **Allow public client flows = Yes**, then skip script 01. Script 01 creates a new app; rerunning it creates a duplicate, overwrites this profile's `PnPClientID`, and leaves the prior app in Entra.
 
    ```powershell
    # Re-enter the actual paths if you opened a new PowerShell window.

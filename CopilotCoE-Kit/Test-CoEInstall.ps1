@@ -56,7 +56,7 @@ $configuredNotice = (Get-CoEOrganizationProfile -Settings $s).SampleNotice
 if ($ContentMode -eq "Demo" -and -not $configuredNotice) {
     throw "ContentMode Demo requires a non-empty SampleNotice; 'none' disables the notice."
 }
-$expectedSampleNotice = if ($ContentMode -eq "Customer") { "" } else { $configuredNotice }
+$expectedSampleNotice = if ($ContentMode -eq "Demo") { $configuredNotice } else { "" }
 $SiteUrl = $SiteUrl.TrimEnd("/")
 
 $results = [System.Collections.Generic.List[object]]::new()

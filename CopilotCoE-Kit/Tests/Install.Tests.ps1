@@ -241,11 +241,12 @@ Describe "Checker follows resolved notice and content mode" {
         . $homeNoticeBlock
         $lastNoticeResult | Should Be $false
     }
-    It "preserves configured notice checks when ContentMode is omitted" {
+    It "skips mode-specific notice checks when ContentMode is omitted" {
         $ContentMode = ""
         $s.SampleNotice = "Reviewed sample notice."
         . $noticePolicyBlock
-        $expectedSampleNotice | Should Be $s.SampleNotice
+        $configuredNotice | Should Be $s.SampleNotice
+        $expectedSampleNotice | Should Be ""
     }
     It "uses the same effective notice for the additional page checks" {
         $checker = Get-Content -LiteralPath $checkerPath -Raw

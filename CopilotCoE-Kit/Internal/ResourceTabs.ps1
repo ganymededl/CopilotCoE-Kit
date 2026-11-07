@@ -136,7 +136,7 @@ function Add-CoEManualTabStep {
         throw "The manual '$DisplayName' tab instruction has no verified target URL."
     }
     $action = if ($TabArgs.ContainsKey("Type") -and $TabArgs.Type -eq "SharePointPageAndList") {
-        "Open Teams, go to Team '$($teams[0].DisplayName)' > channel '$($channels[0].DisplayName)' ($membershipType), click + on the tab bar, choose Existing page, paste $targetUrl, add the page, and name the tab '$DisplayName'. Then rerun 02_Install-CopilotCoE.ps1 with -ResumeExisting."
+        "Confirm the SharePoint page for Team '$($teams[0].DisplayName)' > channel '$($channels[0].DisplayName)' ($membershipType) opens at $targetUrl. If Teams Page > Existing page accepts only Loop pages, do not substitute a Loop or Website tab; neither is the required embedded SharePoint page tab. Keep the page as the channel site's home page and record this as a Teams compatibility exception. Rerun 02_Install-CopilotCoE.ps1 with -ResumeExisting only after Teams exposes a supported SharePoint page-tab option."
     } else {
         "Open Teams, go to Team '$($teams[0].DisplayName)' > channel '$($channels[0].DisplayName)' ($membershipType), click + on the tab bar, add '$DisplayName' pointing at $targetUrl, save, then rerun 02_Install-CopilotCoE.ps1 with -ResumeExisting."
     }
@@ -522,7 +522,9 @@ function Sync-CoESharePointPageTab {
         $intended = @($tabs | Where-Object { Test-CoESharePointPageTabTarget $_ $DisplayName $PageUrl })
     }
     if (-not $intended.Count) {
-        throw "The embedded SharePoint page tab '$DisplayName' could not be verified; existing tabs were retained."
+        Add-CoEManualTabStep -Team $Team -Channel $Channel -DisplayName $DisplayName `
+            -TabArgs @{ Type = "SharePointPageAndList"; WebSiteUrl = $PageUrl } -Connection $Connection | Out-Null
+        return $null
     }
     $keep = $intended[0]
     foreach ($tab in $tabs) {
