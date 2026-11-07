@@ -4,6 +4,10 @@ A config-driven Teams + SharePoint **Center of Excellence (CoE)** kit for organi
 
 Release: **v3.8.24**. Customers install the named [`Copilot-CoE-Implementation-Kit.zip`](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.24/Copilot-CoE-Implementation-Kit.zip) release asset and verify SHA256 `EFD59EDD830FDBE4FC7C83ECCA1163AAE98818234C645E71B1B7595D7B91BA9D` against its [`.sha256` receipt](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.24/Copilot-CoE-Implementation-Kit.zip.sha256). GitHub's automatic **Source code (zip)**, **Source code (tar.gz)** and repository **Download ZIP** are source snapshots, not the prebuilt implementation ZIP; cloning GitHub and renaming an older ZIP does not produce it.
 
+> **Pending release change:** The provisioning app now requests delegated Microsoft Graph permission `TeamsAppInstallation.ReadWriteForTeam`. This lets the installer add a tab's approved Teams app to a fresh Team scope before retrying tab creation. Any tenant previously registered under the old five-permission app must add this delegated permission and grant admin consent again before using the updated kit.
+>
+> If Teams still refuses a tab after the approved app installation, the run can complete with explicit `ManualStepsRequired` entries in `CoE-Revision-Report.json`. These are not successful tab creations: the operator must add each listed tab in Teams and rerun with `-ResumeExisting`.
+
 > **Not an official Microsoft product.** This is independently maintained sample/starter tooling. All seeded content (guides, FAQs, governance samples, prompt libraries) is starter material for your organization's own review — none of it is adopted policy, and no customer or tenant is implied, named, or endorsed by shipping this kit.
 
 ## What it builds

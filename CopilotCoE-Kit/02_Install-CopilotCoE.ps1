@@ -5,7 +5,7 @@ Builds the Copilot Center of Excellence Team and SharePoint site in your tenant.
 
 .DESCRIPTION
 STEP 2 OF 3. Run after 01_Register-CoEProvisioningApp.ps1 has saved PnPClientID
-and all five app permissions show Granted in Entra.
+and all six app permissions show Granted in Entra.
     .\02_Install-CopilotCoE.ps1 -SeedDemoContent
 Reads Deployment-Settings.json (tenant, hosts, owner, names). Any parameter
 supplied on the command line overrides the settings file. If PnPClientID is
@@ -184,7 +184,7 @@ foreach ($address in $GovernanceAdditionalAllowedMembers) {
 }
 
 if ([string]::IsNullOrWhiteSpace($PnPClientID)) {
-    throw "PnPClientID is empty in $SettingsPath. Run .\01_Register-CoEProvisioningApp.ps1 first as an approved consent approver with required admin authority, confirm all five permissions show Granted in Entra, then run this script again. Nothing was created."
+    throw "PnPClientID is empty in $SettingsPath. Run .\01_Register-CoEProvisioningApp.ps1 first as an approved consent approver with required admin authority, confirm all six permissions show Granted in Entra, then run this script again. Nothing was created."
 }
 if ($PnPClientID -notmatch "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$") {
     throw "PnPClientID must be the app's Application (client) ID GUID."
@@ -192,6 +192,7 @@ if ($PnPClientID -notmatch "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-
 
 $advisoryContext = New-CoEAdvisoryContext -SettingsPath $SettingsPath -Tenant $Tenant `
     -SiteFQDN $SiteFQDN -TeamAlias $MailNickname
+Initialize-CoEResourceTabRuntime -AdvisoryContext $advisoryContext
 Invoke-CoEConfigurationAdvisories -Context $advisoryContext -Settings $settings `
     -SupportEmail $SupportEmail -DisplayName $DisplayName -SampleNotice $SampleNotice -ContentMode $ContentMode `
     -AllowMissingDataSafetyIncidentRoute:$AllowMissingDataSafetyIncidentRoute
@@ -233,6 +234,7 @@ $signIn = @{
 $signIn[$AuthenticationMode] = $true
 if ($ForceAuthentication) { $signIn.ForceAuthentication = $true }
 $adminConnection = Connect-PnPOnline @signIn
+Assert-CoEProvisioningAppConsent -Connection $adminConnection
 
 # Read-only preflight: shared-channel creation looks up the owner in Microsoft Graph. That needs the
 # delegated User.Read.All permission to read Member/Guest account type for other users.
@@ -501,6 +503,10 @@ if (-not $ResumeExisting) {
 }
 $standardChannels = @(Ensure-CoEStandardChannels -Team $coeGroup.GroupId -Specifications $standardChannelSpecs -Connection $adminConnection)
 $welcomeStatePath = Join-Path (Split-Path -Parent $SettingsPath) "CoE-Welcome-Post-State.json"
+if ($ResumeExisting -and (Test-Path -LiteralPath $welcomeStatePath -PathType Leaf)) {
+    $null = Sync-CoEPendingWelcomePostState -Path $welcomeStatePath -Team $coeGroup.GroupId `
+        -Channels $standardChannels -Specifications $standardChannelSpecs
+}
 if (-not $ResumeExisting) {
     $null = Initialize-CoEWelcomePostState -Path $welcomeStatePath -Team $coeGroup.GroupId `
         -Channels $standardChannels -Specifications $standardChannelSpecs -DefaultStatus Pending
@@ -568,6 +574,18 @@ foreach ($channelSpec in $standardChannelSpecs) {
         $effectiveTabSpec = Resolve-CoEResourceTabCapability -Team $coeGroup.GroupId -Channel $channel.Id `
             -Specification $tabSpec -InstalledApps $resourceApps -SiteUrl $coeUrl `
             -SiteConnection $siteConnection -Connection $adminConnection
+        if (-not $effectiveTabSpec) {
+            $resourceTabChoices += [pscustomobject]@{
+                Channel = $channelSpec.DisplayName; Tab = $tabSpec.DisplayName; OriginalUrl = $tabSpec.WebsiteUrl
+                TabUrl = $tabSpec.WebsiteUrl; Type = $tabSpec.Type
+                ProvisioningMode = "ManualActionRequired"; ResourcePageUrl = $null
+            }
+            continue
+        }
+        if ($effectiveTabSpec.Type -eq "SharePointPageAndList" -and
+            -not (Find-CoEResourceAppInstallation $resourceApps $effectiveTabSpec.TeamsAppId)) {
+            $resourceApps = @(Get-CoETeamResourceApps -Team $coeGroup.GroupId -Connection $adminConnection)
+        }
         $fileId = ""
         if ($tabSpec.Type -in @("PDF", "PowerPoint")) {
             if ($tabSpec.DisplayName -eq "Top 10 to try") {
@@ -584,8 +602,17 @@ foreach ($channelSpec in $standardChannelSpecs) {
             }
             $fileId = Get-CoEManagedFileIdentity -FileUrl $tabSpec.ContentUrl -SiteUrl $coeUrl -Connection $siteConnection
         }
+        $manualStepCount = @(Get-CoEManualTabSteps).Count
         Sync-CoEManagedResourceTab -Team $coeGroup.GroupId -Channel $channel.Id -Specification $effectiveTabSpec `
             -EntityId $fileId -Connection $adminConnection | Out-Null
+        if (@(Get-CoEManualTabSteps).Count -gt $manualStepCount) {
+            $resourceTabChoices += [pscustomobject]@{
+                Channel = $channelSpec.DisplayName; Tab = $tabSpec.DisplayName; OriginalUrl = $tabSpec.WebsiteUrl
+                TabUrl = $effectiveTabSpec.WebsiteUrl; Type = $effectiveTabSpec.Type
+                ProvisioningMode = "ManualActionRequired"; ResourcePageUrl = Get-CoEResourceProperty $effectiveTabSpec "ResourcePageUrl"
+            }
+            continue
+        }
         $resourceTabChoices += [pscustomobject]@{
             Channel = $channelSpec.DisplayName; Tab = $tabSpec.DisplayName; OriginalUrl = $tabSpec.WebsiteUrl
             TabUrl = $effectiveTabSpec.WebsiteUrl; Type = $effectiveTabSpec.Type
@@ -807,6 +834,7 @@ $installSummary = [pscustomobject]@{
     StandardChannels = $summaryChannels -join "; "
     SharedChannels   = "Leadership Governance; Program Governance (allowlisted members verified)"
     ResourceTabs     = $resourceTabChoices
+    ManualStepsRequired = @(Get-CoEManualTabSteps)
 }
 $installSummary
 if ($SeedDemoContent) {
@@ -819,7 +847,8 @@ if ($SeedDemoContent) {
         -OrgName $OrgName -OrgNoun $OrgNoun -DisplayName $DisplayName `
         -RepairCapturedPages:(!$ResumeExisting) `
         -AllowMissingDataSafetyIncidentRoute:$AllowMissingDataSafetyIncidentRoute `
-        -SettingsPath $SettingsPath -OrgPath $OrgPath -AcceptOrgAssets:$AcceptOrgAssets -ContentMode $ContentMode -NewDeployment
+        -SettingsPath $SettingsPath -OrgPath $OrgPath -AcceptOrgAssets:$AcceptOrgAssets `
+        -ExistingManualTabSteps @(Get-CoEManualTabSteps) -ContentMode $ContentMode -NewDeployment
 } else {
     Write-CoESecurityPosture -SiteUrl $coeUrl -TeamId $coeGroup.GroupId -ExpectedVisibility $TeamVisibility `
         -CoESiteSharingCapability $CoESiteSharingCapability -SettingsPath $SettingsPath `

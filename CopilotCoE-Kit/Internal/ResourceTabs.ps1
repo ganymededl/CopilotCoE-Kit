@@ -20,20 +20,203 @@ function Test-TeamsFileTabTarget {
     return $false
 }
 
+function Test-CoEAuthorizationFailure {
+    param([string]$Message)
+    return $Message -match "(?<!\d)(401|403)(?!\d)|Unauthorized|Forbidden|Access.?Denied|insufficient.*privilege|invalid.?audience|invalid.?token|authentication"
+}
+
+function Add-PnPTeamsAppToTeam {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][string]$TeamId,
+        [Parameter(Mandatory)][string]$AppId,
+        [Parameter(Mandatory)][object]$Connection
+    )
+    $teamGuid = [guid]::Empty
+    if (-not [guid]::TryParse($TeamId, [ref]$teamGuid) -or $teamGuid -eq [guid]::Empty) {
+        throw "Teams app installation requires a runtime Team GUID."
+    }
+    $graphHost = Get-CoEResourceGraphHost $Connection
+    $content = @{
+        "teamsApp@odata.bind" = "https://$graphHost/v1.0/appCatalogs/teamsApps/$([uri]::EscapeDataString($AppId))"
+    }
+    Invoke-PnPGraphMethod -Url "v1.0/teams/$TeamId/installedApps" -Method Post -Content $content `
+        -Connection $Connection -ErrorAction Stop | Out-Null
+}
+
+function Initialize-CoEResourceTabRuntime {
+    param([Parameter(Mandatory)][object]$AdvisoryContext, [object[]]$ManualSteps)
+    $script:CoEResourceTabAdvisoryContext = $AdvisoryContext
+    $script:CoEManualTabSteps = @()
+    foreach ($step in @($ManualSteps | Where-Object { $null -ne $_ })) {
+        $values = [ordered]@{}
+        foreach ($name in @("Team", "TeamId", "Channel", "ChannelId", "MembershipType", "Tab", "TargetUrl", "Action")) {
+            $value = [string](Get-CoEResourceProperty $step $name)
+            if ([string]::IsNullOrWhiteSpace($value)) {
+                throw "A saved manual tab step is missing required property '$name'. Review the deployment report."
+            }
+            $values[$name] = $value
+        }
+        $normalized = [pscustomobject]$values
+        $duplicate = @($script:CoEManualTabSteps | Where-Object {
+            $_.TeamId -eq $normalized.TeamId -and $_.ChannelId -eq $normalized.ChannelId -and
+                $_.Tab -eq $normalized.Tab -and $_.TargetUrl -eq $normalized.TargetUrl
+        })
+        if (-not $duplicate.Count) { $script:CoEManualTabSteps += $normalized }
+    }
+}
+
+function Get-CoEManualTabSteps {
+    if (-not (Get-Variable -Name CoEManualTabSteps -Scope Script -ErrorAction SilentlyContinue)) { return @() }
+    return @($script:CoEManualTabSteps)
+}
+
+function Get-CoEUnresolvedManualTabSteps {
+    param([Parameter(Mandatory)][object]$Connection)
+    foreach ($step in @(Get-CoEManualTabSteps)) {
+        try {
+            $tabs = @(Get-PnPTeamsTab -Team $step.TeamId -Channel $step.ChannelId `
+                -Connection $Connection -ErrorAction Stop | Where-Object DisplayName -eq $step.Tab)
+            $requiresEmbeddedPage = $step.MembershipType -in @("shared", "private") -and
+                $step.TargetUrl -match '/SitePages/'
+            $resolved = @($tabs | Where-Object {
+                if ($requiresEmbeddedPage) {
+                    return Test-CoESharePointPageTabTarget -Tab $_ -DisplayName $step.Tab -PageUrl $step.TargetUrl
+                }
+                return Test-TeamsFileTabTarget -Tab $_ -FileUrl $step.TargetUrl
+            })
+            if ($resolved.Count) {
+                Write-Host "Resolved prior manual tab step: $($step.Team) / $($step.Channel) / $($step.Tab)"
+                continue
+            }
+        } catch {
+            if (Test-CoEAuthorizationFailure $_.Exception.Message) { throw }
+            Write-Warning "Could not verify prior manual tab step '$($step.Team) / $($step.Channel) / $($step.Tab)'; it remains in the report. $($_.Exception.Message)"
+        }
+        $step
+    }
+}
+
+function Install-CoETeamsAppOnce {
+    param([string]$Team, [string]$AppId, [string]$DisplayName, [object]$Connection)
+    Write-Host "  Installing Teams app '$AppId' in the Team scope for the '$DisplayName' tab."
+    try {
+        Add-PnPTeamsAppToTeam -TeamId $Team -AppId $AppId -Connection $Connection -ErrorAction Stop
+        Write-Host "  Installed Teams app '$AppId' in the Team scope."
+    } catch {
+        if ($_.Exception.Message -match "409|already.*installed|installed.*already") {
+            Write-Host "  Teams app '$AppId' is already installed in the Team scope."
+            return
+        }
+        if (Test-CoEAuthorizationFailure $_.Exception.Message) {
+            throw "The provisioning app could not install Teams app '$AppId'. Add delegated Microsoft Graph permission TeamsAppInstallation.ReadWriteForTeam to the existing app, grant admin consent again, clear the persisted sign-in, and rerun with -ForceAuthentication. See 01_Register-CoEProvisioningApp.ps1. $($_.Exception.Message)"
+        }
+        throw "Teams app '$AppId' could not be installed in Team '$Team'. Confirm it is allowed in Teams admin center, then resume. $($_.Exception.Message)"
+    }
+}
+
+function Add-CoEManualTabStep {
+    param([string]$Team, [string]$Channel, [string]$DisplayName, [hashtable]$TabArgs, [object]$Connection)
+    if (-not (Get-Variable -Name CoEResourceTabAdvisoryContext -Scope Script -ErrorAction SilentlyContinue) -or
+        -not $script:CoEResourceTabAdvisoryContext) {
+        throw "Manual tab fallback requires the initialized CoE advisory context."
+    }
+    $teams = @(Get-PnPTeamsTeam -Identity $Team -Connection $Connection -ErrorAction Stop)
+    $channels = @(Get-PnPTeamsChannel -Team $Team -Identity $Channel -Connection $Connection -ErrorAction Stop)
+    if ($teams.Count -ne 1 -or $channels.Count -ne 1 -or [string]::IsNullOrWhiteSpace([string]$teams[0].DisplayName) -or
+        [string]::IsNullOrWhiteSpace([string]$channels[0].DisplayName)) {
+        throw "The Team and channel identities could not be resolved for the manual '$DisplayName' tab instruction."
+    }
+    $membershipType = [string]$channels[0].MembershipType
+    if ([string]::IsNullOrWhiteSpace($membershipType)) { $membershipType = "unknown" }
+    $targetUrl = if ($TabArgs.ContainsKey("WebSiteUrl")) { [string]$TabArgs.WebSiteUrl }
+        elseif ($TabArgs.ContainsKey("ContentUrl")) { [string]$TabArgs.ContentUrl }
+        else { "" }
+    if ([string]::IsNullOrWhiteSpace($targetUrl)) {
+        throw "The manual '$DisplayName' tab instruction has no verified target URL."
+    }
+    $action = if ($TabArgs.ContainsKey("Type") -and $TabArgs.Type -eq "SharePointPageAndList") {
+        "Open Teams, go to Team '$($teams[0].DisplayName)' > channel '$($channels[0].DisplayName)' ($membershipType), click + on the tab bar, choose Existing page, paste $targetUrl, add the page, and name the tab '$DisplayName'. Then rerun 02_Install-CopilotCoE.ps1 with -ResumeExisting."
+    } else {
+        "Open Teams, go to Team '$($teams[0].DisplayName)' > channel '$($channels[0].DisplayName)' ($membershipType), click + on the tab bar, add '$DisplayName' pointing at $targetUrl, save, then rerun 02_Install-CopilotCoE.ps1 with -ResumeExisting."
+    }
+    $step = [pscustomobject]@{
+        Team = [string]$teams[0].DisplayName
+        TeamId = $Team
+        Channel = [string]$channels[0].DisplayName
+        ChannelId = $Channel
+        MembershipType = $membershipType
+        Tab = $DisplayName
+        TargetUrl = $targetUrl
+        Action = $action
+    }
+    $facts = @("TeamId=$Team", "ChannelId=$Channel", "MembershipType=$membershipType",
+        "Tab=$DisplayName", "TargetUrl=$targetUrl")
+    Confirm-CoEAdvisory -Context $script:CoEResourceTabAdvisoryContext -Id SharedChannelTabManualInstall `
+        -Facts $facts -Message "$($step.Action) PROCEED records this manual step and continues the remaining install."
+    $existing = @(Get-CoEManualTabSteps | Where-Object {
+        $_.TeamId -eq $Team -and $_.ChannelId -eq $Channel -and $_.Tab -eq $DisplayName -and $_.TargetUrl -eq $targetUrl
+    })
+    if (-not $existing.Count) { $script:CoEManualTabSteps += $step }
+    Write-Warning "MANUAL ACTION REQUIRED: $($step.Action)"
+    return $null
+}
+
 function Add-TeamsTabWithRetry {
     param([string]$Team, [string]$Channel, [string]$DisplayName, [hashtable]$TabArgs, [object]$Connection,
         $Specification, [string]$ExpectedEntityId)
+    $appInstallAttempted = $false
+    $appPropagationAttempts = 0
+    $maxAppPropagationAttempts = 6
     for ($attempt = 1; $attempt -le 4; $attempt++) {
         try {
             return Add-PnPTeamsTab -Team $Team -Channel $Channel -DisplayName $DisplayName @TabArgs -Connection $Connection -ErrorAction Stop
         } catch {
-            $authFailure = $_.Exception.Message -match "401|403|Unauthorized|Forbidden|Access.?Denied|insufficient.*privilege|invalid.?token|authentication"
+            $authFailure = Test-CoEAuthorizationFailure $_.Exception.Message
             if ($authFailure) { throw }
-            if ($_.Exception.Message -match 'needs to be installed|unblocked state|app.*blocked|blocked.*app|app.*policy') {
-                throw "Teams refused the '$DisplayName' tab because its app is not installed or allowed in this Team/channel scope. No app policy change or permission expansion was attempted. Review the approved app setup and resume. $($_.Exception.Message)"
+            $missingAppFailure = $_.Exception.Message -match 'needs to be installed|unblocked state'
+            $policyFailure = $_.Exception.Message -match '(blocked|denied|not allowed|disabled).*(app )?policy|(app )?policy.*(blocked|denied|not allowed|disabled)' -or
+                (-not $missingAppFailure -and $_.Exception.Message -match 'app.*(blocked|denied|not allowed|disabled)|(blocked|denied|not allowed|disabled).*app')
+            if ($policyFailure) {
+                throw "Teams refused the '$DisplayName' tab because its app is blocked by policy. No app policy change or installation was attempted. $($_.Exception.Message)"
+            }
+            if ($missingAppFailure) {
+                if (-not $appInstallAttempted -and $TabArgs.ContainsKey("Type") -and
+                    $TabArgs.Type -eq "SharePointPageAndList" -and $TabArgs.ContainsKey("WebSiteUrl")) {
+                    $channelMatches = @(Get-PnPTeamsChannel -Team $Team -Identity $Channel `
+                        -Connection $Connection -ErrorAction Stop)
+                    if ($channelMatches.Count -ne 1) {
+                        throw "The channel identity for '$DisplayName' could not be resolved before handling its app scope."
+                    }
+                    if ([string]$channelMatches[0].MembershipType -in @("shared", "private")) {
+                        return Add-CoEManualTabStep -Team $Team -Channel $Channel -DisplayName $DisplayName `
+                            -TabArgs $TabArgs -Connection $Connection
+                    }
+                }
+                if (-not $appInstallAttempted) {
+                    $appInstallAttempted = $true
+                    $appId = if ($Specification -and $Specification.PSObject.Properties["TeamsAppId"]) {
+                        [string]$Specification.TeamsAppId
+                    } elseif ($TabArgs.ContainsKey("Type")) {
+                        Get-CoETabAppIdForType ([string]$TabArgs.Type)
+                    } else { "" }
+                    if ([string]::IsNullOrWhiteSpace($appId)) {
+                        throw "Teams refused the '$DisplayName' tab, but its approved Teams app identity could not be resolved. No app was installed."
+                    }
+                    Install-CoETeamsAppOnce -Team $Team -AppId $appId -DisplayName $DisplayName -Connection $Connection
+                }
+                if ($appPropagationAttempts -ge $maxAppPropagationAttempts) {
+                    return Add-CoEManualTabStep -Team $Team -Channel $Channel -DisplayName $DisplayName `
+                        -TabArgs $TabArgs -Connection $Connection
+                }
+                $appPropagationAttempts++
+                Write-Host "  Waiting 20 seconds for Teams app propagation before retrying the '$DisplayName' tab ($appPropagationAttempts of $maxAppPropagationAttempts)."
+                Start-Sleep -Seconds 20
+                $attempt--
+                continue
             }
             $transient = $_.Exception.Message -match "Timeout|canceled|cancelled|429|TooManyRequests|502|503|504|temporarily|ServiceUnavailable|GatewayTimeout"
-            if (-not $transient -or $authFailure) { throw }
+            if (-not $transient) { throw }
             Write-Host "  Teams was slow adding the '$DisplayName' tab (attempt $attempt of 4); checking and retrying..."
             $retryTabs = @(if ($Specification) {
                 Get-CoEResourceTabs -Team $Team -Channel $Channel -DisplayName $DisplayName -Connection $Connection
@@ -89,9 +272,11 @@ function Sync-CoEFileTab {
         else { Test-TeamsFileTabTarget $_ $FileUrl $EntityId }
     })
     if ($intended.Count -eq 0) {
+        $manualStepCount = @(Get-CoEManualTabSteps).Count
         Add-TeamsTabWithRetry -Team $Team -Channel $Channel -DisplayName $DisplayName `
             -TabArgs @{ Type = $Type; ContentUrl = $FileUrl; EntityId = $EntityId } -Connection $Connection `
             -Specification $specification -ExpectedEntityId $EntityId | Out-Null
+        if (@(Get-CoEManualTabSteps).Count -gt $manualStepCount) { return $null }
     }
     # Verify the replacement before removing anything; an interrupted replacement is recoverable.
     $tabs = @(if ($VerifyIdentity) {
@@ -309,6 +494,55 @@ function Test-CoEManagedTabTarget {
     return $EntityId -and [string]::Equals([string]$configuration.EntityId, $EntityId, [StringComparison]::OrdinalIgnoreCase)
 }
 
+function Test-CoESharePointPageTabTarget {
+    param($Tab, [string]$DisplayName, [string]$PageUrl)
+    $appId = Get-CoETabAppId $Tab
+    if ($appId -notin @("2a527703-1f6f-4559-a332-d8a7d288cd88", "0ae35b36-0fd7-422e-805b-d53af1579093")) {
+        return $false
+    }
+    $specification = [pscustomobject]@{
+        DisplayName = $DisplayName
+        Type = "SharePointPageAndList"
+        TeamsAppId = $appId
+        WebsiteUrl = $PageUrl
+    }
+    return Test-CoEManagedTabTarget -Tab $Tab -Specification $specification -EntityId ""
+}
+
+function Sync-CoESharePointPageTab {
+    param([string]$Team, [string]$Channel, [string]$DisplayName, [string]$PageUrl, [object]$Connection)
+    $tabs = @(Get-CoEResourceTabs -Team $Team -Channel $Channel -DisplayName $DisplayName -Connection $Connection)
+    $intended = @($tabs | Where-Object { Test-CoESharePointPageTabTarget $_ $DisplayName $PageUrl })
+    if (-not $intended.Count) {
+        $manualStepCount = @(Get-CoEManualTabSteps).Count
+        Add-TeamsTabWithRetry -Team $Team -Channel $Channel -DisplayName $DisplayName `
+            -TabArgs @{ Type = "SharePointPageAndList"; WebSiteUrl = $PageUrl } -Connection $Connection | Out-Null
+        if (@(Get-CoEManualTabSteps).Count -gt $manualStepCount) { return $null }
+        $tabs = @(Get-CoEResourceTabs -Team $Team -Channel $Channel -DisplayName $DisplayName -Connection $Connection)
+        $intended = @($tabs | Where-Object { Test-CoESharePointPageTabTarget $_ $DisplayName $PageUrl })
+    }
+    if (-not $intended.Count) {
+        throw "The embedded SharePoint page tab '$DisplayName' could not be verified; existing tabs were retained."
+    }
+    $keep = $intended[0]
+    foreach ($tab in $tabs) {
+        if ($tab.Id -eq $keep.Id -or $tab.DisplayName -ne $DisplayName) { continue }
+        if ((Test-CoESharePointPageTabTarget $tab $DisplayName $PageUrl) -or
+            (Test-TeamsFileTabTarget -Tab $tab -FileUrl $PageUrl)) {
+            Remove-PnPTeamsTab -Team $Team -Channel $Channel -Identity $tab.Id -Force `
+                -Connection $Connection -ErrorAction Stop | Out-Null
+        } else {
+            Write-Warning "Preserved unrelated same-name '$DisplayName' tab '$($tab.Id)'."
+        }
+    }
+    $remaining = @(Get-CoEResourceTabs -Team $Team -Channel $Channel -DisplayName $DisplayName -Connection $Connection)
+    $verified = @($remaining | Where-Object { Test-CoESharePointPageTabTarget $_ $DisplayName $PageUrl })
+    if ($verified.Count -ne 1 -or $verified[0].Id -ne $keep.Id) {
+        throw "The embedded SharePoint page tab '$DisplayName' or duplicate cleanup could not be verified."
+    }
+    return $keep
+}
+
 function Expand-CoETeamTemplateValue {
     param([string]$Value, [hashtable]$Parameters)
     $expanded = [regex]::Replace($Value, '\{(?:parameter:)?([^{}]+)\}', {
@@ -455,7 +689,7 @@ function Ensure-CoEStandardChannels {
                 Add-PnPTeamsChannel -Team $Team -DisplayName $spec.DisplayName -Description $spec.Description `
                     -ChannelType Standard -Connection $Connection -ErrorAction Stop | Out-Null
             } catch {
-                if ($_.Exception.Message -match '401|403|Unauthorized|Forbidden|Access.?Denied|insufficient.*privilege|invalid.?token|authentication' -or
+                if ((Test-CoEAuthorizationFailure $_.Exception.Message) -or
                     $_.Exception.Message -notmatch 'Timeout|canceled|cancelled|429|TooManyRequests|502|503|504|temporarily|ServiceUnavailable|GatewayTimeout|409|Conflict|already exists') { throw }
                 $failure = $_
             }
@@ -550,6 +784,38 @@ function Initialize-CoEWelcomePostState {
     return $state
 }
 
+function Sync-CoEPendingWelcomePostState {
+    param([string]$Path, [string]$Team, [object[]]$Channels, [object[]]$Specifications)
+
+    $state = Read-CoEWelcomePostState $Path
+    if (-not $state) { return $null }
+    if ([string]$state.TeamId -ne $Team) {
+        throw "Welcome-post state belongs to another Team. Use a clean organization folder: $Path"
+    }
+    $changed = $false
+    foreach ($spec in $Specifications) {
+        $channel = Get-CoEVerifiedStandardChannel $Channels $spec.DisplayName
+        $matches = @($state.Channels | Where-Object Name -ceq $spec.DisplayName)
+        if (-not $channel -or $matches.Count -ne 1) {
+            throw "Welcome-post state does not match prepared channel '$($spec.DisplayName)'."
+        }
+        $entry = $matches[0]
+        if ($entry.Status -ne "Pending") { continue }
+        $expectedHash = Get-CoEWelcomePostHash ([string]$spec.WelcomeHtml)
+        if ([string]$entry.ChannelId -ne [string]$channel.Id -or [string]$entry.ContentHash -ne $expectedHash) {
+            $entry.ChannelId = [string]$channel.Id
+            $entry.ContentHash = $expectedHash
+            $changed = $true
+        }
+    }
+    if ($changed) {
+        $state.UpdatedAt = [datetime]::UtcNow.ToString("o")
+        Save-CoEWelcomePostState $Path $state
+        Write-Host "Updated Pending welcome-post state to the current verified channels and prepared messages."
+    }
+    return $state
+}
+
 function Assert-CoEWelcomePostStateMatches {
     param($State, [string]$Team, [object[]]$Channels, [object[]]$Specifications)
     if ([string]$State.TeamId -ne $Team) { throw "Welcome-post state does not match the target Team." }
@@ -639,8 +905,10 @@ function Sync-CoEManagedResourceTab {
         if ($Specification.Type -eq "WebSite") { $tabArgs.ContentUrl = $Specification.ContentUrl }
         elseif ($Specification.Type -eq "SharePointPageAndList") { $tabArgs.WebsiteUrl = $Specification.WebsiteUrl }
         else { throw "Unsupported managed resource tab type '$($Specification.Type)'." }
+        $manualStepCount = @(Get-CoEManualTabSteps).Count
         Add-TeamsTabWithRetry -Team $Team -Channel $Channel -DisplayName $Specification.DisplayName `
             -TabArgs $tabArgs -Specification $Specification -Connection $Connection | Out-Null
+        if (@(Get-CoEManualTabSteps).Count -gt $manualStepCount) { return $null }
     }
     $tabs = @(Get-CoEResourceTabs -Team $Team -Channel $Channel -DisplayName $Specification.DisplayName -Connection $Connection)
     $intended = @($tabs | Where-Object { Test-CoEManagedTabTarget $_ $Specification "" })
@@ -681,7 +949,7 @@ function Get-CoEStandardChannelFilesFolder {
         try {
             $folder = Get-PnPTeamsChannelFilesFolder -Team $Team -Channel $Channel -Connection $Connection -ErrorAction Stop
         } catch {
-            if ($_.Exception.Message -match '401|403|Unauthorized|Forbidden|Access.?Denied|insufficient.*privilege|invalid.?token|authentication' -or
+            if ((Test-CoEAuthorizationFailure $_.Exception.Message) -or
                 $_.Exception.Message -notmatch 'Timeout|canceled|cancelled|429|TooManyRequests|502|503|504|temporarily|ServiceUnavailable|GatewayTimeout|404|NotFound') { throw }
             if ($attempt -eq 6) { throw }
         }
@@ -913,7 +1181,13 @@ function Resolve-CoEResourceTabCapability {
     if (-not $validResourcePage.Count) {
         if (Find-CoEResourceAppInstallation $InstalledApps $Specification.TeamsAppId) { return $Specification }
         if (-not (Find-CoEResourceAppInstallation $InstalledApps $sharePointId)) {
-            throw "Neither the legacy Website nor the supported SharePoint resource-page app is available in this Team. No app was installed or policy changed."
+            Install-CoETeamsAppOnce -Team $Team -AppId $sharePointId -DisplayName $Specification.DisplayName `
+                -Connection $Connection
+            $installedAfter = @(Get-CoETeamResourceApps -Team $Team -Connection $Connection)
+            if (-not (Find-CoEResourceAppInstallation $installedAfter $sharePointId)) {
+                return Add-CoEManualTabStep -Team $Team -Channel $Channel -DisplayName $Specification.DisplayName `
+                    -TabArgs @{ Type = "WebSite"; ContentUrl = $Specification.WebsiteUrl } -Connection $Connection
+            }
         }
     }
     Ensure-CoEResourceLinkPage -SiteUrl $SiteUrl -DisplayName $Specification.DisplayName `

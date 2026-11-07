@@ -26,6 +26,7 @@ param(
     [ValidateSet("Interactive", "DeviceLogin")][string]$AuthenticationMode = "DeviceLogin",
     [switch]$ForceAuthentication,
     [object]$Connection,
+    [object[]]$ExistingManualTabSteps,
     # Passed only by 02_Install-CopilotCoE.ps1, which has just created or resumed this Team and verified it itself.
     # Without it (03 updates), a saved TeamId in the deployment report must match the Team the alias resolves to.
     [switch]$NewDeployment
@@ -114,6 +115,7 @@ $developerEnabled = [bool]$developerSetting
 $advisorySettingsPath = if ($SettingsPath) { $SettingsPath } else { Join-Path $kitRoot "Deployment-Settings.json" }
 $advisoryContext = New-CoEAdvisoryContext -SettingsPath $advisorySettingsPath -Tenant $Tenant `
     -SiteFQDN ([uri]$SiteUrl).Host -TeamAlias $TeamAlias
+Initialize-CoEResourceTabRuntime -AdvisoryContext $advisoryContext -ManualSteps $ExistingManualTabSteps
 Invoke-CoEConfigurationAdvisories -Context $advisoryContext -Settings $orgSettings `
     -SupportEmail $SupportEmail -DisplayName $DisplayName -SampleNotice $SampleNotice -ContentMode $ContentMode `
     -AllowMissingDataSafetyIncidentRoute:$AllowMissingDataSafetyIncidentRoute
@@ -302,6 +304,12 @@ if ($GovernanceOnly -or $GuidesOnly) {
 } else {
     $report = [ordered]@{ Site = $SiteUrl; Version = $copy.version; Governance = @() }
 }
+$priorManualTabSteps = @()
+if ($priorReportForSite -and $priorReportForSite.ContainsKey("ManualStepsRequired")) {
+    $priorManualTabSteps = @($priorReportForSite.ManualStepsRequired)
+}
+Initialize-CoEResourceTabRuntime -AdvisoryContext $advisoryContext `
+    -ManualSteps @(@(Get-CoEManualTabSteps) + $priorManualTabSteps)
 $report.Organization = @{ Name = $orgName; DisplayName = $DisplayName; Noun = $orgNoun; Short = $ShortName
     OrgPath = $OrgPath; ContentOverrides = $orgOverrides }
 $report.SupportRoutes = @($supportRoutes | Select-Object Key,Configured,Url)
@@ -2130,7 +2138,10 @@ foreach ($section in $sectionConfig.sections) {
             # never post them, and remove copies an earlier kit version posted.
             if ($seedFile.Name -like "README*") {
                 $stale = @(try { Get-PnPFolderItem -FolderSiteRelativeUrl $target -ItemType File -Connection $site |
-                    Where-Object Name -eq $seedFile.Name } catch { })
+                    Where-Object Name -eq $seedFile.Name } catch {
+                        if ($_.Exception.Message -match '401|403|Unauthorized|Forbidden|Access.?Denied|insufficient.*privilege|invalid.?token|authentication') { throw }
+                        Write-Warning "Could not check for a stale README in '$target'; cleanup was skipped. $($_.Exception.Message)"
+                    })
                 foreach ($file in $stale) { Remove-PnPFile -SiteRelativeUrl "$target/$($file.Name)" -Recycle -Force -Connection $site }
                 continue
             }
@@ -2617,11 +2628,8 @@ foreach ($kind in @("program", "leadership")) {
     if ([string](Get-PnPHomePage -Connection $sharedSite) -ne "SitePages/CoE-Governance-Start-Here.aspx") {
         Set-PnPHomePage -RootFolderRelativeUrl "SitePages/CoE-Governance-Start-Here.aspx" -Connection $sharedSite
     }
-    $existingTabs = @(Get-PnPTeamsTab -Team $group.GroupId -Channel $channel[0].Id -Connection $Connection)
-    if ("Start here" -notin @($existingTabs | ForEach-Object DisplayName)) {
-        Add-TeamsTabWithRetry -Team $group.GroupId -Channel $channel[0].Id -DisplayName "Start here" `
-            -TabArgs @{ Type = "SharePointPageAndList"; WebSiteUrl = $pageUrl } -Connection $Connection | Out-Null
-    }
+    Sync-CoESharePointPageTab -Team $group.GroupId -Channel $channel[0].Id -DisplayName "Start here" `
+        -PageUrl $pageUrl -Connection $Connection | Out-Null
     $securityEntry = @($governanceSecurity | Where-Object Channel -eq $channelName) | Select-Object -First 1
     if (-not $securityEntry) { throw "The security preflight did not validate '$channelName'." }
     $report.Governance += @{
@@ -2649,5 +2657,11 @@ Write-CoESecurityPosture -SiteUrl $SiteUrl -TeamId $group.GroupId -ExpectedVisib
     -OwnerUPN ([string](Get-OrgValue "SharedChannelOwnerUPN" "")) `
     -AdditionalAllowedMembers $governanceAdditionalAllowedMembers -Connection $Connection
 $report.SecurityChecks = @{ Passed = $true; VerifiedAt = [datetime]::UtcNow.ToString("o") }
+$report.ManualStepsRequired = @(Get-CoEUnresolvedManualTabSteps -Connection $Connection)
 $report | ConvertTo-Json -Depth 15 | Set-Content $reportPath -Encoding utf8
-Write-Host "Content completion and security configuration checks passed. Browser acceptance checks are still required; this script does not claim Teams rendering."
+if ($report.ManualStepsRequired.Count) {
+    Write-Warning "Content completion and security configuration checks passed with $($report.ManualStepsRequired.Count) manual tab step(s) required:"
+    foreach ($step in $report.ManualStepsRequired) { Write-Warning "  - $($step.Action)" }
+} else {
+    Write-Host "Content completion and security configuration checks passed. Browser acceptance checks are still required; this script does not claim Teams rendering."
+}

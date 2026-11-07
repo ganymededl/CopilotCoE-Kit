@@ -12,7 +12,9 @@ The app is single-tenant, public-client (no secret or certificate), uses the
 http://localhost redirect for interactive/device sign-in, and requests only the
 delegated permissions the installer needs:
   Microsoft Graph : Group.ReadWrite.All, ChannelMember.ReadWrite.All, User.Read,
-                    User.Read.All (verifies governance users' Member/Guest account type)
+                    User.Read.All (verifies governance users' Member/Guest account type),
+                    TeamsAppInstallation.ReadWriteForTeam (installs approved Teams apps
+                    into a team scope so their tabs can be added)
   SharePoint      : AllSites.FullControl
 Delegated means the app can only do what the signed-in administrator can do.
 
@@ -62,7 +64,8 @@ Write-Host "Sign in as the approved consent approver, using just-in-time admin a
 $registration = @{
     ApplicationName               = $ApplicationName
     Tenant                        = $Tenant
-    GraphDelegatePermissions      = @("Group.ReadWrite.All", "ChannelMember.ReadWrite.All", "User.Read", "User.Read.All")
+    GraphDelegatePermissions      = @("Group.ReadWrite.All", "ChannelMember.ReadWrite.All", "User.Read", "User.Read.All",
+        "TeamsAppInstallation.ReadWriteForTeam")
     SharePointDelegatePermissions = @("AllSites.FullControl")
 }
 if (-not $Interactive) { $registration.DeviceLogin = $true }
@@ -91,7 +94,8 @@ Write-Host "CONFIRM ADMIN CONSENT (required once):"
 Write-Host "  Entra admin center > App registrations > $ApplicationName > API permissions."
 Write-Host "  If any permission shows 'Not granted', select 'Grant admin consent for <your organization>' and Yes."
 Write-Host "  Or open this link as an approved consent approver with admin-consent authority: $consentUrl"
-Write-Host "All five permissions must show 'Granted' before running .\02_Install-CopilotCoE.ps1."
+Write-Host "All six permissions must show 'Granted' before running .\02_Install-CopilotCoE.ps1."
+Write-Warning "If this tenant previously used the five-permission app, add delegated Microsoft Graph permission TeamsAppInstallation.ReadWriteForTeam to that existing app and grant admin consent again. Existing consent does not include newly added scopes."
 
 if ($SettingsPath) {
     $settings = Get-Content -LiteralPath $SettingsPath -Raw | ConvertFrom-Json
@@ -107,5 +111,5 @@ Assert-CoEProvisioningAppPublicClient -Tenant $Tenant -ClientId $clientId
     Tenant          = $Tenant
     ClientId        = $clientId
     AdminConsentUrl = $consentUrl
-    NextStep        = "Confirm Allow public client flows is Yes and all five permissions show Granted, then run .\02_Install-CopilotCoE.ps1 -SeedDemoContent."
+    NextStep        = "Confirm Allow public client flows is Yes and all six permissions show Granted. Previously registered five-permission apps must add TeamsAppInstallation.ReadWriteForTeam and receive admin consent again. Then run .\02_Install-CopilotCoE.ps1 -SeedDemoContent."
 }

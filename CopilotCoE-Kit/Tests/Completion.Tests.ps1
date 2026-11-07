@@ -1763,6 +1763,10 @@ Describe "Optional policy report and organization success videos" {
         $source.LastIndexOf('Write-CoESecurityPosture -SiteUrl') |
             Should BeLessThan $source.LastIndexOf('$report | ConvertTo-Json')
         $source | Should Match '\$report.SecurityChecks = .*Passed = \$true'
+        $source | Should Match '\$report.ManualStepsRequired = @\(Get-CoEUnresolvedManualTabSteps -Connection \$Connection\)'
+    }
+    It "synchronizes shared governance Start here tabs as embedded SharePoint pages" {
+        $source | Should Match 'Sync-CoESharePointPageTab -Team \$group\.GroupId -Channel \$channel\[0\]\.Id -DisplayName "Start here"'
     }
     It "omitted policy code preserves files and never emits a stale report link" {
         $block = Get-CompletionBlock 'if ([string]::IsNullOrWhiteSpace([IO.File]::ReadAllText($policyPath)))'

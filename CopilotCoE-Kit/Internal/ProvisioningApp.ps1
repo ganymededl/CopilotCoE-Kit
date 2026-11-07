@@ -61,3 +61,56 @@ function Assert-CoEProvisioningAppPublicClient {
     }
     Write-Host "Provisioning app prerequisite passed: Entra accepted the public-client authentication probe."
 }
+
+function Get-CoEAccessTokenScopes {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][ValidateSet("Graph", "SharePoint")][string]$ResourceTypeName,
+        [Parameter(Mandatory)][object]$Connection
+    )
+    $token = [string](Get-PnPAccessToken -ResourceTypeName $ResourceTypeName -Connection $Connection -ErrorAction Stop)
+    $parts = @($token.Split("."))
+    if ($parts.Count -lt 2 -or [string]::IsNullOrWhiteSpace($parts[1])) {
+        throw "The $ResourceTypeName access token is not a JWT."
+    }
+    $payload = $parts[1].Replace("-", "+").Replace("_", "/")
+    switch ($payload.Length % 4) {
+        2 { $payload += "==" }
+        3 { $payload += "=" }
+        0 { }
+        default { throw "The $ResourceTypeName access token payload has invalid base64url length." }
+    }
+    try {
+        $json = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($payload))
+        $claims = $json | ConvertFrom-Json -ErrorAction Stop
+    } catch {
+        throw "The $ResourceTypeName access token payload could not be decoded. $($_.Exception.Message)"
+    }
+    if (-not $claims.PSObject.Properties["scp"] -or [string]::IsNullOrWhiteSpace([string]$claims.scp)) {
+        throw "The $ResourceTypeName access token has no delegated scp claim."
+    }
+    return @(([string]$claims.scp -split '\s+') | Where-Object { $_ })
+}
+
+function Assert-CoEProvisioningAppConsent {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][object]$Connection)
+
+    $requiredGraph = @("Group.ReadWrite.All", "ChannelMember.ReadWrite.All", "User.Read", "User.Read.All",
+        "TeamsAppInstallation.ReadWriteForTeam")
+    $requiredSharePoint = @("AllSites.FullControl")
+    try {
+        $graphScopes = @(Get-CoEAccessTokenScopes -ResourceTypeName Graph -Connection $Connection)
+        $sharePointScopes = @(Get-CoEAccessTokenScopes -ResourceTypeName SharePoint -Connection $Connection)
+    } catch {
+        throw "The provisioning app's granted delegated scopes could not be inspected after sign-in. Re-run 01_Register-CoEProvisioningApp.ps1 guidance and confirm all six permissions have admin consent. $($_.Exception.Message)"
+    }
+
+    $missingGraph = @($requiredGraph | Where-Object { $_ -notin $graphScopes })
+    $missingSharePoint = @($requiredSharePoint | Where-Object { $_ -notin $sharePointScopes })
+    if ($missingGraph.Count -or $missingSharePoint.Count) {
+        $missing = @($missingGraph + $missingSharePoint) -join ", "
+        throw "The signed-in provisioning app token is missing required delegated scope(s): $missing. In Entra admin center, update the existing app's API permissions, grant admin consent again, clear the persisted sign-in, and rerun with -ForceAuthentication. Nothing was created or changed."
+    }
+    Write-Host "Provisioning app consent prerequisite passed: all six delegated scopes are present."
+}

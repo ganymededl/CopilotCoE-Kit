@@ -361,7 +361,7 @@ Write-Host 'Offline content preflight completed.'</code></pre>
       <div class="warning danger">
         <p><strong>Reuse an existing approved app; do not rerun script 01.</strong> If this tenant already has the
           kit&rsquo;s approved provisioning app, put its Application (client) ID in
-          <code>$orgPath\Deployment-Settings.json</code> as <code>PnPClientID</code>, confirm the five permissions
+          <code>$orgPath\Deployment-Settings.json</code> as <code>PnPClientID</code>, confirm the six permissions
           and public-client setting below, and continue to script 02.</p>
         <p>Script 01 is a create command, not an update command. Rerunning it creates another Entra app registration
           with a new client ID, overwrites <code>PnPClientID</code> in this organization profile, and leaves the
@@ -401,7 +401,7 @@ Set-Location -LiteralPath $kitRoot
         as <code>$kitRoot</code> and <code>$orgPath</code>. Re-enter the paths in that new session before using a
         relative <code>.\</code> script path.</p>
       <div class="warning">
-        <p>Before moving on, check that the Entra app permissions are granted, including the delegated <code>User.Read.All</code> permission, and that <strong>Allow public client flows</strong> is <strong>Yes</strong>. Script 01 does not change that setting itself: it checks it and, if it is off, stops (after saving <code>PnPClientID</code>) with the exact Entra path. Scripts 02, 03, 04 and the checker run the same check before sign-in; if the check cannot reach Entra or a tenant policy refuses it, they warn and continue to sign-in.</p>
+        <p>Before moving on, check that the Entra app permissions are granted, including delegated <code>User.Read.All</code> and <code>TeamsAppInstallation.ReadWriteForTeam</code>, and that <strong>Allow public client flows</strong> is <strong>Yes</strong>. A tenant that previously consented the old five-permission app must add the Teams app installation permission and grant admin consent again. Script 01 does not change the public-client setting itself: it checks it and, if it is off, stops (after saving <code>PnPClientID</code>) with the exact Entra path. Scripts 02, 03, 04 and the checker run the same public-client check before sign-in; script 02 also verifies the six granted token scopes immediately after sign-in.</p>
         <p>If consent changed after someone previously signed in, add <code>-ForceAuthentication</code> to the install command in the next step.</p>
         <p><strong>Sign-in methods differ by script.</strong> 02 and the checker sign in through a browser. 01, 03 and 04 default to a device code and reuse a cached sign-in until it expires. A block can first appear on a later update, after that cached sign-in expires.</p>
         <p>If Conditional Access blocks device-code flow (Microsoft&rsquo;s &ldquo;Block device code flow&rdquo; managed policy), sign in through the browser instead:</p>

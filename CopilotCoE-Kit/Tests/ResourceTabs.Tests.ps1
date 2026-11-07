@@ -47,7 +47,8 @@ public class OfflineCoEResourcePage {
 '@
 }
 
-function Get-PnPTeamsChannel { [CmdletBinding()]param($Team, $Connection) throw "Unexpected channel read" }
+function Get-PnPTeamsTeam { [CmdletBinding()]param($Identity, $Connection) throw "Unexpected team read" }
+function Get-PnPTeamsChannel { [CmdletBinding()]param($Team, $Identity, $Connection) throw "Unexpected channel read" }
 function Add-PnPTeamsChannel { [CmdletBinding()]param($Team, $DisplayName, $Description, $ChannelType, $Connection) throw "Unexpected channel create" }
 function Submit-PnPTeamsChannelMessage {
     [CmdletBinding()]param($Team, $Channel, $Message, $ContentType, $Connection)
@@ -55,7 +56,8 @@ function Submit-PnPTeamsChannelMessage {
 }
 function Get-PnPTeamsTab { [CmdletBinding()]param($Team, $Channel, $Identity, $Connection) throw "Unexpected tab read" }
 function Add-PnPTeamsTab {
-    [CmdletBinding()]param($Team, $Channel, $DisplayName, $Type, $ContentUrl, $EntityId, $WebsiteUrl, $Connection)
+    [CmdletBinding()]param($Team, $Channel, $DisplayName, $Type, $TeamsAppId, $ContentUrl, $EntityId,
+        $WebsiteUrl, $RemoveUrl, $Connection)
     throw "Unexpected tab create"
 }
 function Remove-PnPTeamsTab { [CmdletBinding()]param($Team, $Channel, $Identity, [switch]$Force, $Connection) throw "Unexpected tab removal" }
@@ -71,6 +73,7 @@ function Get-PnPPage { [CmdletBinding()]param($Identity, $Connection) throw "Une
 function Add-PnPPage { [CmdletBinding()]param($Name, $Title, $LayoutType, $ContentType, $Connection) throw "Unexpected page create" }
 function Add-PnPPageTextPart { [CmdletBinding()]param($Page, $Text, $Connection) throw "Unexpected page content write" }
 function Set-PnPPage { [CmdletBinding()]param($Identity, $Title, [switch]$Publish, $Connection) throw "Unexpected page publish" }
+function Confirm-CoEAdvisory { [CmdletBinding()]param($Context, $Id, $Message, [string[]]$Facts, $Level) throw "Unexpected advisory" }
 
 function New-ResourceChannel([string]$Id, [string]$Name, [string]$Membership = "standard") {
     $channel = New-Object OfflineCoEChannel
@@ -303,6 +306,31 @@ Describe "Prepared standard channel welcome posts" {
             -Specifications $specs -DefaultStatus Unknown -SelectedChannelNames @("General")
         @($state.Channels | Where-Object Name -eq "General")[0].Status | Should Be "Pending"
         @($state.Channels | Where-Object Name -eq "Share Your Prompt")[0].Status | Should Be "Unknown"
+    }
+    It "updates stale channel identities and content hashes only while welcome posts are Pending" {
+        $statePath = Join-Path $TestDrive ("welcome-state-" + [guid]::NewGuid().ToString("N") + ".json")
+        $stateTeam = "11111111-1111-1111-1111-111111111111"
+        $stateChannels = @($specs | ForEach-Object {
+                New-ResourceChannel ("19:" + [guid]::NewGuid().ToString("N") + "@thread.tacv2") $_.DisplayName
+            })
+        $state = Initialize-CoEWelcomePostState -Path $statePath -Team $stateTeam -Channels $stateChannels `
+            -Specifications $specs -DefaultStatus Pending
+        $general = @($state.Channels | Where-Object Name -eq "General")[0]
+        $general.ChannelId = "19:stale@thread.tacv2"
+        $general.ContentHash = ("0" * 64)
+        $posted = @($state.Channels | Where-Object Name -eq "Share Your Prompt")[0]
+        $posted.Status = "Posted"
+        $posted.ContentHash = ("1" * 64)
+        Save-CoEWelcomePostState $statePath $state
+
+        $synced = Sync-CoEPendingWelcomePostState -Path $statePath -Team $stateTeam -Channels $stateChannels `
+            -Specifications $specs
+        $currentGeneral = @($synced.Channels | Where-Object Name -eq "General")[0]
+        $currentGeneral.ChannelId | Should Be @($stateChannels | Where-Object DisplayName -eq "General")[0].Id
+        $currentGeneral.ContentHash | Should Be (Get-CoEWelcomePostHash @($specs | Where-Object DisplayName -eq "General")[0].WelcomeHtml)
+        @($synced.Channels | Where-Object Name -eq "Share Your Prompt")[0].ContentHash | Should Be ("1" * 64)
+        { Assert-CoEWelcomePostStateMatches $synced $stateTeam $stateChannels $specs } |
+            Should Throw "prepared channel 'Share Your Prompt'"
     }
 }
 
@@ -989,12 +1017,120 @@ Describe "Expanded Teams app identity reconciliation" {
             @(Get-CoETeamResourceApps @appArgs).Count | Should Be 0
             Assert-MockCalled Invoke-PnPGraphMethod -Times 0 -Exactly -Scope It -ParameterFilter { $Method -ne "Get" }
         }
-        It "does not install a permanent Website app after a missing-app error" {
+        It "posts the approved app identity to the verified Team installed-apps endpoint" {
+            Mock Invoke-PnPGraphMethod {}
+            Add-PnPTeamsAppToTeam -TeamId $teamId -AppId "2a527703-1f6f-4559-a332-d8a7d288cd88" `
+                -Connection $connection
+            Assert-MockCalled Invoke-PnPGraphMethod -Times 1 -Exactly -Scope It -ParameterFilter {
+                $Url -eq "v1.0/teams/$($script:teamId)/installedApps" -and $Method -eq "Post" -and
+                    $null -eq $ContentType -and $Connection -eq $script:connection -and
+                    $Content -is [hashtable] -and $Content.Count -eq 1 -and
+                    @($Content.Keys)[0] -ceq "teamsApp@odata.bind" -and
+                    $Content["teamsApp@odata.bind"] -eq "https://graph.microsoft.us/v1.0/appCatalogs/teamsApps/2a527703-1f6f-4559-a332-d8a7d288cd88"
+            }
+        }
+        It "installs the required app once and waits for propagation before retrying the missing-app tab" {
+            $script:tabCreates = 0
+            Mock Add-PnPTeamsTab {
+                $script:tabCreates++
+                if ($script:tabCreates -eq 1) {
+                    throw "App id 2a527703-1f6f-4559-a332-d8a7d288cd88 needs to be installed to the scope 320ab2d1-2018-4401-9199-4ea3539d842d:channel and be in an unblocked state"
+                }
+                [pscustomobject]@{ Id = "created-tab" }
+            }
+            Mock Add-PnPTeamsAppToTeam {}
+            $result = Add-TeamsTabWithRetry -Team $teamId -Channel channel -DisplayName Managed `
+                -TabArgs @{Type="WebSite";ContentUrl="https://learn.microsoft.com/resource"} -Connection $connection
+            $result.Id | Should Be "created-tab"
+            Assert-MockCalled Add-PnPTeamsAppToTeam -Times 1 -Exactly -Scope It -ParameterFilter {
+                $TeamId -eq $script:teamId -and $AppId -eq "com.microsoft.teamspace.tab.web" -and
+                    $Connection -eq $script:connection
+            }
+            Assert-MockCalled Add-PnPTeamsTab -Times 2 -Exactly -Scope It
+            Assert-MockCalled Start-Sleep -Times 1 -Exactly -Scope It -ParameterFilter { $Seconds -eq 20 }
+        }
+        It "replaces a same-target Website tab only after verifying the embedded SharePoint tab" {
+            $pageUrl = "https://neutral.sharepoint.com/sites/CoE-Program/SitePages/CoE-Governance-Start-Here.aspx"
+            $external = New-ResourceTab external WebSite $pageUrl "" "Start here"
+            $embedded = New-ResourceTab embedded SharePointPageAndList $pageUrl "" "Start here"
+            $embedded.TeamsApp.Id = "0ae35b36-0fd7-422e-805b-d53af1579093"
+            $script:tabState = @($external, $embedded)
+            Mock Get-PnPTeamsTab { $script:tabState }
+            Mock Remove-PnPTeamsTab {
+                $script:tabState = @($script:tabState | Where-Object Id -ne $Identity)
+            }
+            $result = Sync-CoESharePointPageTab -Team $teamId -Channel channel -DisplayName "Start here" `
+                -PageUrl $pageUrl -Connection $connection
+            $result.Id | Should Be "embedded"
+            $script:tabState.Count | Should Be 1
+            (Get-CoETabAppId $script:tabState[0]) | Should Be "0ae35b36-0fd7-422e-805b-d53af1579093"
+            Assert-MockCalled Remove-PnPTeamsTab -Times 1 -Exactly -Scope It -ParameterFilter {
+                $Identity -eq "external"
+            }
+        }
+        It "recognizes standalone HTTP authorization codes without matching digits inside GUIDs" {
+            (Test-CoEAuthorizationFailure "403 Forbidden") | Should Be $true
+            (Test-CoEAuthorizationFailure "401 Unauthorized") | Should Be $true
+            (Test-CoEAuthorizationFailure "scope 320ab2d1-2018-4401-9199-4ea3539d842d needs to be installed") | Should Be $false
+        }
+        It "still retries immediately when the missing-app response occurs on the fourth attempt" {
+            $script:tabCreates = 0
+            Mock Add-PnPTeamsTab {
+                $script:tabCreates++
+                if ($script:tabCreates -le 3) { throw "503 ServiceUnavailable" }
+                if ($script:tabCreates -eq 4) { throw "App needs to be installed to the scope" }
+                [pscustomobject]@{ Id = "created-tab" }
+            }
+            Mock Get-PnPTeamsTab { return @() }
+            Mock Add-PnPTeamsAppToTeam {}
+            $result = Add-TeamsTabWithRetry -Team $teamId -Channel channel -DisplayName Managed `
+                -TabArgs @{Type="WebSite";ContentUrl="https://learn.microsoft.com/resource"} -Connection $connection
+            $result.Id | Should Be "created-tab"
+            Assert-MockCalled Add-PnPTeamsAppToTeam -Times 1 -Exactly -Scope It
+            Assert-MockCalled Add-PnPTeamsTab -Times 5 -Exactly -Scope It
+            Assert-MockCalled Start-Sleep -Times 4 -Exactly -Scope It
+        }
+        It "records a manual step and returns null when the installed app retry is still refused" {
+            Initialize-CoEResourceTabRuntime -AdvisoryContext ([pscustomobject]@{ Path="offline" })
             Mock Add-PnPTeamsTab { throw "App needs to be installed to the scope and be in an unblocked state" }
-            { Add-TeamsTabWithRetry -Team $teamId -Channel channel -DisplayName Managed -TabArgs @{Type="WebSite";ContentUrl="https://learn.microsoft.com/resource"} `
-                -Connection $connection } | Should Throw "No app policy change"
-            Assert-MockCalled Invoke-PnPGraphMethod -Times 0 -Exactly -Scope It
+            Mock Add-PnPTeamsAppToTeam {}
+            Mock Get-PnPTeamsTeam { [pscustomobject]@{ DisplayName = "Offline CoE Team" } }
+            Mock Get-PnPTeamsChannel {
+                [pscustomobject]@{ Id=$script:teamId; DisplayName="Program Governance"; MembershipType="shared" }
+            }
+            Mock Confirm-CoEAdvisory {}
+            $result = Add-TeamsTabWithRetry -Team $teamId -Channel channel -DisplayName "Start here" `
+                -TabArgs @{Type="SharePointPageAndList";WebSiteUrl="https://neutral.sharepoint.com/teams/CoE/SitePages/Home.aspx"} `
+                -Connection $connection
+            $result | Should BeNullOrEmpty
+            @(Get-CoEManualTabSteps).Count | Should Be 1
+            Assert-MockCalled Add-PnPTeamsAppToTeam -Times 0 -Exactly -Scope It
             Assert-MockCalled Add-PnPTeamsTab -Times 1 -Exactly -Scope It
+            Assert-MockCalled Start-Sleep -Times 0 -Exactly -Scope It
+            Assert-MockCalled Confirm-CoEAdvisory -Times 1 -Exactly -Scope It -ParameterFilter {
+                $Id -eq "SharedChannelTabManualInstall" -and
+                    "MembershipType=shared" -in $Facts -and "Tab=Start here" -in $Facts -and
+                    "ChannelId=channel" -in $Facts
+            }
+        }
+        It "keeps a manual step until its exact tab target is positively verified" {
+            $step = [ordered]@{
+                Team="Offline CoE Team";TeamId=$teamId;Channel="Program Governance";ChannelId="channel"
+                MembershipType="shared";Tab="Start here";TargetUrl="https://neutral.sharepoint.com/teams/CoE/SitePages/Home.aspx"
+                Action="Add the tab"
+            }
+            Initialize-CoEResourceTabRuntime -AdvisoryContext ([pscustomobject]@{ Path="offline" }) -ManualSteps @($step)
+            Mock Get-PnPTeamsTab { return @() }
+            @(Get-CoEUnresolvedManualTabSteps -Connection $connection).Count | Should Be 1
+            Mock Get-PnPTeamsTab {
+                New-ResourceTab external WebSite $script:step.TargetUrl "" "Start here"
+            }
+            $script:step = $step
+            @(Get-CoEUnresolvedManualTabSteps -Connection $connection).Count | Should Be 1
+            Mock Get-PnPTeamsTab {
+                New-ResourceTab verified SharePointPageAndList $script:step.TargetUrl "" "Start here"
+            }
+            @(Get-CoEUnresolvedManualTabSteps -Connection $connection).Count | Should Be 0
         }
         It "compares expanded app ExternalId rather than the installation ID and never grants resource-specific consent" {
             $script:installedApps = @([pscustomobject]@{id="com.microsoft.teamspace.tab.web"
@@ -1010,11 +1146,17 @@ Describe "Expanded Teams app identity reconciliation" {
             Assert-MockCalled Invoke-PnPGraphMethod -Times 0 -Exactly -Scope It -ParameterFilter { $Method -eq "Post" }
         }
         It "does not attempt app installation for authorization or explicit policy denials" {
-            foreach ($message in @("403 Forbidden: App needs to be installed", "App is blocked by policy and needs to be installed")) {
+            foreach ($message in @("403 Forbidden: App needs to be installed",
+                    "App is blocked by policy and needs to be installed",
+                    "App is not allowed by policy",
+                    "App is disabled by app permission policy",
+                    "App is blocked")) {
                 Mock Add-PnPTeamsTab { throw $message }
+                Mock Add-PnPTeamsAppToTeam {}
                 { Add-TeamsTabWithRetry -Team $teamId -Channel channel -DisplayName Managed -TabArgs @{Type="WebSite";ContentUrl="https://learn.microsoft.com/resource"} `
                     -Connection $connection } | Should Throw
             }
+            Assert-MockCalled Add-PnPTeamsAppToTeam -Times 0 -Exactly -Scope It
             Assert-MockCalled Invoke-PnPGraphMethod -Times 0 -Exactly -Scope It
             Assert-MockCalled Start-Sleep -Times 0 -Exactly -Scope It
         }
@@ -1130,6 +1272,7 @@ Describe "Expanded Teams app identity reconciliation" {
                     $Team -ne "runtime-team" -or $Channel -ne "runtime-channel") { throw "Wrong fallback tab parameters" }
                 $script:tabState += @(New-ResourceTab "created" SharePointPageAndList $WebsiteUrl "" $DisplayName)
             }
+            Mock Add-PnPTeamsAppToTeam {}
             Mock Remove-PnPTeamsTab { throw "Unexpected unrelated tab removal" }
         }
         It "creates a deterministic private-parent resource page with the exact official external link and verifies publication" {
@@ -1191,13 +1334,36 @@ Describe "Expanded Teams app identity reconciliation" {
             Assert-MockCalled Add-PnPPage -Times 1 -Exactly -Scope It
             Assert-MockCalled Set-PnPPage -Times 1 -Exactly -Scope It
         }
-        It "fails closed when neither app is available or capability identities are ambiguous" {
+        It "installs and rechecks SharePoint capability when neither app is initially available" {
             $capabilityArgs.InstalledApps = @()
-            { Resolve-CoEResourceTabCapability @capabilityArgs } | Should Throw "Neither the legacy Website"
+            Mock Get-CoETeamResourceApps { @($script:sharePointApp) }
+            (Resolve-CoEResourceTabCapability @capabilityArgs).Type | Should Be "SharePointPageAndList"
+            Assert-MockCalled Add-PnPTeamsAppToTeam -Times 1 -Exactly -Scope It -ParameterFilter {
+                $AppId -eq "2a527703-1f6f-4559-a332-d8a7d288cd88"
+            }
+            Assert-MockCalled Get-CoETeamResourceApps -Times 1 -Exactly -Scope It
+        }
+        It "records a manual Website tab step when capability is still absent after installation" {
+            $capabilityArgs.InstalledApps = @()
+            Initialize-CoEResourceTabRuntime -AdvisoryContext ([pscustomobject]@{ Path="offline" })
+            Mock Get-CoETeamResourceApps { @() }
+            Mock Get-PnPTeamsTeam { [pscustomobject]@{ DisplayName = "Offline CoE Team" } }
+            Mock Get-PnPTeamsChannel {
+                [pscustomobject]@{ Id="runtime-channel"; DisplayName="Ask Us Anything"; MembershipType="standard" }
+            }
+            Mock Confirm-CoEAdvisory {}
+            (Resolve-CoEResourceTabCapability @capabilityArgs) | Should BeNullOrEmpty
+            @(Get-CoEManualTabSteps).Count | Should Be 1
+            Assert-MockCalled Confirm-CoEAdvisory -Times 1 -Exactly -Scope It -ParameterFilter {
+                $Id -eq "SharedChannelTabManualInstall" -and "MembershipType=standard" -in $Facts -and
+                    "Tab=Managed" -in $Facts
+            }
+            Assert-MockCalled Add-PnPPage -Times 0 -Exactly -Scope It
+        }
+        It "fails closed when capability identities are ambiguous" {
             $capabilityArgs.InstalledApps = @($sharePointApp,$sharePointApp)
             { Resolve-CoEResourceTabCapability @capabilityArgs } | Should Throw
             Assert-MockCalled Add-PnPPage -Times 0 -Exactly -Scope It
-            Assert-MockCalled Invoke-PnPGraphMethod -Times 0 -Exactly -Scope It
         }
         It "does not overwrite an existing custom or wrong-destination resource page" {
             Ensure-CoEResourceLinkPage @pageArgs | Out-Null

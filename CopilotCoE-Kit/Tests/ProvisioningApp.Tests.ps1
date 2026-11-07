@@ -6,6 +6,16 @@ $kitRoot = Split-Path -Parent $PSScriptRoot
 
 $tenant = "t.onmicrosoft.com"
 $clientId = "11111111-2222-3333-4444-555555555555"
+function Get-PnPAccessToken {
+    [CmdletBinding()]
+    param([switch]$ListPermissionScopes, [string]$ResourceTypeName, $Connection)
+    throw "Unexpected token inspection"
+}
+function New-CoETestAccessToken([string[]]$Scopes) {
+    $json = @{ scp = ($Scopes -join " ") } | ConvertTo-Json -Compress
+    $payload = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($json)).TrimEnd("=").Replace("+", "-").Replace("/", "_")
+    return "header.$payload.signature"
+}
 
 Describe "Provisioning app public-client prerequisite" {
     BeforeEach {
@@ -67,6 +77,19 @@ Describe "Public-client preflight wiring" {
         $register.IndexOf("Assert-CoEProvisioningAppPublicClient") |
             Should BeGreaterThan $register.IndexOf("Saved PnPClientID")
     }
+    It "declares the Teams app installation delegated scope and six-permission guidance" {
+        $register | Should Match '"TeamsAppInstallation\.ReadWriteForTeam"'
+        $register | Should Not Match 'TeamsAppInstallation\.ReadWriteForTeam\.All'
+        $register | Should Match "All six permissions"
+        $register | Should Match "grant admin consent again"
+        $install | Should Match "all six app permissions"
+    }
+    It "checks granted token scopes immediately after the installer signs in" {
+        $install.IndexOf("Assert-CoEProvisioningAppConsent -Connection `$adminConnection") |
+            Should BeGreaterThan $install.IndexOf("`$adminConnection = Connect-PnPOnline")
+        $install.IndexOf("Assert-CoEProvisioningAppConsent -Connection `$adminConnection") |
+            Should BeLessThan $install.IndexOf("v1.0/users/")
+    }
     foreach ($entry in @(
             @{ Name = "02 installer"; Text = $install },
             @{ Name = "04 remover"; Text = $remove },
@@ -79,5 +102,50 @@ Describe "Public-client preflight wiring" {
             $entry.Text.IndexOf("Assert-CoEProvisioningAppPublicClient") |
                 Should BeLessThan $entry.Text.IndexOf("Connect-PnPOnline")
         }
+    }
+}
+
+Describe "Provisioning app consent prerequisite" {
+    BeforeEach {
+        Mock Write-Host {}
+        Mock Get-PnPAccessToken {
+            if ($ResourceTypeName -eq "Graph") {
+                return New-CoETestAccessToken @("Group.ReadWrite.All", "ChannelMember.ReadWrite.All", "User.Read",
+                    "User.Read.All", "TeamsAppInstallation.ReadWriteForTeam")
+            }
+            if ($ResourceTypeName -eq "SharePoint") { return New-CoETestAccessToken @("AllSites.FullControl") }
+            throw "Unexpected resource"
+        }
+    }
+    It "accepts all five Graph scopes and the SharePoint scope" {
+        { Assert-CoEProvisioningAppConsent -Connection offline } | Should Not Throw
+        Assert-MockCalled Get-PnPAccessToken -Times 1 -Exactly -Scope It -ParameterFilter {
+            $ResourceTypeName -eq "Graph" -and $Connection -eq "offline"
+        }
+        Assert-MockCalled Get-PnPAccessToken -Times 1 -Exactly -Scope It -ParameterFilter {
+            $ResourceTypeName -eq "SharePoint" -and $Connection -eq "offline"
+        }
+    }
+    It "fails fast with re-consent guidance when the Teams scope is absent" {
+        Mock Get-PnPAccessToken {
+            if ($ResourceTypeName -eq "Graph") {
+                return New-CoETestAccessToken @("Group.ReadWrite.All", "ChannelMember.ReadWrite.All", "User.Read", "User.Read.All")
+            }
+            return New-CoETestAccessToken @("AllSites.FullControl")
+        }
+        $message = Get-CoETestExceptionMessage { Assert-CoEProvisioningAppConsent -Connection offline }
+        $message | Should Match "TeamsAppInstallation.ReadWriteForTeam"
+        $message | Should Match "grant admin consent again"
+        $message | Should Match "Nothing was created or changed"
+    }
+    It "fails closed when token scopes cannot be inspected" {
+        Mock Get-PnPAccessToken { throw "token cache unavailable" }
+        Get-CoETestExceptionMessage { Assert-CoEProvisioningAppConsent -Connection offline } |
+            Should Match "could not be inspected.*all six permissions"
+    }
+    It "fails closed when a token has no delegated scope claim" {
+        Mock Get-PnPAccessToken { return "header.e30.signature" }
+        Get-CoETestExceptionMessage { Assert-CoEProvisioningAppConsent -Connection offline } |
+            Should Match "no delegated scp claim"
     }
 }

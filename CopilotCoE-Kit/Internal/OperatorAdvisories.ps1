@@ -102,7 +102,7 @@ function Confirm-CoEAdvisory {
         [Parameter(Mandatory)][object]$Context,
         [Parameter(Mandatory)][ValidateSet("LabSupportMailbox", "UnconfiguredSupportRoutes",
             "DefaultSampleNotice", "LongDisplayName", "ParentTeamExternalMembers", "HeaderLayout",
-            "GroupNamingPolicy", "OwnerDiffersFromOperator")]
+            "GroupNamingPolicy", "OwnerDiffersFromOperator", "SharedChannelTabManualInstall")]
         [string]$Id,
         [Parameter(Mandatory)][string]$Message,
         [Parameter(Mandatory)][string[]]$Facts,
