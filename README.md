@@ -2,7 +2,7 @@
 
 A config-driven Teams + SharePoint **Center of Excellence (CoE)** kit for organizations rolling out Microsoft 365 Copilot. One kit, any organization: everything organization-specific (tenant, names, support links, policies, decks) lives in an **organization folder** passed to every script with `-OrgPath`, never edited in the kit itself.
 
-Release: **v3.8.24**. Customers install the named [`Copilot-CoE-Implementation-Kit.zip`](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.24/Copilot-CoE-Implementation-Kit.zip) release asset and verify SHA256 `EFD59EDD830FDBE4FC7C83ECCA1163AAE98818234C645E71B1B7595D7B91BA9D` against its [`.sha256` receipt](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.24/Copilot-CoE-Implementation-Kit.zip.sha256). GitHub's automatic **Source code (zip)**, **Source code (tar.gz)** and repository **Download ZIP** are source snapshots, not the prebuilt implementation ZIP; cloning GitHub and renaming an older ZIP does not produce it.
+Release: **v3.8.24**. Customers install the named [`Copilot-CoE-Implementation-Kit.zip`](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.24/Copilot-CoE-Implementation-Kit.zip) release asset and verify SHA256 `474F8676D43626C81EF8A6D452D32B2ECBB469B5DB7708BB3EE14C66A0BD19E2` against its [`.sha256` receipt](https://github.com/ganymededl/CopilotCoE-Kit/releases/download/v3.8.24/Copilot-CoE-Implementation-Kit.zip.sha256). GitHub's automatic **Source code (zip)**, **Source code (tar.gz)** and repository **Download ZIP** are source snapshots, not the prebuilt implementation ZIP; cloning GitHub and renaming an older ZIP does not produce it.
 
 > **Pending release change:** The provisioning app now requests delegated Microsoft Graph permission `TeamsAppInstallation.ReadWriteForTeam`. This lets the installer add a tab's approved Teams app to a fresh Team scope before retrying tab creation. Any tenant previously registered under the old five-permission app must add this delegated permission and grant admin consent again before using the updated kit.
 >
@@ -29,7 +29,7 @@ Run these steps **one block at a time in PowerShell 7.4 or later**. The first te
    ```powershell
    $zip = 'C:\CoE-Releases\Copilot-CoE-Implementation-Kit.zip'
    $receipt = 'C:\CoE-Releases\Copilot-CoE-Implementation-Kit.zip.sha256'
-   $expectedHash = 'EFD59EDD830FDBE4FC7C83ECCA1163AAE98818234C645E71B1B7595D7B91BA9D'
+   $expectedHash = '474F8676D43626C81EF8A6D452D32B2ECBB469B5DB7708BB3EE14C66A0BD19E2'
 
    $zipHash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash
    $receiptHash = ((Get-Content -LiteralPath $receipt -Raw).Trim() -split '\s+')[0]
