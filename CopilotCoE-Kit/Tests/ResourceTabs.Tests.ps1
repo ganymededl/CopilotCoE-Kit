@@ -1086,6 +1086,9 @@ Describe "Expanded Teams app identity reconciliation" {
             @(Get-CoEManualTabSteps).Count | Should Be 1
             (Get-CoEManualTabSteps)[0].Action | Should Match "accepts only Loop pages"
             (Get-CoEManualTabSteps)[0].Action | Should Match "do not substitute a Loop or Website tab"
+            (Get-CoEManualTabSteps)[0].Action | Should Match "known Teams compatibility exception"
+            (Get-CoEManualTabSteps)[0].Action | Should Match "Select PROCEED"
+            (Get-CoEManualTabSteps)[0].Action | Should Not Match "only after Teams exposes"
             Assert-MockCalled Confirm-CoEAdvisory -Times 1 -Exactly -Scope It -ParameterFilter {
                 $Id -eq "SharedChannelTabManualInstall" -and "MembershipType=shared" -in $Facts -and
                     "Tab=Start here" -in $Facts
@@ -1127,6 +1130,8 @@ Describe "Expanded Teams app identity reconciliation" {
                 -Connection $connection
             $result | Should BeNullOrEmpty
             @(Get-CoEManualTabSteps).Count | Should Be 1
+            (Get-CoEManualTabSteps)[0].Action | Should Match "rerun 02_Install-CopilotCoE.ps1 with -ResumeExisting"
+            (Get-CoEManualTabSteps)[0].Action | Should Match "remove only this advisory's saved STOP decision"
             Assert-MockCalled Add-PnPTeamsAppToTeam -Times 0 -Exactly -Scope It
             Assert-MockCalled Add-PnPTeamsTab -Times 1 -Exactly -Scope It
             Assert-MockCalled Start-Sleep -Times 0 -Exactly -Scope It

@@ -136,7 +136,7 @@ function Add-CoEManualTabStep {
         throw "The manual '$DisplayName' tab instruction has no verified target URL."
     }
     $action = if ($TabArgs.ContainsKey("Type") -and $TabArgs.Type -eq "SharePointPageAndList") {
-        "Confirm the SharePoint page for Team '$($teams[0].DisplayName)' > channel '$($channels[0].DisplayName)' ($membershipType) opens at $targetUrl. If Teams Page > Existing page accepts only Loop pages, do not substitute a Loop or Website tab; neither is the required embedded SharePoint page tab. Keep the page as the channel site's home page and record this as a Teams compatibility exception. Rerun 02_Install-CopilotCoE.ps1 with -ResumeExisting only after Teams exposes a supported SharePoint page-tab option."
+        "Confirm the SharePoint page for Team '$($teams[0].DisplayName)' > channel '$($channels[0].DisplayName)' ($membershipType) opens at $targetUrl. If Teams Page > Existing page accepts only Loop pages, do not substitute a Loop or Website tab; neither is the required embedded SharePoint page tab. Keep the page as the channel site's home page. This is a known Teams compatibility exception; do not wait for Teams to expose another page-tab option. Select PROCEED for this advisory to record the exception and continue the remaining installation. If a prior STOP ended the run, remove only this advisory's saved STOP decision from CoE-Advisory-Decisions.json, rerun 02_Install-CopilotCoE.ps1 with -ResumeExisting, and select PROCEED when prompted."
     } else {
         "Open Teams, go to Team '$($teams[0].DisplayName)' > channel '$($channels[0].DisplayName)' ($membershipType), click + on the tab bar, add '$DisplayName' pointing at $targetUrl, save, then rerun 02_Install-CopilotCoE.ps1 with -ResumeExisting."
     }
@@ -153,7 +153,7 @@ function Add-CoEManualTabStep {
     $facts = @("TeamId=$Team", "ChannelId=$Channel", "MembershipType=$membershipType",
         "Tab=$DisplayName", "TargetUrl=$targetUrl")
     Confirm-CoEAdvisory -Context $script:CoEResourceTabAdvisoryContext -Id SharedChannelTabManualInstall `
-        -Facts $facts -Message "$($step.Action) PROCEED records this manual step and continues the remaining install."
+        -Facts $facts -Message "$($step.Action) Run the completion checker only after the installer finishes."
     $existing = @(Get-CoEManualTabSteps | Where-Object {
         $_.TeamId -eq $Team -and $_.ChannelId -eq $Channel -and $_.Tab -eq $DisplayName -and $_.TargetUrl -eq $targetUrl
     })
